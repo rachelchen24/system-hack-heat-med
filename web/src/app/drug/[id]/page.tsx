@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: PageProps<"/drug/[id]">): Pro
 
 function Section({ title, plain, children }: { title: string; plain?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-tile border border-line bg-page p-4">
-      <h3 className="text-lg font-bold">{title}</h3>
+    <section className="border-t border-line pt-4">
+      <h3 className="font-semibold">{title}</h3>
       {plain && <p className="mb-2 text-sm text-ink-muted">{plain}</p>}
       <div className="space-y-2">{children}</div>
     </section>
@@ -74,28 +74,28 @@ async function DrugBody({ params }: { params: PageProps<"/drug/[id]">["params"] 
   const guide = guidanceSaysWhatToDo(d);
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6">
-      <Link href="/medicines" className="text-sm underline">
+    <article className="max-w-3xl space-y-8">
+      <Link href="/medicines" className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">
         ← All medicines
       </Link>
       <KbSourceBanner source={source} file={file} />
 
       {/* Outcome first: the plain message and what to do. */}
-      <section className={`rounded-tile border-l-8 bg-page p-5 shadow-sm ring-1 ring-line ${b ? b.ink : "border-line-strong"}`}>
+      <section className={`border-l-4 pl-5 ${b ? b.ink : "border-line-strong"}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-ink">{d.names?.display ?? d.id}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">{d.names?.display ?? d.id}</h1>
             {d.names?.class_label && <p className="text-ink-muted">{d.names.class_label}</p>}
           </div>
           {bucket && <BucketChip bucket={bucket} size="md" />}
         </div>
-        <p className="mt-4 text-xl font-semibold leading-snug text-ink">
+        <p className="mt-4 text-xl leading-snug text-ink">
           {d.label_line || <Dash what="No plain message yet" />}
         </p>
       </section>
 
       <section aria-labelledby="todo-h" className="space-y-3">
-        <h2 id="todo-h" className="text-xl font-bold">
+        <h2 id="todo-h" className="text-xl font-semibold">
           What to do
         </h2>
         {steps.length === 0 ? (
@@ -128,14 +128,14 @@ async function DrugBody({ params }: { params: PageProps<"/drug/[id]">["params"] 
       </section>
 
       {/* Everything else: one click away. */}
-      <details className="group rounded-tile border border-line-strong bg-surface">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-lg border border-line bg-card px-4 shadow-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 font-semibold [&::-webkit-details-marker]:hidden">
           <span>See the evidence</span>
           <span aria-hidden className="text-ink-muted transition-transform group-open:rotate-180">
             ▾
           </span>
         </summary>
-        <div className="space-y-4 border-t border-line p-4">
+        <div className="space-y-6 pb-6">
           <Section title="In short">
             <p className="text-sm">{d.evidence?.plain_summary || <Dash />}</p>
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
@@ -213,7 +213,7 @@ async function DrugBody({ params }: { params: PageProps<"/drug/[id]">["params"] 
             </dl>
           </Section>
 
-          <Section title="Studies and reports" plain="① System graph, ② published studies, ③ FDA reports are kept separate.">
+          <Section title="Studies and reports" plain="System graph, published studies and FDA reports are kept separate.">
             {claims.length === 0 ? (
               <p className="text-sm text-ink-muted">
                 No verified claims yet <Dash />
@@ -330,7 +330,7 @@ async function DrugBody({ params }: { params: PageProps<"/drug/[id]">["params"] 
               </ul>
             </Section>
           )}
-          <p className="text-xs text-ink-muted">Source: {file ?? "inline fallback"}</p>
+          <p className="text-xs text-ink-muted">Sources: {file ?? "inline fallback"}</p>
         </div>
       </details>
     </article>

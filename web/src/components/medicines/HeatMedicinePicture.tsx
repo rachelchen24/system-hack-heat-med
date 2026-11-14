@@ -85,11 +85,11 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
   return (
     <section aria-labelledby="hm-title" className="space-y-3">
       <div>
-        <h2 id="hm-title" className="text-xl font-bold leading-snug">
+        <h2 id="hm-title" className="text-xl font-semibold">
           {title}
         </h2>
         <p className="text-sm text-ink-muted">
-          How heat and medicine add up: each line is a link found in published studies. Click a line to see why.
+          Each line is a link found in published studies. Click a line to see why.
         </p>
       </div>
 
@@ -107,7 +107,7 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="overflow-x-auto rounded-tile border border-line bg-page">
+        <div className="overflow-x-auto">
           <p className="px-3 pt-2 text-xs text-ink-muted md:hidden">Swipe sideways to see the whole picture →</p>
           <svg
             viewBox={`0 0 ${W} ${H}`}
@@ -227,7 +227,7 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
         </div>
 
         {/* Why? panel */}
-        <aside aria-live="polite" className="rounded-tile border border-line bg-surface p-4 text-sm">
+        <aside aria-live="polite" className="rounded-tile bg-surface p-4 text-sm">
           <h3 className="mb-2 font-bold">Why?</h3>
           {!sel && <p className="text-ink-muted">Click or tap a line to see the studies behind it.</p>}
           {selLink && (
@@ -306,11 +306,14 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
         </aside>
       </div>
 
-      <p className="text-xs text-ink-muted">
-        Source: {source} (full System API run): study counts per medicine and per body effect. Example study titles from{" "}
-        data/processed/system_drug_mediator_findings.csv. &ldquo;Drowsy&rdquo; is not shown: there is no drowsiness
-        pathway in {source}.
-      </p>
+      <details className="text-xs text-ink-muted">
+        <summary className="cursor-pointer">Sources</summary>
+        <p className="mt-1">
+          {source} (full System API run): study counts per medicine and per body effect. Example study titles from
+          data/processed/system_drug_mediator_findings.csv. &ldquo;Drowsy&rdquo; is not shown: there is no drowsiness pathway
+          in {source}.
+        </p>
+      </details>
     </section>
   );
 }
