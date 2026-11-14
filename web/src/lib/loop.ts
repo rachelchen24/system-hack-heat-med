@@ -9,6 +9,7 @@
 
 import { db, demoNow } from "@/lib/db";
 import { contactMessage, getPanelPatient, patientMessage, type Scenario } from "@/lib/panel";
+import { riskGroup } from "@/lib/risk";
 
 export type AlertStatus = "sent" | "acknowledged" | "escalated_contact" | "escalated_clinic" | "resolved";
 
@@ -51,24 +52,63 @@ function logMessage(m: Omit<MessageRow, "id" | "simulated" | "read_at" | "create
     .run(m.patient_id, m.alert_id, m.recipient, m.channel, m.body, m.note, at.toISOString());
 }
 
-export function sendAlert(patientId: string, scenario: Scenario = "replay"): { ok: true; alertId: number } | { ok: false; error: string } {
+export type SendMode = "text" | "call";
+
+/**
+ * Send a patient their risk group's message (P2 "Text this group").
+ *   Low    → heads-up (heat_card), no escalation
+ *   Medium → nearest cool place + safe hours (cooling_place), no escalation
+ *   High   → safety_alert + cooling_place, with the full escalation (check-ins, contact, clinic)
+ *   mode "call" (alert_opt_in = false) → no text; put on the clinic call list instead.
+ */
+export function sendAlert(
+  patientId: string,
+  scenario: Scenario = "replay",
+  mode: SendMode = "text",
+): { ok: true; alertId: number } | { ok: false; error: string } {
   const p = getPanelPatient(patientId, scenario);
   if (!p) return { ok: false, error: `${patientId} not in panel_scores_${scenario}.json` };
-  const msg = patientMessage(p, "safety_alert");
-  const body = msg?.text ?? `[no safety_alert message for ${patientId} in panel_scores_${scenario}.json]`;
-  const firstStep = p.escalation?.steps?.[0];
+  const group = riskGroup(p.readiness?.level);
+  const kind = group === "high" ? "safety_alert" : group === "medium" ? "cooling_place" : "heat_card";
+  const msg = patientMessage(p, kind);
+  const body = msg?.text ?? `[no ${kind} message for ${patientId} in panel_scores_${scenario}.json]`;
+  const steps = p.escalation?.steps ?? [];
+  const firstStep = steps[0];
   const now = demoNow();
 
+  if (mode === "call") {
+    const res = db()
+      .prepare(
+        `INSERT INTO alerts (patient_id, kind, message, language, channel, status, wait_minutes, scenario, steps_done, sent_at, escalated_at)
+         VALUES (?, 'heat_safety', ?, ?, 'call', 'escalated_clinic', NULL, ?, ?, ?, ?)`,
+      )
+      .run(patientId, body, msg?.language ?? p.language, scenario, steps.length, now.toISOString(), now.toISOString());
+    const alertId = Number(res.lastInsertRowid);
+    logMessage({
+      patient_id: patientId, alert_id: alertId, recipient: "clinic", channel: "call_list",
+      body: `Call this patient (they asked not to get texts). Read them: ${body}`,
+      note: "alert_opt_in = false (questionnaire.csv)",
+    }, now);
+    return { ok: true, alertId };
+  }
+
+  // Only the High group gets the check-in / contact / clinic escalation.
+  const stepsDone = group === "high" ? (firstStep ? 1 : 0) : steps.length;
   const res = db()
     .prepare(
       `INSERT INTO alerts (patient_id, kind, message, language, channel, status, wait_minutes, scenario, steps_done, sent_at)
        VALUES (?, 'heat_safety', ?, ?, 'push+sms', 'sent', ?, ?, ?, ?)`,
     )
-    .run(patientId, body, msg?.language ?? p.language, p.escalation?.tWaitMin ?? null, scenario, firstStep ? 1 : 0, now.toISOString());
+    .run(patientId, body, msg?.language ?? p.language, p.escalation?.tWaitMin ?? null, scenario, stepsDone, now.toISOString());
   const alertId = Number(res.lastInsertRowid);
 
+  const note = group === "high" ? firstStep?.action ?? null : `${group === "medium" ? "Medium" : "Low"} group message`;
   for (const channel of ["push", "sms"]) {
-    logMessage({ patient_id: patientId, alert_id: alertId, recipient: "patient", channel, body, note: firstStep?.action ?? null }, now);
+    logMessage({ patient_id: patientId, alert_id: alertId, recipient: "patient", channel, body, note }, now);
+  }
+  if (group === "high") {
+    const cool = patientMessage(p, "cooling_place");
+    if (cool) logMessage({ patient_id: patientId, alert_id: alertId, recipient: "patient", channel: "sms", body: cool.text, note: "Where to go" }, now);
   }
   return { ok: true, alertId };
 }

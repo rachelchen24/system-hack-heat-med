@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
 
+/* Risk-group utilities are built from strings in src/lib/risk.ts; always generate them. */
+@source inline("{bg,text,border,ring,fill,stroke,outline}-risk-{high,medium,low}{,-on,-tint,-ink}");
+
 /*
  * Tailwind v4 theme extension: exposes the design tokens in tokens.css as
  * utilities, e.g. bg-adjust-solid, text-hold-ink, border-store-ink,

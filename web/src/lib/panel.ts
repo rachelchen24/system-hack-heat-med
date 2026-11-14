@@ -5,6 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import type { PatientScore } from "@lib/types/patient.ts";
 import { REPO_ROOT } from "@/lib/kb";
 
 export type Scenario = "replay" | "today";
@@ -42,6 +43,10 @@ export interface PanelPatient {
   language: string;
   heatriskToday: number;
   rank?: number;
+  readiness?: PatientScore["readiness"];
+  lifestyle?: PatientScore["lifestyle"];
+  stacking?: PatientScore["stacking"];
+  meds?: { heatRelevantDrugs?: string[]; defenses?: { defense: string; label: string; drugs: string[] }[] };
   tier?: { tier: string; reasons: string[]; autoSafetyAlert?: boolean; coolingText?: boolean };
   escalation?: {
     enrolled: boolean;
@@ -54,8 +59,27 @@ export interface PanelPatient {
     steps: EscalationStep[];
     assumptions?: string[];
   };
-  cooling?: { best?: { name: string; address: string; leaveBy?: string; arriveBy?: string; travelMin?: number } | null };
+  cooling?: {
+    best?: CoolingPlace | null;
+    alternatives?: CoolingPlace[];
+    note?: string;
+  };
   messages?: PanelMessage[];
+}
+
+export interface CoolingPlace {
+  id?: string;
+  name: string;
+  category?: string;
+  address: string;
+  lat?: number;
+  lon?: number;
+  hoursToday?: string;
+  leaveBy?: string;
+  arriveBy?: string;
+  travelMin?: number;
+  distanceKm?: number;
+  caveats?: string[];
 }
 
 export interface CallListRow {
