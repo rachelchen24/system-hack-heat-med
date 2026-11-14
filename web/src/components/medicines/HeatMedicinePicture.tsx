@@ -193,7 +193,9 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
             {/* medicine labels */}
             {drugs.map((d) => {
               const has = data.links.some((l) => l.drug === d.id);
-              const pillW = Math.min(250, d.label.length * 7.2 + 22);
+              // Size the pill to the full visible text, including " (none)".
+              const shown = d.label + (has ? "" : " (none)");
+              const pillW = Math.min(300, shown.length * 7.2 + 22);
               return (
                 <g key={d.id} onMouseEnter={() => setHoverDrug(d.id)} className="cursor-pointer">
                 <rect
@@ -211,8 +213,7 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
                   className={`text-[13px] font-semibold ${hoverDrug === d.id ? "fill-page" : has ? "fill-ink" : "fill-ink-muted"}`}
                   x={X_DRUG - 6}
                 >
-                  {d.label}
-                  {!has ? " (none)" : ""}
+                  {shown}
                 </text>
                 </g>
               );
