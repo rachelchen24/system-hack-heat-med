@@ -9,7 +9,7 @@ import { loadReplay } from "@/lib/replay";
 
 export const metadata: Metadata = { title: "Cool-Aid" };
 
-// Home: hero with the live clinic map as the default tab, the heat-day time-lapse second, and one patient's plan third.
+// Home: hero with the live clinic map as the default tab, one patient's plan second, and the heat-day time-lapse third.
 export default function Home() {
   const patients = loadMapPatients();
   const replay = loadReplay();
@@ -20,14 +20,6 @@ export default function Home() {
   ) : (
     <p className="p-4 text-sm">Patients go here: {FILES.panel} and {FILES.patients} (not found).</p>
   );
-  const replay = loadReplay();
-  const hours = replay ? (
-    <div className="bg-white p-2 sm:p-3">
-      <Timelapse data={replay} embedded />
-    </div>
-  ) : (
-    <p className="p-4 text-sm">Time-lapse data not found (data/processed/replay_heatwave_hourly.csv, replay_hrrr_grid.json).</p>
-  );
   return (
     <Hero195
       title="Who is at risk in the heat, and where to cool off"
@@ -36,9 +28,8 @@ export default function Home() {
       defaultTab="map"
       tabs={[
         { value: "map", label: "Clinic map", icon: <MapIcon className="size-4" aria-hidden />, content: clinicMap },
-        { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: hours },
         { value: "patient", label: "A patient's plan", icon: <Smartphone className="size-4" aria-hidden />, content: <div className="bg-white p-2 sm:p-3"><PatientPlanMap patientId="S01" variant="patient" height={420} /></div> },
-        { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: replay ? <div className="bg-white p-2 sm:p-3"><Timelapse data={replay} /></div> : <p className="p-6 text-sm text-muted-foreground">Hour-by-hour replay needs data/processed/replay_heatwave_hourly.csv.</p> },
+        { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: replay ? <div className="bg-white p-2 sm:p-3"><Timelapse data={replay} embedded /></div> : <p className="p-6 text-sm text-muted-foreground">Hour-by-hour replay needs data/processed/replay_heatwave_hourly.csv.</p> },
       ]}
     />
   );
