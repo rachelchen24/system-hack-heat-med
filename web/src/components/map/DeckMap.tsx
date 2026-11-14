@@ -12,6 +12,8 @@ if (typeof window !== "undefined") maplibregl.setWorkerUrl(`${window.location.or
 
 export const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const BUILDINGS_ID = "tml-3d-buildings";
+// Room for the 2D/3D toggle (top-left), zoom buttons (right) and attribution (bottom).
+const FIT_PADDING = { top: 72, bottom: 56, left: 48, right: 64 };
 
 function DeckOverlay(props: MapboxOverlayProps) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
@@ -72,7 +74,7 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
   useEffect(() => {
     if (firstFit.current) { firstFit.current = false; return; }
     if (!fitBounds) return;
-    ref.current?.fitBounds(fitBounds, { padding: 48, maxZoom: 16, duration: 600 });
+    ref.current?.fitBounds(fitBounds, { padding: FIT_PADDING, maxZoom: 16, duration: 600 });
   }, [fitBounds]);
 
   return (
@@ -82,7 +84,7 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
         mapLib={maplibregl}
         initialViewState={
           fitBounds
-            ? { bounds: fitBounds, fitBoundsOptions: { padding: 48, maxZoom: 16 }, pitch: 0, bearing: 0 }
+            ? { bounds: fitBounds, fitBoundsOptions: { padding: FIT_PADDING, maxZoom: 16 }, pitch: 0, bearing: 0 }
             : { ...initialView, pitch: 0, bearing: 0 }
         }
         mapStyle={BASEMAP_STYLE}

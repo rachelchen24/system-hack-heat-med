@@ -4,9 +4,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { LineLayer, ScatterplotLayer, TextLayer } from "@deck.gl/layers";
 import { HELP_HEX, HELP_RGB } from "./colors";
-import { boundsOf, clock, directionsUrl, hourLabel } from "./format";
+import { boundsOf, clock, directionsUrl } from "./format";
 import MapCanvas from "./MapCanvas";
 import type { PatientPlanMapData } from "./patientPlanData";
+import { PLAN_MAP_STRINGS, type PlanMapLang } from "./planMapStrings";
 import { ThreeDToggle } from "./ThreeDToggle";
 
 const INK: [number, number, number] = [20, 20, 20];
@@ -22,9 +23,10 @@ function titleCase(s: string) {
   return s.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase());
 }
 
-export function PatientPlanMapView({ data: initial, patientId, height = 320 }: { data?: PatientPlanMapData; patientId?: string; height?: number }) {
+export function PatientPlanMapView({ data: initial, patientId, height = 320, lang = "en" }: { data?: PatientPlanMapData; patientId?: string; height?: number; lang?: PlanMapLang }) {
+  const t = PLAN_MAP_STRINGS[lang];
   const [data, setData] = useState<PatientPlanMapData | null>(initial ?? null);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
   const [threeD, setThreeD] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
     fetch(`/api/map/plan?id=${encodeURIComponent(patientId)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d: PatientPlanMapData) => { if (live) setData(d); })
-      .catch(() => { if (live) setErr("Could not load the map."); });
+      .catch(() => { if (live) setErr(true); });
     return () => { live = false; };
   }, [initial, patientId]);
 
@@ -41,10 +43,10 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
     if (!data?.home) return [];
     const home = data.home, place = data.place, sub = data.subway;
     const labels: { pos: [number, number]; text: string; color: [number, number, number] }[] = [
-      { pos: [home.lon, home.lat], text: "Home", color: INK },
+      { pos: [home.lon, home.lat], text: t.home, color: INK },
     ];
     if (place) labels.push({ pos: [place.lon, place.lat], text: shortName(titleCase(place.name)), color: [0, 105, 76] });
-    if (sub) labels.push({ pos: [sub.lon, sub.lat], text: `Subway: ${sub.name}`, color: INK });
+    if (sub) labels.push({ pos: [sub.lon, sub.lat], text: t.subwayLabel(sub.name), color: INK });
     return [
       place && new LineLayer({
         id: "route", data: [{ from: [home.lon, home.lat], to: [place.lon, place.lat] }],
@@ -70,19 +72,19 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
         characterSet: "auto",
       }),
     ].filter(Boolean);
-  }, [data]);
+  }, [data, t]);
 
   const fit = useMemo(() => {
     if (!data?.home) return null;
     return boundsOf([data.home, ...(data.place ? [data.place] : []), ...(data.subway ? [data.subway] : [])]);
   }, [data]);
 
-  if (err) return <p className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">{err}</p>;
-  if (!data) return <div style={{ height }} className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">Loading map…</div>;
+  if (err) return <p className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">{t.loadError}</p>;
+  if (!data) return <div style={{ height }} className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">{t.loading}</div>;
   if (!data.home) {
     return (
       <p className="rounded-xl border border-dashed p-4 text-sm">
-        No home location for this patient. Data would come from data/processed/synthetic/patients.csv (home_lat, home_lon).
+        {t.noHome}
       </p>
     );
   }
@@ -92,25 +94,26 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
   const walk = place?.walkMin != null ? Math.round(place.walkMin) : null;
 
   return (
-    <section className="space-y-4 text-[var(--ui-ink,#141414)]" aria-label="Where to go to cool off">
+    <section className="space-y-4 text-[var(--ui-ink,#141414)]" aria-label={t.sectionLabel}>
+      {t.note && <p className="text-xs italic text-[var(--ui-ink-muted,#4b5563)]">{t.note}</p>}
       {place ? (
         <div className="space-y-1">
-          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--ui-ink-muted,#4b5563)]">Nearest cool place</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--ui-ink-muted,#4b5563)]">{t.nearest}</p>
           <p className="text-2xl font-bold leading-tight">{titleCase(cleanName(place.name))}</p>
           <p className="text-lg">{titleCase(place.address)}</p>
           <div className="flex flex-wrap gap-2 pt-1">
             {walk !== null && (
               <span className="rounded-full border-2 px-3 py-1 text-lg font-semibold" style={{ borderColor: HELP_HEX }}>
-                🚶 About {walk} min walk
+                🚶 {t.walk(walk)}
               </span>
             )}
             {leave && (
-              <span className="rounded-full bg-[var(--ui-ink,#141414)] px-3 py-1 text-lg font-bold text-white">Leave by {leave}</span>
+              <span className="rounded-full bg-[var(--ui-ink,#141414)] px-3 py-1 text-lg font-bold text-white">{t.leaveBy(leave)}</span>
             )}
           </div>
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed p-3 text-sm">No cool place matched. Data would come from data/processed/synthetic/cooling_match.csv.</p>
+        <p className="rounded-xl border border-dashed p-3 text-sm">{t.noPlace}</p>
       )}
 
       <div className="relative overflow-hidden rounded-2xl border border-[var(--ui-line,#d4d4d0)]">
@@ -120,7 +123,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
           fitBounds={fit}
           threeD={threeD}
           height={height}
-          ariaLabel="Map from your home to the nearest cool place"
+          ariaLabel={t.mapAria}
         />
         <div className="absolute left-3 top-3"><ThreeDToggle on={threeD} onChange={setThreeD} large /></div>
       </div>
@@ -128,19 +131,19 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
       <ul className="space-y-2 text-lg">
         {data.hottest && (
           <li>
-            <strong>Hottest hours today:</strong> {hourLabel(data.hottest.startHour)} to {hourLabel(data.hottest.endHour)}. Try to be inside somewhere cool by then.
+            <strong>{t.hottestLabel}</strong> {t.hottest(data.hottest.startHour, data.hottest.endHour)}
           </li>
         )}
         {data.subway && (
           <li>
-            <strong>Nearest subway:</strong> {data.subway.name} ({data.subway.routes.split(/[\s,]+/).join(", ")}), about {data.subway.meters >= 1000 ? `${(data.subway.meters / 1000).toFixed(1)} km` : `${Math.round(data.subway.meters / 10) * 10} m`} from home.
+            <strong>{t.subwayTitle}</strong> {data.subway.name} ({data.subway.routes.split(/[\s,]+/).join(", ")}), {t.subwayAbout(data.subway.meters >= 1000 ? `${(data.subway.meters / 1000).toFixed(1)} km` : `${Math.round(data.subway.meters / 10) * 10} m`)}
           </li>
         )}
         {place?.phone && (
-          <li><strong>Call ahead:</strong> <a className="underline" href={`tel:${place.phone}`}>{place.phone}</a>. Hours and services can change.</li>
+          <li><strong>{t.callAhead}</strong> <a className="underline" href={`tel:${place.phone}`}>{place.phone}</a>. {t.callAheadTail}</li>
         )}
-        {place?.notes.some((n) => /older adults only/i.test(n)) && <li>This place is for adults 60 and older.</li>}
-        {place?.notes.some((n) => /activated heat days/i.test(n)) && <li>It opens as a cooling center only on official heat days. Check that it is open today.</li>}
+        {place?.notes.some((n) => /older adults only/i.test(n)) && <li>{t.olderAdults}</li>}
+        {place?.notes.some((n) => /activated heat days/i.test(n)) && <li>{t.coolingCenter}</li>}
       </ul>
 
       {place && (
@@ -151,27 +154,25 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320 }: {
           className="block rounded-full px-5 py-3 text-center text-lg font-bold text-white"
           style={{ background: "#00694c" }}
         >
-          Directions
+          {t.directions}
         </a>
       )}
 
       {data.delivery.show ? (
         <div className="rounded-2xl border-2 p-4" style={{ borderColor: "var(--risk-high, #d55e00)", background: "var(--risk-high-tint, #fbe3d6)" }}>
-          <p className="text-xl font-bold">Ask for a delivery instead</p>
+          <p className="text-xl font-bold">{t.deliveryTitle}</p>
           <ul className="mt-1 list-disc pl-5 text-lg">
-            {data.delivery.reasons.map((r) => <li key={r}>{r}</li>)}
+            {data.delivery.reasons.map((r) => <li key={r}>{t.reason(r)}</li>)}
           </ul>
-          <p className="mt-2 text-lg">Stay in your coolest room. Ask your pharmacy, a family member or a neighbor to bring what you need.</p>
+          <p className="mt-2 text-lg">{t.deliveryText}</p>
         </div>
       ) : (
         data.hottest && (
-          <p className="text-lg">
-            If you can&apos;t leave by {leave ?? "then"}, stay in from {hourLabel(data.hottest.startHour)} to {hourLabel(data.hottest.endHour)} and ask for a delivery instead.
-          </p>
+          <p className="text-lg">{t.ifCantLeave(leave, data.hottest.startHour, data.hottest.endHour)}</p>
         )
       )}
       <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">
-        Synthetic patient. Line shows the trip, not the exact street route; walk time is from a routed walk at the patient&apos;s pace. Sources: {data.sources.join(", ")}.
+        {t.footnote} {t.sources} {data.sources.join(", ")}.
       </p>
     </section>
   );
