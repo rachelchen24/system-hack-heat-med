@@ -141,7 +141,7 @@ function PlaceCard({ id, onClose }: { id: string; onClose: () => void }) {
   if (place.hours) rows.push(["Hours", place.hours]);
   if (place.phone) rows.push(["Phone", <a key="ph" className="underline" href={`tel:${place.phone}`}>{place.phone}</a>]);
   if (place.website) rows.push(["Website", <a key="w" className="break-all underline" href={place.website} target="_blank" rel="noreferrer">{place.website.replace(/^https?:\/\//, "")}</a>]);
-  if (place.services) rows.push(["Services", place.services]);
+  if (place.services) rows.push(["Services", place.services.length > 180 ? `${place.services.slice(0, 177).trimEnd()}…` : place.services]);
   if (place.languages) rows.push(["Languages", place.languages]);
   return (
     <Card title={place.name} onClose={onClose}>
@@ -220,7 +220,8 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
     if (layers?.heat && showHeat) {
       out.push(new GeoJsonLayer<HeatArea["properties"]>({
         id: "heat", data: layers.heat as never, pickable: true, stroked: true, filled: true,
-        getFillColor: (f) => [...HEAT_RGB[Math.min(4, Math.max(0, f.properties.hvi - 1))], 150] as [number, number, number, number],
+        getFillColor: (f) => [...HEAT_RGB[Math.min(4, Math.max(0, f.properties.hvi - 1))], threeD ? 90 : 150] as [number, number, number, number],
+        updateTriggers: { getFillColor: threeD },
         getLineColor: [255, 255, 255, 200], lineWidthUnits: "pixels", getLineWidth: 0.6,
         onClick: (info: PickingInfo) => { const f = info.object as HeatArea | undefined; if (f) setSel({ kind: "area", nta: f.properties.nta }); },
       }));
@@ -234,7 +235,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
     if (layers?.help && showHelp) {
       const big = zoom >= 13;
       out.push(new IconLayer<HelpPoint>({
-        id: "help", data: helpVisible, pickable: true,
+        id: "help", data: helpVisible, pickable: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
         getPosition: (d) => [d.lon, d.lat],
         getIcon: (d) => ({ url: helpIconUrl(d.type), id: d.type, width: 32, height: 32 }),
         getSize: big ? 24 : zoom >= 12 ? 14 : 9, sizeUnits: "pixels",
@@ -243,7 +244,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
       }));
     }
     out.push(new ScatterplotLayer<MapPatient>({
-      id: "patients", data: visiblePatients, pickable: true,
+      id: "patients", data: visiblePatients, pickable: true, billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
       getPosition: (d) => [d.lon, d.lat],
       getRadius: (d) => (selPatient?.id === d.id ? 10 : 6), radiusUnits: "pixels",
       getFillColor: (d) => RISK_RGB[d.group].solid,
@@ -254,7 +255,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
       onClick: (info: PickingInfo) => { const d = info.object as MapPatient | undefined; if (d) setSel({ kind: "patient", id: d.id }); },
     }));
     return out;
-  }, [layers, showHeat, showHelp, helpVisible, visiblePatients, selArea, selPatient, zoom]);
+  }, [layers, showHeat, showHelp, helpVisible, visiblePatients, selArea, selPatient, zoom, threeD]);
 
   const getTooltip = ({ object, layer }: PickingInfo) => {
     if (!object || !layer) return null;
@@ -263,6 +264,17 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
     if (layer.id === "heat") { const f = object as HeatArea; return { text: `${f.properties.name}\nClick to see patients here` }; }
     return null;
   };
+
+  const areaOptions = useMemo(() => {
+    const m = new Map<string, { nta: string; name: string; n: number; high: number }>();
+    for (const p of patients) {
+      if (!p.nta) continue;
+      const o = m.get(p.nta) ?? { nta: p.nta, name: p.ntaName ?? p.nta, n: 0, high: 0 };
+      o.n++; if (p.group === "High") o.high++;
+      m.set(p.nta, o);
+    }
+    return [...m.values()].sort((a, b) => b.high - a.high || b.n - a.n);
+  }, [patients]);
 
   const toggle = <T,>(set: Set<T>, v: T) => { const n = new Set(set); if (n.has(v)) n.delete(v); else n.add(v); return n; };
   const areaPatients = selArea ? patients.filter((p) => p.nta === selArea.properties.nta && groups.has(p.group)) : [];
@@ -277,6 +289,20 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
           Click a dot to see a patient. Click a neighborhood to see everyone who lives there and text a group.
         </p>
       )}
+
+      <label className="block space-y-1 text-sm">
+        <span className="font-bold">Pick a neighborhood</span>
+        <select
+          className="w-full rounded-lg border border-[var(--ui-line-strong,#6b6b66)] bg-white px-2 py-1.5"
+          value={selArea?.properties.nta ?? ""}
+          onChange={(e) => setSel(e.target.value ? { kind: "area", nta: e.target.value } : null)}
+        >
+          <option value="">Neighborhoods with patients…</option>
+          {areaOptions.map((o) => (
+            <option key={o.nta} value={o.nta}>{o.name} ({o.n} patients{o.high ? `, ${o.high} high` : ""})</option>
+          ))}
+        </select>
+      </label>
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-bold">Synthetic patients, by heat risk</legend>
@@ -344,7 +370,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
           height="min(72vh, 760px)"
           ariaLabel="Map of synthetic patients, neighborhood heat and help places"
         />
-        <div className="absolute left-3 top-3 flex items-center gap-2">
+        <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
           <ThreeDToggle on={threeD} onChange={setThreeD} />
           {!layers && !loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Loading heat and places…</span>}
           {loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Could not load heat and places.</span>}

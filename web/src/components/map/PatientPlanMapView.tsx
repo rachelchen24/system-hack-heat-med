@@ -49,24 +49,24 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
     if (sub) labels.push({ pos: [sub.lon, sub.lat], text: t.subwayLabel(sub.name), color: INK });
     return [
       place && new LineLayer({
-        id: "route", data: [{ from: [home.lon, home.lat], to: [place.lon, place.lat] }],
+        id: "route", data: [{ from: [home.lon, home.lat], to: [place.lon, place.lat] }], parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
         getSourcePosition: (d: { from: [number, number] }) => d.from, getTargetPosition: (d: { to: [number, number] }) => d.to,
         getColor: [20, 20, 20, 200], getWidth: 4, widthUnits: "pixels",
       }),
       sub && new ScatterplotLayer({
-        id: "subway", data: [sub], getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
+        id: "subway", data: [sub], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
         getRadius: 7, radiusUnits: "pixels", getFillColor: [255, 255, 255], stroked: true, getLineColor: INK, lineWidthUnits: "pixels", getLineWidth: 3,
       }),
       place && new ScatterplotLayer({
-        id: "place", data: [place], getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
+        id: "place", data: [place], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
         getRadius: 11, radiusUnits: "pixels", getFillColor: HELP_RGB, stroked: true, getLineColor: [255, 255, 255], lineWidthUnits: "pixels", getLineWidth: 3,
       }),
       new ScatterplotLayer({
-        id: "home", data: [home], getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
+        id: "home", data: [home], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
         getRadius: 11, radiusUnits: "pixels", getFillColor: INK, stroked: true, getLineColor: [255, 255, 255], lineWidthUnits: "pixels", getLineWidth: 3,
       }),
       new TextLayer({
-        id: "labels", data: labels, getPosition: (d) => d.pos, getText: (d) => d.text, getColor: (d) => d.color,
+        id: "labels", data: labels, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d) => d.pos, getText: (d) => d.text, getColor: (d) => d.color,
         getSize: 15, sizeUnits: "pixels", getPixelOffset: [0, -24], fontWeight: 700, fontFamily: "system-ui, sans-serif",
         background: true, getBackgroundColor: [255, 255, 255, 230], backgroundPadding: [4, 2],
         characterSet: "auto",
@@ -125,7 +125,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
           height={height}
           ariaLabel={t.mapAria}
         />
-        <div className="absolute left-3 top-3"><ThreeDToggle on={threeD} onChange={setThreeD} large /></div>
+        <div className="absolute left-3 top-3 z-10"><ThreeDToggle on={threeD} onChange={setThreeD} large /></div>
       </div>
 
       <ul className="space-y-2 text-lg">
