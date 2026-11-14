@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Conversation } from "@/components/messages/Conversation";
 
-export const metadata: Metadata = { title: "Conversation · The Missing Label" };
+export const metadata: Metadata = { title: "Conversation · Cool-Aid" };
 
 // One patient's conversation with the clinic. The id is read on the client (useParams).
 export default function ConversationPage() {

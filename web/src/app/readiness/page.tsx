@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ENV_LABELS } from "@lib/thermal/index.ts";
 import { Placeholder } from "@/components/Placeholder";
 
-export const metadata: Metadata = { title: "Heat-Wave Readiness · The Missing Label" };
+export const metadata: Metadata = { title: "Heat-Wave Readiness · Cool-Aid" };
 
 export default function ReadinessPage() {
   return (

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Inbox } from "@/components/messages/Inbox";
 
-export const metadata: Metadata = { title: "Messages · The Missing Label" };
+export const metadata: Metadata = { title: "Messages · Cool-Aid" };
 
 // Clinician inbox: every patient conversation, newest activity first.
 export default function MessagesPage() {

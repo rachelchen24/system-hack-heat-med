@@ -12,7 +12,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/journey/[stage]">): Promise<Metadata> {
   const { stage } = await params;
   const s = STAGES.find((x) => x.id === stage);
-  return { title: `${s?.name ?? "Journey"} · The Missing Label` };
+  return { title: `${s?.name ?? "Journey"} · Cool-Aid` };
 }
 
 export default async function StagePage({ params }: PageProps<"/journey/[stage]">) {

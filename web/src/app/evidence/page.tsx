@@ -7,7 +7,7 @@ import { listProcessedFiles, loadKb, primaryBucket, readProcessedJson } from "@/
 import { BADGES, BUCKET_ORDER, BUCKETS } from "@/lib/ui";
 import type { BadgeCode } from "@lib/types/knowledge-base.ts";
 
-export const metadata: Metadata = { title: "Evidence (nerd stats) · The Missing Label" };
+export const metadata: Metadata = { title: "Evidence (nerd stats) · Cool-Aid" };
 
 interface KappaFile {
   method?: string;

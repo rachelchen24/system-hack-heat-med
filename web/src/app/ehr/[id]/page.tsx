@@ -6,7 +6,7 @@ import { buildEhrPlan, KB_FILE, PANEL_FILE } from "@/components/ehr/ehrPlan";
 import { RISK } from "@/lib/risk";
 import { HOURLY_FILE } from "@/lib/synthetic";
 
-export const metadata: Metadata = { title: "EHR side panel · The Missing Label" };
+export const metadata: Metadata = { title: "EHR side panel · Cool-Aid" };
 
 // P6: the patient's heat plan in a narrow EHR side-panel layout (~400 px).
 // Same sources as the patient plan (/phone/[id]); see components/ehr/ehrPlan.ts.
@@ -29,7 +29,7 @@ async function EhrPanel({ params }: { params: Promise<{ id: string }> }) {
         className="w-full max-w-[400px] overflow-hidden rounded-tile border border-line-strong bg-white shadow-sm"
       >
         <header className="border-b border-line bg-surface px-4 py-2">
-          <p className="text-sm font-semibold text-ink">Heat plan · The Missing Label</p>
+          <p className="text-sm font-semibold text-ink">Heat plan · Cool-Aid</p>
           <p className="text-xs text-ink-muted">Prototype, designed to embed via SMART on FHIR / CDS Hooks.</p>
         </header>
 

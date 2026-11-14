@@ -9,7 +9,7 @@ export function GET() {
       {
         hook: "order-select",
         id: "heat-medication-check",
-        title: "The Missing Label: heat and medications",
+        title: "Cool-Aid: heat and medications",
         description:
           "Prototype. Returns a card when a heat-risk medicine is ordered, or when the synthetic patient is Medium or High heat risk. The card links to the patient's heat plan side panel (/ehr/<patientId>).",
         prefetch: {
@@ -20,7 +20,7 @@ export function GET() {
       {
         hook: "patient-view",
         id: "heat-plan-patient-view",
-        title: "The Missing Label: heat plan",
+        title: "Cool-Aid: heat plan",
         description:
           "Prototype. On opening a chart, returns a card for synthetic patients who are Medium or High heat risk, linking to their heat plan side panel.",
         prefetch: {

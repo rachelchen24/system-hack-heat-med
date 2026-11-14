@@ -5,7 +5,7 @@ import { clinicianWhy, plainName, riskGroup, whyBullets } from "@/lib/risk";
 import { callInsteadIds, kbDrugFor, QUESTIONNAIRE_FILE } from "@/lib/synthetic";
 import { Board, type BoardRow } from "./Board";
 
-export const metadata: Metadata = { title: "Patients · The Missing Label" };
+export const metadata: Metadata = { title: "Patients · Cool-Aid" };
 
 // Clinician side: synthetic patients in High / Medium / Low risk groups.
 // Groups and reasons: data/processed/panel_scores_replay.json (readiness, stacking, lifestyle).

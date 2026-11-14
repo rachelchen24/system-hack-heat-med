@@ -1,14 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1130" width="1600" height="1130" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1130" width="1600" height="1130" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif">
   <title>The Missing Label: how we got, connected and funneled the data</title>
   <style>
-    :root { --bg:#ffffff; --ink:#1b1f24; --muted:#5b6470; --line:#c9cfd6; --card:#f6f7f9;
-            --sys:#6d3fd1; --sysbg:#f1ecfc; --lit:#1f6fb2; --litbg:#e9f2fa; --reg:#b4541a; --regbg:#fbefe6;
-            --place:#2b8a3e; --placebg:#eaf6ec; --pat:#a61e4d; --patbg:#fbe9ef; --kb:#1b1f24; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg:#14171b; --ink:#e8eaed; --muted:#9aa3ad; --line:#3a414a; --card:#1d2126;
-              --sys:#b69cff; --sysbg:#251d3a; --lit:#7ab8ef; --litbg:#16263a; --reg:#f0a06a; --regbg:#33221a;
-              --place:#7fd18d; --placebg:#16291b; --pat:#f28bb0; --patbg:#33181f; --kb:#e8eaed; }
-    }
+    /* Site design tokens (web/src/styles/tokens.css); light mode only.
+       System = graph layer, Literature = literature layer, Regulatory = FDA layer,
+       Place = Store-cool/Low-risk blue, Patients = Monitor purple. */
+    :root { --bg:#ffffff; --ink:#141414; --muted:#4b5563; --line:#d4d4d0; --card:#f7f7f5;
+            --sys:#3730a3; --sysbg:#eef2ff; --lit:#166534; --litbg:#f0fdf4; --reg:#9a3412; --regbg:#fff7ed;
+            --place:#005a8c; --placebg:#dcebf5; --pat:#9c3d74; --patbg:#f6e4ee; --kb:#141414; }
     .bg { fill: var(--bg); }
     .t  { fill: var(--ink); }
     .m  { fill: var(--muted); }
@@ -30,9 +28,9 @@
   </style>
   <defs>
     <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#8a929c"/></marker>
+      <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/></marker>
     <marker id="ahs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#8b63e6"/></marker>
+      <path d="M0,0 L10,5 L0,10 z" fill="#3730a3"/></marker>
   </defs>
 
   <rect class="bg" x="0" y="0" width="1600" height="1130"/>

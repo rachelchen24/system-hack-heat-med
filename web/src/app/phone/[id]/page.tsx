@@ -7,6 +7,13 @@ import { getPanelPatient } from "@/lib/panel";
 import { MASKED_WHY_ES, patientWhy, patientWhyEs, plainName, RISK, RISK_LABEL_ES, riskGroup, SIGN_ES } from "@/lib/risk";
 import { HOURLY_FILE, hourlyHeat } from "@/lib/synthetic";
 import { Phone } from "./Phone";
+import { MedicineCabinet, type CabinetEffect } from "@/components/cabinet/MedicineCabinet";
+
+/** "Blood pressure (dizziness, fainting)" → title + signs */
+function splitLabel(label: string): { title: string; signs: string | null } {
+  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(label);
+  return m ? { title: m[1], signs: m[2] } : { title: label, signs: null };
+}
 
 // Patient "my heat plan" (P3). Everything comes from panel_scores_replay.json,
 // replay_heatwave_hourly.csv and the map component's files.
@@ -83,6 +90,11 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
   const contact = p.escalation?.contacts?.find((c) => c.contactId === p.escalation?.firstContactId);
   const es = p.language === "es";
   const t = es ? T.es : T.en;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mechanisms = ((p as any).stacking?.mechanisms ?? []) as { defense: string; label: string; drugs: string[] }[];
+  const cabinet: CabinetEffect[] = mechanisms
+    .filter((m) => m.drugs?.length)
+    .map((m) => ({ id: m.defense, ...splitLabel(m.label), drugs: m.drugs }));
 
   const plan = (
     <div className="space-y-6">
@@ -90,7 +102,7 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
       <section className={`rounded-2xl border-2 p-4 ${RISK[g].chip}`}>
         <p className="text-patient-lg font-bold">{t.risk} {es ? RISK_LABEL_ES[g] : RISK[g].label}</p>
         <p className="mt-1 text-ink">{es ? patientWhyEs(p) : patientWhy(p)}</p>
-        <p className="mt-1 text-base text-ink-muted">{t.synthetic}</p>
+        <p className="mt-1 text-xs text-ink-muted">{t.synthetic}</p>
         {t.note && <p className="mt-1 text-sm italic text-ink-muted">{t.note}</p>}
       </section>
 
@@ -99,9 +111,9 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
         <h2 className="text-patient-lg font-bold">{t.safest}</h2>
         {hours.length ? (
           <>
-            <p>
+            <p className="font-semibold">
               {hot.length
-                ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1)
+                ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1).split(". ")[0] + "."
                 : t.noHot}
             </p>
             <ol className="flex gap-0.5" aria-label={t.hourly}>
@@ -137,14 +149,21 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
       </section>
 
       {/* 4. Or stay in */}
-      <section className="rounded-2xl bg-surface p-4">
-        <h2 className="text-patient-lg font-bold">{t.orStay}</h2>
-        <p>{t.orStayText}</p>
-      </section>
+      {/* 4. Medicine cabinet (visual) */}
+      <MedicineCabinet
+        effects={cabinet}
+        title={es ? "Sus medicinas y el calor" : "Your medicines in the heat"}
+        hint={es ? "Toque sus medicinas para ver qué le pueden hacer con el calor." : "Tap your medicines to see what they can do in the heat."}
+      />
+
+      <details className="rounded-2xl bg-surface p-4">
+        <summary className="cursor-pointer text-patient-lg font-bold">{t.orStay}</summary>
+        <p className="mt-2">{t.orStayText}</p>
+      </details>
 
       {/* 5. What to watch for */}
-      <section className="space-y-2">
-        <h2 className="text-patient-lg font-bold">{t.watch}</h2>
+      <details className="space-y-2 rounded-2xl border border-line p-4">
+        <summary className="cursor-pointer text-patient-lg font-bold">{t.watch}</summary>
         <ul className="list-disc space-y-1 pl-6">
           {symptoms.map((s) => (
             <li key={s.sign}>{es ? SIGN_ES[s.sign] ?? s.label : s.label}</li>
@@ -161,11 +180,11 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
             {contact ? t.contact(plainName(contact.name)) : ""}
           </p>
         )}
-        <p className="font-bold">{t.talk}</p>
         <Link href={`/phone/signup?patient=${p.patientId}`} className="inline-block text-base underline">
           {es ? "Actualizar mis respuestas" : "Update my answers"}
         </Link>
-      </section>
+      </details>
+      <p className="font-bold">{t.talk}</p>
     </div>
   );
 

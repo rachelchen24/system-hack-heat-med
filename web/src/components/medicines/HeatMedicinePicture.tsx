@@ -11,6 +11,16 @@ import type { PathwayData } from "./pathways";
 const C_DRUG = "#6b6b66"; // neutral grey, medicine → effect
 const C_HEAT = "#d55e00"; // --bucket-hold-solid / --risk-high, heat → effect
 const C_SEL = "#141414"; // --ui-ink, the selected line
+// One Okabe–Ito color per body effect; a medicine's line takes the color of the effect it points to.
+const EFFECT_COLOR: Record<string, string> = {
+  dehydration: "#56b4e9",
+  hyponatremia: "#009e73",
+  aki: "#cc79a7",
+  sweating: "#e69f00",
+  body_temp: "#d55e00",
+  bp_hypotension: "#0072b2",
+};
+const effColor = (id: string) => EFFECT_COLOR[id] ?? C_DRUG;
 
 type Sel = { kind: "drug"; drug: string; effect: string } | { kind: "heat"; effect: string } | null;
 
@@ -88,18 +98,16 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
         <h2 id="hm-title" className="text-xl font-bold leading-snug">
           {title}
         </h2>
-        <p className="text-sm text-ink-muted">
-          How heat and medicine add up: each line is a link found in published studies. Click a line to see why.
-        </p>
+        <p className="text-sm text-ink-muted">Each line is a link found in published studies (System graph). Click a line for why.</p>
       </div>
 
       {/* One legend. */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: C_DRUG }} /> Medicine studies
+          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: "linear-gradient(90deg,#56b4e9,#009e73,#cc79a7,#e69f00,#0072b2)" }} /> Medicine → body effect
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: C_HEAT }} /> Heat studies
+          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: C_HEAT }} /> Heat → body effect
         </span>
         <span className="inline-flex items-center gap-1.5">
           Thicker line = more studies: {legendW(1)} 1 {legendW(10)} 10 {legendW(maxStudies)} {maxStudies}
@@ -172,8 +180,8 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
                   <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
                   <path
                     d={d}
-                    stroke={on ? C_SEL : C_DRUG}
-                    strokeOpacity={on ? 1 : dimmed(l.drug, l.effect) ? 0.1 : 0.45}
+                    stroke={on ? C_SEL : effColor(l.effect)}
+                    strokeOpacity={on ? 1 : dimmed(l.drug, l.effect) ? 0.08 : hoverDrug === l.drug ? 0.95 : 0.5}
                     strokeWidth={width(l.drugStudies)}
                     fill="none"
                     strokeLinecap="round"
@@ -185,18 +193,28 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
             {/* medicine labels */}
             {drugs.map((d) => {
               const has = data.links.some((l) => l.drug === d.id);
+              const pillW = Math.min(250, d.label.length * 7.2 + 22);
               return (
+                <g key={d.id} onMouseEnter={() => setHoverDrug(d.id)} className="cursor-pointer">
+                <rect
+                  x={X_DRUG - pillW + 6}
+                  y={yDrug.get(d.id)! - 12}
+                  width={pillW}
+                  height={24}
+                  rx={12}
+                  fill={hoverDrug === d.id ? "#141414" : "#f7f7f5"}
+                  stroke={hoverDrug === d.id ? "#141414" : "#d4d4d0"}
+                />
                 <text
-                  key={d.id}
-                  x={X_DRUG}
                   y={yDrug.get(d.id)! + 4}
                   textAnchor="end"
-                  className={`text-[13px] ${has ? "fill-ink" : "fill-ink-muted"} ${hoverDrug === d.id ? "font-bold" : ""}`}
-                  onMouseEnter={() => setHoverDrug(d.id)}
+                  className={`text-[13px] font-semibold ${hoverDrug === d.id ? "fill-page" : has ? "fill-ink" : "fill-ink-muted"}`}
+                  x={X_DRUG - 6}
                 >
                   {d.label}
                   {!has ? " (none)" : ""}
                 </text>
+                </g>
               );
             })}
 
@@ -209,8 +227,10 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
                   width={X_EFF_R - X_EFF_L}
                   height={30}
                   rx={15}
-                  className="fill-page stroke-line-strong"
-                  strokeWidth={1.5}
+                  fill={effColor(e.id)}
+                  fillOpacity={0.16}
+                  stroke={effColor(e.id)}
+                  strokeWidth={2.5}
                 />
                 <text x={(X_EFF_L + X_EFF_R) / 2} y={yEff.get(e.id)! + 5} textAnchor="middle" className="fill-ink text-[14px] font-semibold">
                   {e.label}

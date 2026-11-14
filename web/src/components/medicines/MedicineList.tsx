@@ -18,21 +18,15 @@ function YesNo({ value, yes, no }: { value: boolean | null; yes: string; no: str
         —<span className="sr-only">Not checked yet</span>
       </span>
     );
+  // Yes = blue (Store-cool) chip; No = orange (Hold) chip: a missing warning is the problem.
   return value ? (
-    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ink">
-      <span aria-hidden className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink text-xs text-page">
-        ✓
-      </span>
+    <span className="inline-flex items-center gap-1 rounded-full border-2 border-store-ink bg-store-tint px-2.5 py-0.5 text-sm font-semibold text-store-ink">
+      <span aria-hidden>✓</span>
       {yes}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
-      <span
-        aria-hidden
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-line-strong text-xs"
-      >
-        ✗
-      </span>
+    <span className="inline-flex items-center gap-1 rounded-full border-2 border-hold-ink bg-hold-tint px-2.5 py-0.5 text-sm font-semibold text-hold-ink">
+      <span aria-hidden>✗</span>
       {no}
     </span>
   );
@@ -42,12 +36,12 @@ function Strength({ meter }: { meter: DrugRecord["evidence"]["meter"] | undefine
   if (!meter || !METER[meter]) return <span className="text-sm text-missing">—</span>;
   const m = METER[meter];
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm">
-      <span aria-hidden className="inline-flex gap-0.5">
+    <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+      <span aria-hidden className="inline-flex gap-1">
         {[1, 2, 3].map((i) => (
           <span
             key={i}
-            className={`h-2.5 w-2.5 rounded-full border border-line-strong ${i <= m.filled ? "bg-ink" : "bg-page"}`}
+            className={`h-3 w-3 rounded-full border-2 ${i <= m.filled ? "border-hold-ink bg-hold-solid" : "border-line bg-page"}`}
           />
         ))}
       </span>
@@ -67,12 +61,12 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
   ].filter((g) => g.rows.length > 0);
 
   return (
-    <div className="space-y-8">
-      {groups.map((g) => {
+    <div className="space-y-3">
+      {groups.map((g, gi) => {
         const b = g.bucket ? BUCKETS[g.bucket] : null;
         return (
-          <section key={g.bucket ?? "none"} aria-labelledby={`grp-${g.bucket ?? "none"}`}>
-            <div className="mb-2 flex items-center gap-3">
+          <details key={g.bucket ?? "none"} open={gi === 0} className={`group/d rounded-tile border-2 bg-page ${b ? borderOnly(b.ink) : "border-line-strong"}`}>
+            <summary className="flex cursor-pointer list-none items-center gap-3 p-3 hover:bg-surface">
               <span
                 aria-hidden
                 className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${
@@ -88,18 +82,18 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                     {g.rows.length} {g.rows.length === 1 ? "medicine" : "medicines"}
                   </span>
                 </h2>
-                {b && !b.plain.startsWith(GROUP_HEADER[g.bucket!]) && <p className="text-sm text-ink-muted">{b.plain}</p>}
               </div>
-            </div>
+              <span aria-hidden className="ml-auto text-xl text-ink-muted transition group-open/d:rotate-180">⌄</span>
+            </summary>
 
-            <div className={`hidden border-b border-line px-3 pb-1 text-xs font-semibold text-ink-muted ${COLS}`}>
-              <span>Medicine and the risk in heat</span>
+            <div className={`hidden border-t border-line px-3 py-1.5 text-xs font-semibold text-ink-muted ${COLS}`}>
+              <span>Medicine</span>
               <span>Evidence</span>
               <span>Who prescribes it</span>
-              <span>Label warns about heat</span>
-              <span>Guidance says what to do</span>
+              <span>Label warns?</span>
+              <span>Guidance says what to do?</span>
             </div>
-            <ul className={`divide-y divide-line rounded-tile border-l-4 text-ink ${b ? borderOnly(b.ink) : "border-line-strong"}`}>
+            <ul className="divide-y divide-line border-t border-line text-ink">
               {g.rows.map(({ drug: d }) => (
                 <li key={d.id}>
                   <Link
@@ -143,7 +137,7 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         );
       })}
     </div>

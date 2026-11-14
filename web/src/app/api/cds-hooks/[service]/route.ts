@@ -63,7 +63,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/cds-hooks/[serv
     indicator: g === "high" ? "warning" : "info",
     detail,
     source: {
-      label: "The Missing Label (prototype, synthetic patients)",
+      label: "Cool-Aid (prototype, synthetic patients)",
       url: `${origin}/medicines`,
       topic: { system: "urn:the-missing-label:topic", code: "heat-medication", display: "Medicines in heat" },
     },

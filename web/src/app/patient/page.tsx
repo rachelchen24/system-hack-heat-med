@@ -4,7 +4,7 @@ import { KbSourceBanner } from "@/components/KbSourceBanner";
 import { loadKb, primaryBucket } from "@/lib/kb";
 import { BUCKETS } from "@/lib/ui";
 
-export const metadata: Metadata = { title: "My Medicine Cabinet · The Missing Label" };
+export const metadata: Metadata = { title: "My Medicine Cabinet · Cool-Aid" };
 
 // Patient side: large type, high contrast, simple words, big tap targets (spec §3.3).
 // Demo cabinet = first few KB medicines until the synthetic panel is wired in.

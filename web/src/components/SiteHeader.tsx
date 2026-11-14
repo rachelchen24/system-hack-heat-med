@@ -13,8 +13,8 @@ export function SiteHeader() {
     <header className="border-b border-line bg-page">
       <div className="bg-ink px-4 py-1.5 text-center text-xs font-semibold text-page">{DISCLAIMER}</div>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          The Missing Label
+        <Link href="/" className="text-xl font-extrabold tracking-tight" style={{ color: "var(--bucket-store-solid, #0072b2)" }}>
+          Cool-Aid
         </Link>
         <nav aria-label="Main" className="flex flex-wrap gap-1 text-sm font-medium">
           {NAV.map((n) => (

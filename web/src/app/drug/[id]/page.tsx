@@ -33,7 +33,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/drug/[id]">): Promise<Metadata> {
   const { id } = await params;
   const d = getDrug(decodeURIComponent(id));
-  return { title: `${d?.names?.display ?? "Drug"} · The Missing Label` };
+  return { title: `${d?.names?.display ?? "Drug"} · Cool-Aid` };
 }
 
 function Section({ title, plain, children }: { title: string; plain?: string; children: React.ReactNode }) {

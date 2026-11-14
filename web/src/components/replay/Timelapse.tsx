@@ -43,7 +43,7 @@ function heatAt(grid: HeatGrid, t: number, lat: number, lon: number): number | n
   return a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy;
 }
 
-export function Timelapse({ data }: { data: ReplayData }) {
+export function Timelapse({ data, embedded = false }: { data: ReplayData; embedded?: boolean }) {
   const { grid } = data;
   const nHours = grid.times.length;
   const total = (nHours - 1) * STEPS_PER_HOUR;
@@ -121,10 +121,14 @@ export function Timelapse({ data }: { data: ReplayData }) {
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6">
+    <div className={embedded ? "flex flex-col gap-4" : "mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6"}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">The June 2025 heat wave, hour by hour</h1>
+          {embedded ? (
+            <h2 className="text-xl font-bold tracking-tight">The June 2025 heat wave, hour by hour</h2>
+          ) : (
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">The June 2025 heat wave, hour by hour</h1>
+          )}
           <p className="mt-1 text-ink-muted">Watch the heat roll over the city. Click any patient to see their plan.</p>
         </div>
         <div className="flex items-center gap-2">

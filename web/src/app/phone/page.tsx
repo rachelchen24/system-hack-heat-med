@@ -4,7 +4,7 @@ import { Placeholder } from "@/components/Placeholder";
 import { loadPanel } from "@/lib/panel";
 import { patientWhy, plainName, RISK, riskGroup } from "@/lib/risk";
 
-export const metadata: Metadata = { title: "Patient app · The Missing Label" };
+export const metadata: Metadata = { title: "Patient app · Cool-Aid" };
 
 // Pick which synthetic patient the patient app plays. Story patients first (S01–S10).
 export default function PhonePicker() {

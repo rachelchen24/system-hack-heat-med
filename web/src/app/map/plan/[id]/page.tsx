@@ -2,7 +2,7 @@
 import { Suspense } from "react";
 import PatientPlanMap from "@/components/map/PatientPlanMap";
 
-export const metadata = { title: "Where to go · The Missing Label" };
+export const metadata = { title: "Where to go · Cool-Aid" };
 
 async function Plan({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

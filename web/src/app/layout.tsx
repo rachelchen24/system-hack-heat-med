@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "The Missing Label",
+  title: "Cool-Aid",
   description: "Medications and heat: a clinician tool, a public story and a patient app. Prototype.",
 };
 

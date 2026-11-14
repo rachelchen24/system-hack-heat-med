@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <section className="mx-auto max-w-3xl space-y-6 py-16 text-center">
-      <p className="text-sm font-semibold uppercase tracking-wide text-ink-muted">The Missing Label</p>
+      <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: "var(--bucket-store-solid, #0072b2)" }}>Cool-Aid</p>
       <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
         On the morning a heat wave is forecast, a clinic nurse sees which patients are at risk because of their
         medicines and their home, texts each group a simple plan, and each patient sees where it&apos;s cooler,

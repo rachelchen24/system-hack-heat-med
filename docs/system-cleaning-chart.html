@@ -45,7 +45,7 @@
   th { font-weight:600; }
   .foot { font-size:13px; color:var(--ui-ink-muted); margin:14px 0 0; }
   #tip { position:fixed; pointer-events:none; background:var(--ui-page); border:1px solid var(--ui-line-strong); border-radius:8px;
-         padding:6px 10px; font-size:13px; opacity:0; transition:opacity .08s; max-width:260px; box-shadow:0 4px 14px rgba(0,0,0,.1); }
+         padding:6px 10px; font-size:13px; opacity:0; transition:opacity .08s; max-width:260px; box-shadow:none; }
 </style>
 </head>
 <body>
@@ -56,7 +56,7 @@
 
   <section class="card">
     <div class="legend">
-      <span class="pair"><span class="chip" style="background:var(--verify-double-fg);color:#fff;border-color:var(--verify-double-fg)">✓✓ Double-verified</span><span class="desc">in the abstract and System has the same value</span></span>
+      <span class="pair"><span class="chip" style="background:var(--verify-double-fg);color:var(--ui-page);border-color:var(--verify-double-fg)">✓✓ Double-verified</span><span class="desc">in the abstract and System has the same value</span></span>
       <span class="pair"><span class="chip" style="background:var(--verify-double-bg);color:var(--verify-double-fg);border-color:var(--verify-double-fg)">✓ Verified</span><span class="desc">in the abstract</span></span>
       <span class="pair"><span class="chip" style="background:var(--verify-conflict-bg);color:var(--verify-conflict-fg);border-color:var(--verify-conflict-fg)">⚠ System mislabel</span><span class="desc">our number is right, System's label is wrong</span></span>
       <span class="pair"><span class="chip" style="background:var(--verify-unverified-bg);color:var(--verify-unverified-fg);border-color:var(--verify-unverified-fg)">? Unverified</span><span class="desc">hidden from public views</span></span>
@@ -86,7 +86,7 @@ const rows = [
   { label: 'After', sub: 'live System API', v: [14, 58, 7, 26] },
 ];
 const cats = [
-  { name: '✓✓ Double-verified', short: '✓✓', fill: 'var(--verify-double-fg)', text: '#ffffff', stroke: 'var(--verify-double-fg)' },
+  { name: '✓✓ Double-verified', short: '✓✓', fill: 'var(--verify-double-fg)', text: 'var(--ui-page)', stroke: 'var(--verify-double-fg)' },
   { name: '✓ Verified',         short: '✓',  fill: 'var(--verify-double-bg)', text: 'var(--verify-double-fg)', stroke: 'var(--verify-double-fg)' },
   { name: '⚠ System mislabel',  short: '⚠',  fill: 'var(--verify-conflict-bg)', text: 'var(--verify-conflict-fg)', stroke: 'var(--verify-conflict-fg)' },
   { name: '? Unverified',       short: '?',  fill: 'var(--verify-unverified-bg)', text: 'var(--verify-unverified-fg)', stroke: 'var(--verify-unverified-fg)' },

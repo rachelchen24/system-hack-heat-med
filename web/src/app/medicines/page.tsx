@@ -5,7 +5,7 @@ import { MedicineList, type MedicineRow } from "@/components/medicines/MedicineL
 import { loadPathways, PATHWAYS_FILE } from "@/components/medicines/pathways";
 import { loadKb, primaryBucket } from "@/lib/kb";
 
-export const metadata: Metadata = { title: "Medicines · The Missing Label" };
+export const metadata: Metadata = { title: "Medicines · Cool-Aid" };
 
 export default function MedicinesPage() {
   const { kb, source, file } = loadKb();
@@ -25,14 +25,15 @@ export default function MedicinesPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">Medicines that matter in a heat wave</h1>
-        <p className="text-ink-muted">
-          {rows.length} common medicines, grouped by what to do. Pick one to see what to do and why.
-        </p>
+        <h1 className="text-3xl font-bold">How medicines add to the heat</h1>
+        <p className="text-ink-muted">Hover a medicine to see what it does to the body in heat.</p>
       </header>
-      <KbSourceBanner source={source} file={file} />
-      <MedicineList rows={rows} />
       <HeatMedicinePicture data={pathways} title={title} source={PATHWAYS_FILE} />
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold">{rows.length} medicines, by what to do</h2>
+        <MedicineList rows={rows} />
+      </section>
+      <KbSourceBanner source={source} file={file} />
       <p className="text-xs text-ink-muted">
         Sources: {file ?? "inline fallback"} · &ldquo;Label warns about heat&rdquo; from
         data/processed/fda_label_heat_audit_summary_v2.csv · &ldquo;Guidance says what to do&rdquo; from

@@ -6,12 +6,11 @@
 <title>System Data Funnel</title>
 <style>
   /* Site design tokens (web/src/styles/tokens.css); light mode only, like the site.
-     Indigo steps extend the site's graph-layer pair (#eef2ff / #3730a3) along the same indigo ramp. */
+     Funnel bands use only the graph-layer pair (#eef2ff / #3730a3): tint for each step, solid for the result. */
   :root {
     --ui-page:#ffffff; --ui-surface:#f7f7f5; --ui-line:#d4d4d0; --ui-line-strong:#6b6b66;
     --ui-ink:#141414; --ui-ink-muted:#4b5563;
     --layer-graph-bg:#eef2ff; --layer-graph-fg:#3730a3;
-    --g1:#a5b4fc; --g2:#818cf8; --g3:#6366f1; --g4:#4f46e5; --g5:#3730a3;
     --verify-double-bg:#d1fae5; --verify-double-fg:#065f46;
     --verify-conflict-bg:#fef3c7; --verify-conflict-fg:#92400e;
     --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -39,7 +38,7 @@
   td, th { padding:3px 12px 3px 0; text-align:left; font-variant-numeric: tabular-nums; }
   .foot { font-size:13px; color:var(--ui-ink-muted); margin:14px 0 0; }
   #tip { position:fixed; pointer-events:none; background:var(--ui-page); border:1px solid var(--ui-line-strong); border-radius:8px;
-         padding:6px 10px; font-size:13px; opacity:0; transition:opacity .08s; max-width:280px; box-shadow:0 4px 14px rgba(0,0,0,.1); }
+         padding:6px 10px; font-size:13px; opacity:0; transition:opacity .08s; max-width:280px; box-shadow:none; }
 </style>
 </head>
 <body>
@@ -81,11 +80,11 @@ function funnel(el, tableEl, stages, widthFn, opt = {}) {
     const y = i * (bandH + neck), w = wd(st.n);
     if (i > 0) {
       const pw = wd(stages[i - 1].n), py = y - neck;
-      s += `<polygon points="${cx - pw / 2},${py} ${cx + pw / 2},${py} ${cx + w / 2},${y} ${cx - w / 2},${y}" fill="${st.fill}" opacity=".35"/>`;
+      s += `<polygon points="${cx - pw / 2},${py} ${cx + pw / 2},${py} ${cx + w / 2},${y} ${cx - w / 2},${y}" fill="var(--layer-graph-fg)" opacity=".12"/>`;
     }
     const t = `<b>${fmt(st.n)} ${st.unit}</b><br>${st.label}${st.detail ? '<br>' + st.detail : ''}`;
     s += `<g class="step" data-tip="${encodeURIComponent(t)}">`;
-    s += `<rect x="${cx - w / 2}" y="${y}" width="${w}" height="${bandH}" rx="6" fill="${st.fill}"/>`;
+    s += `<rect x="${cx - w / 2}" y="${y}" width="${w}" height="${bandH}" rx="6" fill="${st.fill}" stroke="var(--layer-graph-fg)"/>`;
     const inside = w > 96;
     s += `<text class="n" x="${inside ? cx : cx + w / 2 + 8}" y="${y + bandH / 2 + 7}" text-anchor="${inside ? 'middle' : 'start'}" fill="${inside ? st.ink : 'var(--ui-ink)'}">${st.short || fmt(st.n)}</text>`;
     s += `<text class="d" x="${cx + maxW / 2 + 14}" y="${y + bandH / 2 - 3}" fill="var(--ui-ink)" font-weight="600">${st.label}</text>`;
@@ -107,19 +106,19 @@ function funnel(el, tableEl, stages, widthFn, opt = {}) {
 /* FIND funnel: log-scaled widths */
 const logW = v => Math.log10(v) / Math.log10(5944001);
 funnel(document.getElementById('f1'), document.getElementById('t1'), [
-  { n: 5944001, short: '5.9M', unit: 'findings', label: 'All findings in System', detail: 'from 40.3M indexed studies', fill: 'var(--g1)', ink: 'var(--ui-ink)' },
-  { n: 15001, unit: 'findings', label: 'Match our terms', detail: '15 drugs · heat · kidney, sodium, fluid', fill: 'var(--g2)', ink: 'var(--ui-ink)' },
-  { n: 912, unit: 'findings', label: 'Link a drug or heat to a mediator', detail: '546 studies', fill: 'var(--g3)', ink: '#ffffff' },
-  { n: 806, unit: 'findings', label: 'Drop blood-pressure efficacy trials', detail: 'drug→mediator 588 · heat→mediator 204 · direct 14', fill: 'var(--g4)', ink: '#ffffff' },
-  { n: 38, unit: 'pathways', label: 'Two-hop pathways for our 15 drugs', detail: 'drug → mediator ← heat; 22 never tested directly', fill: 'var(--g5)', ink: '#ffffff' },
+  { n: 5944001, short: '5.9M', unit: 'findings', label: 'All findings in System', detail: 'from 40.3M indexed studies', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 15001, unit: 'findings', label: 'Match our terms', detail: '15 drugs · heat · kidney, sodium, fluid', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 912, unit: 'findings', label: 'Link a drug or heat to a mediator', detail: '546 studies', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 806, unit: 'findings', label: 'Drop blood-pressure efficacy trials', detail: 'drug→mediator 588 · heat→mediator 204 · direct 14', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 38, unit: 'pathways', label: 'Two-hop pathways for our 15 drugs', detail: 'drug → mediator ← heat; 22 never tested directly', fill: 'var(--layer-graph-fg)', ink: 'var(--ui-page)' },
 ], logW, { aria: 'Funnel of System findings from 5.9 million to 38 pathways' });
 
 /* CHECK funnel: linear widths, then a split into match / mislabel */
 const linW = v => v / 83;
 funnel(document.getElementById('f2'), document.getElementById('t2'), [
-  { n: 83, unit: 'papers', label: 'Papers we cite', detail: 'master list + research report', fill: 'var(--g2)', ink: 'var(--ui-ink)' },
-  { n: 80, unit: 'papers', label: 'Indexed in System', detail: 'the Dataverse bulk release had only 7', fill: 'var(--g3)', ink: '#ffffff' },
-  { n: 15, unit: 'papers', label: 'System extracted findings', detail: '50 findings; text only, no tables', fill: 'var(--g4)', ink: '#ffffff' },
+  { n: 83, unit: 'papers', label: 'Papers we cite', detail: 'master list + research report', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 80, unit: 'papers', label: 'Indexed in System', detail: 'the Dataverse bulk release had only 7', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
+  { n: 15, unit: 'papers', label: 'System extracted findings', detail: '50 findings; text only, no tables', fill: 'var(--layer-graph-bg)', ink: 'var(--layer-graph-fg)' },
 ], linW, {
   aria: 'Funnel of our 83 cited papers through the System check',
   extraH: 96,
@@ -134,7 +133,7 @@ funnel(document.getElementById('f2'), document.getElementById('t2'), [
     // split lines from the 15 band
     s += `<path d="M${cx - 10},${top - 0} C${cx - 10},${top + 18} ${97},${top + 14} ${97},${yb}" stroke="var(--verify-double-fg)" stroke-width="2" fill="none"/>`;
     s += `<path d="M${cx + 10},${top - 0} C${cx + 10},${top + 18} ${297},${top + 14} ${297},${yb}" stroke="var(--verify-conflict-fg)" stroke-width="2" fill="none"/>`;
-    s += g(0, 194, 'var(--verify-double-fg)', 'var(--verify-double-fg)', '#ffffff', '✓✓ 7 papers', 'same number as ours',
+    s += g(0, 194, 'var(--verify-double-fg)', 'var(--verify-double-fg)', 'var(--ui-page)', '✓✓ 7 papers', 'same number as ours',
            '', '<b>7 papers, 14 numbers</b><br>System extracted the same value we quote');
     s += g(200, 194, 'var(--verify-conflict-bg)', 'var(--verify-conflict-fg)', 'var(--verify-conflict-fg)', '⚠ 3 papers', 'System mislabel → fix list',
            '', '<b>3 papers, 7 numbers</b><br>Martin-Latry 2007, Layton 2020, Wong 2024: right number, wrong or missing drug in System');

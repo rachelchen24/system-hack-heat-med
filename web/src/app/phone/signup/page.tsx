@@ -10,7 +10,7 @@ import { getPanelPatient, loadPanel } from "@/lib/panel";
 import { plainName } from "@/lib/risk";
 import { kbDrugFor, parseCsv, questionnaire, QUESTIONNAIRE_FILE } from "@/lib/synthetic";
 
-export const metadata: Metadata = { title: "Sign up · The Missing Label" };
+export const metadata: Metadata = { title: "Sign up · Cool-Aid" };
 
 // CHILL'D-Out-style sign-up (CDC 2024; areas listed in research-notes/advisor-models.md).
 // Pre-filled from the chosen synthetic patient's files:
