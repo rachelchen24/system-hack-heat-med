@@ -41,7 +41,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
             aria-current={view === x.id ? "page" : undefined}
             className={
               view === x.id
-                ? "rounded-full bg-ink px-4 py-1.5 text-page"
+                ? "rounded-full bg-[var(--bucket-store-solid,#0e7c86)] px-4 py-1.5 text-white"
                 : "rounded-full px-4 py-1.5 text-ink-muted hover:text-ink"
             }
           >

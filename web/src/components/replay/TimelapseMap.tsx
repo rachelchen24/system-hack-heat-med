@@ -171,7 +171,7 @@ export default function TimelapseMap({
         getRadius: 9,
         radiusUnits: "pixels",
         getFillColor: [255, 255, 255],
-        getLineColor: [0, 114, 178],
+        getLineColor: [14, 124, 134],
         getLineWidth: 3,
         lineWidthUnits: "pixels",
         stroked: true,

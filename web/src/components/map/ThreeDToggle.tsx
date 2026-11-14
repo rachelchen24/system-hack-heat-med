@@ -10,7 +10,7 @@ export function ThreeDToggle({ on, onChange, large = false }: { on: boolean; onC
           type="button"
           aria-pressed={on === v}
           onClick={() => onChange(v)}
-          className={`${base} font-semibold ${on === v ? "bg-[var(--bucket-store-solid,#0072b2)] text-white" : "text-[var(--ui-ink,#141414)]"}`}
+          className={`${base} font-semibold ${on === v ? "bg-[var(--bucket-store-solid,#0e7c86)] text-white" : "text-[var(--ui-ink,#141414)]"}`}
         >
           {v ? "3D" : "2D"}
         </button>

@@ -14,7 +14,7 @@ function hex(h: string): RGB {
 export const RISK_HEX: Record<RiskGroup, { solid: string; tint: string; ink: string; on: string }> = {
   High: { solid: "#d55e00", tint: "#fbe3d6", ink: "#a0410a", on: "#141414" },
   Medium: { solid: "#f0c419", tint: "#fdf4d3", ink: "#7a5c00", on: "#141414" },
-  Low: { solid: "#0072b2", tint: "#dcebf5", ink: "#005a8c", on: "#ffffff" },
+  Low: { solid: "#0e7c86", tint: "#d9f0f1", ink: "#0a5f66", on: "#ffffff" },
 };
 
 export const RISK_RGB: Record<RiskGroup, { solid: RGB; ink: RGB }> = {
@@ -27,7 +27,7 @@ export const RISK_RGB: Record<RiskGroup, { solid: RGB; ink: RGB }> = {
 export const RISK_CSS: Record<RiskGroup, { solid: string; tint: string; ink: string; on: string }> = {
   High: { solid: "var(--risk-high, #d55e00)", tint: "var(--risk-high-tint, #fbe3d6)", ink: "var(--risk-high-ink, #a0410a)", on: "var(--risk-high-on, #141414)" },
   Medium: { solid: "var(--risk-medium, #f0c419)", tint: "var(--risk-medium-tint, #fdf4d3)", ink: "var(--risk-medium-ink, #7a5c00)", on: "var(--risk-medium-on, #141414)" },
-  Low: { solid: "var(--risk-low, #0072b2)", tint: "var(--risk-low-tint, #dcebf5)", ink: "var(--risk-low-ink, #005a8c)", on: "var(--risk-low-on, #ffffff)" },
+  Low: { solid: "var(--risk-low, #0e7c86)", tint: "var(--risk-low-tint, #d9f0f1)", ink: "var(--risk-low-ink, #0a5f66)", on: "var(--risk-low-on, #ffffff)" },
 };
 
 /** Heat shading (neighborhood heat vulnerability 1 = cooler … 5 = hotter).

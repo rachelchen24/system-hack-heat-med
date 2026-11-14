@@ -75,7 +75,7 @@ export function Hero195({
               {t.content}
             </TabsContent>
           ))}
-          <BorderBeam size={180} duration={12} colorFrom="#d55e00" colorTo="#0072b2" />
+          <BorderBeam size={180} duration={12} colorFrom="#d55e00" colorTo="#0e7c86" />
         </div>
       </Tabs>
     </section>

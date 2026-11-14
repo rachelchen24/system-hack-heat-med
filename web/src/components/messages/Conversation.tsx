@@ -158,9 +158,9 @@ export function Conversation() {
               <div
                 className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[15px] leading-snug ${
                   m.kind === "out"
-                    ? "bg-[#0072b2] text-white"
+                    ? "bg-[#0e7c86] text-white"
                     : m.kind === "contact"
-                      ? "border-2 border-[#0072b2] bg-page"
+                      ? "border-2 border-[#0e7c86] bg-page"
                       : "border border-line bg-page"
                 }`}
               >

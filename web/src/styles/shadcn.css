@@ -31,7 +31,7 @@
 
 :root {
   /* Mapped to Rachel's tokens (tokens.css) so shadcn components use the app palette. No black buttons:
-     primary = the app blue (--bucket-store-solid #0072b2, white text 5.19:1). */
+     primary = the app teal (--bucket-store-solid #0e7c86, white text 4.95:1). */
   --background: var(--ui-page);
   --foreground: var(--ui-ink);
   --card: var(--ui-page);

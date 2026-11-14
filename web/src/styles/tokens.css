@@ -44,14 +44,14 @@
   --bucket-monitor-tint: #f6e4ee;
   --bucket-monitor-ink: #9c3d74;  /* 6.30:1 on white, 5.18:1 on tint */
 
-  /* Store cool: Okabe–Ito blue */
-  --bucket-store-solid: #0072b2;
-  --bucket-store-on: #ffffff;     /* 5.19:1 on solid */
-  --bucket-store-tint: #dcebf5;
-  --bucket-store-ink: #005a8c;    /* 7.39:1 on white, 6.07:1 on tint */
+  /* Store cool: teal (Rachel, 14 Nov: warmer than Okabe–Ito blue; still CVD-distinct from orange/yellow/purple) */
+  --bucket-store-solid: #0e7c86;
+  --bucket-store-on: #ffffff;     /* 4.95:1 on solid */
+  --bucket-store-tint: #d9f0f1;
+  --bucket-store-ink: #0a5f66;    /* 7.39:1 on white, 6.22:1 on tint */
 
   /* ---- Risk groups (High / Medium / Low), same chip style --------- */
-  /* High = Hold vermillion; Medium = yellow; Low = Store-cool blue.
+  /* High = Hold vermillion; Medium = yellow; Low = Store-cool teal.
      Yellow dots on a light map need a thin dark outline (--risk-medium-ink). */
   --risk-high: #d55e00;
   --risk-high-on: #141414;        /* 4.76:1 on solid */
@@ -61,15 +61,15 @@
   --risk-medium-on: #141414;      /* ~11.9:1 on solid */
   --risk-medium-tint: #fdf4d3;
   --risk-medium-ink: #7a5c00;     /* ~6.3:1 on white, ~5.8:1 on tint */
-  --risk-low: #0072b2;
-  --risk-low-on: #ffffff;         /* 5.19:1 on solid */
-  --risk-low-tint: #dcebf5;
-  --risk-low-ink: #005a8c;        /* 7.39:1 on white, 6.07:1 on tint */
+  --risk-low: #0e7c86;
+  --risk-low-on: #ffffff;         /* 4.95:1 on solid */
+  --risk-low-tint: #d9f0f1;
+  --risk-low-ink: #0a5f66;        /* 7.39:1 on white, 6.07:1 on tint */
 
   /* ---- Guidance gap ring / "!" badge ------------------------------- */
   --gap-ring: #141414;            /* dashed ring, 18.4:1 on white */
-  --gap-badge-bg: #141414;
-  --gap-badge-fg: #ffffff;
+  --gap-badge-bg: #d55e00;       /* Hold vermillion: black is never a text background */
+  --gap-badge-fg: #141414;       /* 4.76:1 on bg */
 
   /* ---- Evidence meter (Strong / Some / Early signs) ---------------- */
   --meter-on: #141414;            /* filled segment */
@@ -90,7 +90,7 @@
 
   /* ---- Heat Dose Compass arrows (direction only, no numbers) ------- */
   --compass-up: #a0410a;      /* ↑ acts stronger in heat; 6.45:1 */
-  --compass-down: #005a8c;    /* ↓ acts weaker in heat;   7.39:1 */
+  --compass-down: #0a5f66;    /* ↓ acts weaker in heat;   7.39:1 */
   --compass-depends: #4b5563; /* ↕ depends;               7.56:1 */
 
   /* ---- Type ------------------------------------------------------- */

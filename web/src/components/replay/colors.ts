@@ -3,7 +3,7 @@
 export const GROUP_COLORS = {
   High: { css: "#d55e00", rgb: [213, 94, 0] as [number, number, number], tint: "#fbe3d6", ink: "#a0410a" },
   Medium: { css: "#f0c419", rgb: [240, 196, 25] as [number, number, number], tint: "#fdf4d3", ink: "#7a5c00" },
-  Low: { css: "#0072b2", rgb: [0, 114, 178] as [number, number, number], tint: "#dcebf5", ink: "#005a8c" },
+  Low: { css: "#0e7c86", rgb: [14, 124, 134] as [number, number, number], tint: "#d9f0f1", ink: "#0a5f66" },
 } as const;
 
 // Radar-style "feels like" ramp: transparent when it's comfortable, then yellow → orange →
@@ -36,7 +36,7 @@ export function heatRgba(f: number | null | undefined): [number, number, number,
 /** Solid version for chips, the clock dot and the strip (no transparency). */
 export function heatColor(f: number | null | undefined): string {
   if (f == null || !Number.isFinite(f)) return "#d4d4d0";
-  if (f <= 88) return "#dcebf5";
+  if (f <= 88) return "#d9f0f1";
   const [r, g, b] = heatRgba(Math.max(f, 88.01));
   return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
 }

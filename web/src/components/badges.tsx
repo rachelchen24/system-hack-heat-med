@@ -107,7 +107,7 @@ export function CompassArrowMark({ arrow, large = false }: { arrow: CompassArrow
 export function GapBadge() {
   return (
     <span
-      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink text-xs font-bold text-page"
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-hold-solid text-xs font-bold text-hold-on"
       title="Guidance gap: no guidance gives a drug-specific action"
     >
       !<span className="sr-only">Guidance gap</span>

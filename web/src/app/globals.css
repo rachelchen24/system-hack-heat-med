@@ -96,6 +96,6 @@ body {
 
 /* Visible keyboard focus everywhere (accessibility). */
 :focus-visible {
-  outline: 3px solid #005a8c;
+  outline: 3px solid #0a5f66;
   outline-offset: 2px;
 }

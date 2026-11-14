@@ -165,7 +165,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
               </span>
             )}
             {leave && (
-              <span className="rounded-full bg-[var(--ui-ink,#141414)] px-3 py-1 text-lg font-bold text-white">{t.leaveBy(leave)}</span>
+              <span className="rounded-full bg-[var(--bucket-store-solid,#0e7c86)] px-3 py-1 text-lg font-bold text-white">{t.leaveBy(leave)}</span>
             )}
           </div>
         </div>
@@ -209,7 +209,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
           target="_blank"
           rel="noreferrer"
           className="block rounded-full px-5 py-3 text-center text-lg font-bold text-white"
-          style={{ background: "#00694c" }}
+          style={{ background: "var(--bucket-store-solid, #0e7c86)" }}
         >
           {t.directions}
         </a>

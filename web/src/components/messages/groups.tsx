@@ -4,7 +4,7 @@ export type RiskGroup = "High" | "Medium" | "Low";
 export const GROUP_STYLE: Record<RiskGroup, { solid: string; tint: string; ink: string }> = {
   High: { solid: "#d55e00", tint: "#fbe3d6", ink: "#a0410a" },
   Medium: { solid: "#f0c419", tint: "#fdf4d3", ink: "#7a5c00" },
-  Low: { solid: "#0072b2", tint: "#dcebf5", ink: "#005a8c" },
+  Low: { solid: "#0e7c86", tint: "#d9f0f1", ink: "#0a5f66" },
 };
 
 export function GroupChip({ group }: { group: RiskGroup }) {
