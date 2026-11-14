@@ -158,6 +158,7 @@ export default function TimelapseMap({
           : personIcon(GROUP_COLORS[p.group].rgb, p.group === "Medium" ? [122, 92, 0] : [255, 255, 255]),
       getSize: (p: ReplayPatient) => (selected?.id === p.id ? 30 : 18),
       sizeUnits: "pixels",
+      loadOptions: { image: { type: "image" } },
       getColor: (p: ReplayPatient) => [255, 255, 255, selected && selected.id !== p.id ? 120 : 255] as [number, number, number, number],
       pickable: true,
       updateTriggers: { getIcon: [selected?.id], getSize: [selected?.id], getColor: [selected?.id] },

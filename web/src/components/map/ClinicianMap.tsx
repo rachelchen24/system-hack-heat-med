@@ -268,6 +268,8 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
           ? personIcon(RISK_RGB[d.group].solid, [20, 20, 20], 2)
           : personIcon(RISK_RGB[d.group].solid, d.group === "Medium" ? RISK_RGB.Medium.ink : [255, 255, 255]),
       getSize: (d) => (selPatient?.id === d.id ? 34 : 22), sizeUnits: "pixels",
+      // SVG icons must load as <img> (createImageBitmap can't decode SVG blobs).
+      loadOptions: { image: { type: "image" } },
       updateTriggers: { getIcon: selPatient?.id, getSize: selPatient?.id },
       onClick: (info: PickingInfo) => { const d = info.object as MapPatient | undefined; if (d) setSel({ kind: "patient", id: d.id }); },
     }));

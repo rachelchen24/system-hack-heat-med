@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ClinicianMap } from "@/components/map/ClinicianMap";
 import { FILES, loadMapPatients } from "@/components/map/data";
 import { Timelapse } from "@/components/replay/Timelapse";
@@ -16,7 +17,15 @@ type View = (typeof VIEWS)[number]["id"];
 // Clinician heat + help map, with the heat-day time-lapse as a second view (?view=hours).
 // Patients load server-side (small); heat areas and help places are fetched by the client
 // from /api/map/layers.
-export default async function MapPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+export default function MapPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  return (
+    <Suspense fallback={<div className="h-[60vh] animate-pulse rounded-xl bg-surface" />}>
+      <MapBody searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function MapBody({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view: v } = await searchParams;
   const view: View = v === "hours" ? "hours" : "forecast";
 
