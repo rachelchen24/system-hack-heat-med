@@ -2,7 +2,8 @@
 // Clinician heat + help map (/map): neighborhoods shaded by heat, help places, synthetic patients
 // colored by risk group. Click a dot, a place or a neighborhood for a card.
 import { useEffect, useMemo, useState } from "react";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, IconLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { personIcon } from "./personIcon";
 import type { PickingInfo } from "@deck.gl/core";
 import { HEAT_HEX, HEAT_RGB, RISK_CSS, RISK_GROUPS, RISK_RGB, type RiskGroup } from "./colors";
 import type { HeatArea, HelpPlace, HelpPoint, MapPatient } from "./data";
@@ -64,11 +65,7 @@ function SendButton({ patients, label }: { patients: MapPatient[]; label: string
           setSt({ status: "sending" });
           try { setSt({ status: "done", ...(await send(patients)) }); } catch (e) { setSt({ status: "error", msg: (e as Error).message }); }
         }}
-<<<<<<< HEAD
         className="w-full rounded-full bg-[var(--bucket-store-solid,#0e7c86)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-=======
-        className="w-full rounded-full bg-[var(--bucket-store-solid,#0072b2)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
->>>>>>> 4905d32b35689aff93dbdbc2c694a89627bfe95c
       >
         {st.status === "sending" ? "Sending…" : allCall && patients.length === 1 ? "Call instead (add to call list)" : label}
       </button>
@@ -152,11 +149,7 @@ function PlaceCard({ id, onClose }: { id: string; onClose: () => void }) {
         {place.hours && <p>{place.hours}</p>}
         {place.phone && <p><a className="underline" href={`tel:${place.phone}`}>{place.phone}</a></p>}
       </div>
-<<<<<<< HEAD
       <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[var(--bucket-store-solid,#0e7c86)] px-4 py-2 text-center text-sm font-semibold text-white">
-=======
-      <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[var(--bucket-store-solid,#0072b2)] px-4 py-2 text-center text-sm font-semibold text-white">
->>>>>>> 4905d32b35689aff93dbdbc2c694a89627bfe95c
         Directions
       </a>
       <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">Hours and services can change. Call ahead.</p>
@@ -266,15 +259,16 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
         onClick: (info: PickingInfo) => { const d = info.object as HelpPoint | undefined; if (d) setSel({ kind: "place", id: d.id }); },
       }));
     }
-    out.push(new ScatterplotLayer<MapPatient>({
+    // Patients: a tiny person per home (restroom-sign style), colored by risk group.
+    out.push(new IconLayer<MapPatient>({
       id: "patients", data: visiblePatients, pickable: true, billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
       getPosition: (d) => [d.lon, d.lat],
-      getRadius: (d) => (selPatient?.id === d.id ? 11 : 7), radiusUnits: "pixels",
-      getFillColor: (d) => RISK_RGB[d.group].solid,
-      stroked: true, lineWidthUnits: "pixels",
-      getLineColor: (d) => (selPatient?.id === d.id ? [20, 20, 20] : d.group === "Medium" ? RISK_RGB.Medium.ink : [255, 255, 255]),
-      getLineWidth: (d) => (selPatient?.id === d.id ? 3 : d.group === "Medium" ? 1.5 : 2),
-      updateTriggers: { getRadius: selPatient?.id, getLineColor: selPatient?.id, getLineWidth: selPatient?.id },
+      getIcon: (d) =>
+        selPatient?.id === d.id
+          ? personIcon(RISK_RGB[d.group].solid, [20, 20, 20], 2)
+          : personIcon(RISK_RGB[d.group].solid, d.group === "Medium" ? RISK_RGB.Medium.ink : [255, 255, 255]),
+      getSize: (d) => (selPatient?.id === d.id ? 34 : 22), sizeUnits: "pixels",
+      updateTriggers: { getIcon: selPatient?.id, getSize: selPatient?.id },
       onClick: (info: PickingInfo) => { const d = info.object as MapPatient | undefined; if (d) setSel({ kind: "patient", id: d.id }); },
     }));
     return out;

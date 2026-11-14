@@ -25,7 +25,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold sm:text-3xl">Who is at risk in the heat, and where to cool off</h1>
-          <p className="text-[var(--ui-ink-muted,#4b5563)]">Each dot is a patient&apos;s home. Click a dot or a neighborhood.</p>
+          <p className="text-[var(--ui-ink-muted,#4b5563)]">Each person icon is a patient&apos;s home. Click one or a neighborhood.</p>
         </div>
         <nav aria-label="Other views" className="flex gap-4 text-sm text-[var(--ui-ink-muted,#4b5563)]">
           <Link href="/board" className="underline-offset-2 hover:underline">Clinician list</Link>

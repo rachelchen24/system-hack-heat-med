@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import DeckGL from "@deck.gl/react";
 import { FlyToInterpolator } from "@deck.gl/core";
-import { PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { IconLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { personIcon } from "@/components/map/personIcon";
 import { Map, type MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as maplibregl from "maplibre-gl";
@@ -147,21 +148,19 @@ export default function TimelapseMap({
         capRounded: true,
         jointRounded: true,
       }),
-    new ScatterplotLayer({
+    new IconLayer({
       id: "patients",
       data: patients,
       getPosition: (p: ReplayPatient) => [p.lon, p.lat],
-      getRadius: (p: ReplayPatient) => (selected?.id === p.id ? 9 : 5),
-      radiusUnits: "pixels",
-      getFillColor: (p: ReplayPatient) => [...GROUP_COLORS[p.group].rgb, selected && selected.id !== p.id ? 110 : 255] as [number, number, number, number],
-      getLineColor: (p: ReplayPatient) => (selected?.id === p.id ? [20, 20, 20] : p.group === "Medium" ? [122, 92, 0] : [255, 255, 255]),
-      getLineWidth: (p: ReplayPatient) => (selected?.id === p.id ? 3 : 1),
-      lineWidthUnits: "pixels",
-      stroked: true,
+      getIcon: (p: ReplayPatient) =>
+        selected?.id === p.id
+          ? personIcon(GROUP_COLORS[p.group].rgb, [20, 20, 20], 2)
+          : personIcon(GROUP_COLORS[p.group].rgb, p.group === "Medium" ? [122, 92, 0] : [255, 255, 255]),
+      getSize: (p: ReplayPatient) => (selected?.id === p.id ? 30 : 18),
+      sizeUnits: "pixels",
+      getColor: (p: ReplayPatient) => [255, 255, 255, selected && selected.id !== p.id ? 120 : 255] as [number, number, number, number],
       pickable: true,
-      autoHighlight: true,
-      highlightColor: [20, 20, 20, 60],
-      updateTriggers: { getRadius: [selected?.id], getFillColor: [selected?.id], getLineColor: [selected?.id], getLineWidth: [selected?.id] },
+      updateTriggers: { getIcon: [selected?.id], getSize: [selected?.id], getColor: [selected?.id] },
     }),
     selected?.place &&
       new ScatterplotLayer({
