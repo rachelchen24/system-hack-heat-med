@@ -16,6 +16,7 @@ import type { NeighborhoodData } from "./exposure.ts";
 import { patientsFromFhirBundle } from "./fhir.ts";
 import type { ForecastInputs } from "./forecast.ts";
 import { cpcFromJson, heatRiskFromCurrentJson, heatRiskFromReplayCsv, historyFromCsv } from "./forecast.ts";
+import type { SystemPathwayIndex } from "./stacking.ts";
 
 export interface Loaded<T> {
   value: T;
@@ -140,6 +141,25 @@ export function loadTravel(root: string, cfg: HealthSystemConfig): Loaded<Travel
 
 export function loadPlaces(root: string, cfg: HealthSystemConfig): CoolingPlace[] {
   return placesFromGeoJson(JSON.parse(read(root, cfg.data_sources.cooling_places.file)));
+}
+
+/** System graph pathway counts (drug group × mediator) for stacking.ts. Optional. */
+export function loadSystemPathways(root: string, p = "data/processed/system_pathways.csv"): Loaded<SystemPathwayIndex | null> {
+  if (!existsSync(join(root, p))) return { value: null, notes: [`System pathways: not loaded (${p} not present)`] };
+  const idx: SystemPathwayIndex = new Map();
+  for (const r of parseCsv(read(root, p))) {
+    const row = {
+      drugGroup: r.drug_group,
+      mediator: r.mediator,
+      mediatorLabel: r.mediator_label,
+      drugLegStudies: Number(r.drug_leg_studies) || 0,
+      heatLegStudies: Number(r.heat_leg_studies) || 0,
+    };
+    const m = idx.get(row.drugGroup) ?? new Map();
+    m.set(row.mediator, row);
+    idx.set(row.drugGroup, m);
+  }
+  return { value: idx, notes: [`System pathways: ${p} (${idx.size} drug groups; Dataverse v2.1)`] };
 }
 
 export function loadRoutedCooling(root: string, cfg: HealthSystemConfig): Loaded<Map<string, Record<string, string>[]> | undefined> {

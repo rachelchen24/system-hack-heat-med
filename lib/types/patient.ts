@@ -272,6 +272,48 @@ export interface HeatWaveOutlook {
   method: string;
 }
 
+export interface LifestyleResult {
+  category: "least" | "medium" | "most";
+  categoryLabel: string;
+  profile:
+    | "outdoor_worker"
+    | "indoors_with_outdoor_activity"
+    | "indoors_cool_place"
+    | "home_with_ac"
+    | "home_without_reliable_ac"
+    | "unknown";
+  profileLabel: string;
+  points: number;
+  factors: { id: string; label: string; points: number; basis: string }[];
+  missingAnswers: string[];
+  /** True when 2+ core answers are missing: the category is a floor, not a judgment. */
+  incomplete: boolean;
+}
+
+export interface StackingResult {
+  mechanisms: {
+    defense: HeatDefense;
+    label: string;
+    drugs: string[];
+    /** 2+ medicines weaken this defense. */
+    stacked: boolean;
+    system: {
+      mediator: string;
+      mediatorLabel: string;
+      heatLegStudies: number | null;
+      drugLegs: { drug: string; systemGroup: string | null; studies: number | null }[];
+    }[];
+    graphNote: string;
+  }[];
+  stackedMechanismCount: number;
+  symptoms: { sign: string; label: string; drugs: string[]; /** medicines + heat */ sources: number; stacked: boolean }[];
+  stackedSymptomCount: number;
+  maskedSigns: { sign: string; label: string; drugs: string[]; why: string }[];
+  summary: string[];
+  caveat: string;
+  systemSource: string | null;
+}
+
 export interface PatientScore {
   patientId: string;
   synthetic: true;
@@ -287,6 +329,10 @@ export interface PatientScore {
   meds: MedRiskStack;
   exposure: ExposureResult;
   readiness: { level: ReadinessLevel; drivers: string[]; modifiers: string[] };
+  /** Least / medium / most susceptible from daily habits only (lib/patient/lifestyle.ts). */
+  lifestyle: LifestyleResult;
+  /** Mechanism and symptom stacking across the patient's medicines (lib/patient/stacking.ts). */
+  stacking: StackingResult;
   tier: TierResult;
   /** Tier if HeatRisk were alert_rules.drill_heatrisk today (the drill / simulator column). */
   drillTier: TierResult;

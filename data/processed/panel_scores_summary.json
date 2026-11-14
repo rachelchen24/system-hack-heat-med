@@ -6,7 +6,8 @@
    "ACB scores: data/kb/anticholinergic_burden.csv (99 rows)",
    "Drug → heat-defense mapping: data/kb/knowledge_base.json (51 drug rows matched)",
    "Contact travel: ROUTED (data/processed/synthetic/contacts_routed.csv; columns used: fastest_min ×31, fastest_nocar_min ×296)",
-   "Cooling match: ROUTED (data/processed/synthetic/cooling_match.csv, 300 patients)"
+   "Cooling match: ROUTED (data/processed/synthetic/cooling_match.csv, 300 patients)",
+   "System pathways: data/processed/system_pathways.csv (19 drug groups; Dataverse v2.1)"
   ]
  },
  "today": {
@@ -54,6 +55,40 @@
    "high": 88,
    "medium": 143,
    "low": 54
+  },
+  "lifestyle": {
+   "category": {
+    "most": 46,
+    "medium": 92,
+    "least": 162
+   },
+   "profile": {
+    "home_without_reliable_ac": 38,
+    "indoors_cool_place": 118,
+    "home_with_ac": 89,
+    "outdoor_worker": 49,
+    "indoors_with_outdoor_activity": 6
+   },
+   "incomplete": 0
+  },
+  "stacking": {
+   "patients_with_stacked_mechanism": 125,
+   "patients_with_stacked_symptoms": 149,
+   "patients_with_masked_signs": 108,
+   "stacked_mechanisms": {
+    "blood_pressure": 81,
+    "kidney_clearance": 71,
+    "alertness": 28,
+    "sweating": 9,
+    "fluid_salt_balance": 24,
+    "brain_thermostat": 8,
+    "blood_sugar": 16,
+    "drug_delivery": 12
+   },
+   "masked_signs": {
+    "confusion": 100,
+    "heavy_sweating": 57
+   }
   },
   "escalation": {
    "enrolled": 208,
@@ -148,6 +183,40 @@
    "high": 88,
    "medium": 143,
    "low": 54
+  },
+  "lifestyle": {
+   "category": {
+    "most": 46,
+    "medium": 92,
+    "least": 162
+   },
+   "profile": {
+    "home_without_reliable_ac": 38,
+    "indoors_cool_place": 118,
+    "home_with_ac": 89,
+    "outdoor_worker": 49,
+    "indoors_with_outdoor_activity": 6
+   },
+   "incomplete": 0
+  },
+  "stacking": {
+   "patients_with_stacked_mechanism": 125,
+   "patients_with_stacked_symptoms": 149,
+   "patients_with_masked_signs": 108,
+   "stacked_mechanisms": {
+    "blood_pressure": 81,
+    "kidney_clearance": 71,
+    "alertness": 28,
+    "sweating": 9,
+    "fluid_salt_balance": 24,
+    "brain_thermostat": 8,
+    "blood_sugar": 16,
+    "drug_delivery": 12
+   },
+   "masked_signs": {
+    "confusion": 100,
+    "heavy_sweating": 57
+   }
   },
   "escalation": {
    "enrolled": 208,
