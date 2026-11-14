@@ -1,5 +1,14 @@
 # The Missing Label: winning plan
 
+> **Status (14 Nov):** `spec.md` is now the source of truth. This plan was the first strategy draft, and Myra's notes (`docs/myra-strategy-notes.md`) have been merged into the spec. Where this plan disagrees with the spec, the spec wins.
+>
+> **Superseded parts of this plan:**
+> - the FAERS / FDA adverse-event check (dropped; see spec §12.1)
+> - the 24-hour timeline (actual hacking time is Sat 10 AM–3 PM; see spec §10.3)
+> - the storage sensor as a core feature (moved to "add later," spec §11)
+>
+> **Still-open conflicts** between Rachel's and Myra's plans are listed in spec §12.2.
+
 This plan builds on Myra's concept (The Missing Label). It sharpens the parts that could fail, adds the rigor most teams skip, and adds three angles the judges are unlikely to see anywhere else.
 
 > **Updated after the graph check (13 Nov 2026), see `docs/graph-check-results.md`.**

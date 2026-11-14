@@ -2,7 +2,27 @@
 
 **Event:** System Public Challenge, NYC, 13–14 Nov 2026. Visualize Challenge 3.
 **Team:** Rachel and Myra
-**Status:** draft spec. The build plan comes later. Strategy and rationale are in `docs/winning-plan.md`.
+**Status:** working spec, reorganized 14 Nov; Myra's notes merged 14 Nov. **This is the source of truth.** The build plan comes later.
+
+**Related docs:**
+- **`docs/build-plan.md`: the chronological build plan (8 steps, dependency order)**
+- `docs/winning-plan.md`: the first strategy draft; partly superseded, see its header
+- `docs/myra-strategy-notes.md`: Myra's session notes, merged here; conflicts are in §12.2
+- `docs/graph-check-results.md`, `docs/schizophrenia-sbh-focus.md`, `docs/supply-chain.md`, `docs/system-api-guide.md`: focus notes
+
+**Contents**
+1. Problem
+2. The challenge and how we meet it
+3. Audiences and design principles
+4. The product
+5. Visuals catalogue
+6. Supporting models and content
+7. Scale-up ideas
+8. Data
+9. Evidence model
+10. Guardrails: non-goals, success criteria, constraints, risks
+11. Add later if time
+12. Decision log and open questions
 
 ---
 
@@ -15,287 +35,819 @@ Many common prescriptions make heat more dangerous. They block sweating, deepen 
 - **The evidence is scattered,** and the System Public Graph holds almost none of it directly:
   - about 15 direct drug × heat findings
   - landmark papers are indexed but filed under vague labels, or have no findings extracted
+- **Most heat deaths happen alone at home.** Knowing who is at risk isn't enough. Someone has to act.
 
-## 1a. How we meet the challenge brief
+## 2. The challenge and how we meet it
 
-The judged deliverable is: *"A visual evidence map of heat-sensitive medications grouped by type of action, showing evidence strength, the prescribers involved and gaps in current guidance, which a clinician, pharmacist or public health official could use to plan heat-wave counseling and outreach."* (Challenge owner: Chethan Sarabu, MD, Cornell Tech.)
+**What we're asked to produce** (Visualize Challenge 3, challenge owner Chethan Sarabu, MD, Cornell Tech):
+> "A visual evidence map of heat-sensitive medications grouped by type of action, showing evidence strength, the prescribers involved and gaps in current guidance, which a clinician, pharmacist or public health official could use to plan heat-wave counseling and outreach."
+
+**Category criterion (Visualize):** "Design and communication, turning relationships in the graph into compelling and accurate visual stories for a non-specialist audience."
+
+**Our judge:** a pediatrician and clinical informatician who works with SBH Health System (Bronx). He frames this as **climate + health**, and suggested the dosing-direction and supply-chain angles.
+
+### 2.1 Event facts (from Myra's notes, 13 Nov)
+- **Deadline:** Sat 14 Nov 2026, **3:00 PM EST** (Devpost).
+- **Saturday:** hacking 10 AM–3 PM, pitches 3–4 PM, winners 5 PM.
+- **Prizes:** one $2,000 winner per category (Explore, Visualize, Build), plus three $500 honorable mentions across all categories.
+- **Judging:** four criteria, **25% each**:
+  - meaningful use of the Public Graph
+  - insight or usefulness to the user/problem
+  - technical execution
+  - communication
+- **Hosts favor** interdisciplinary problems at the intersection of climate, environment, food and health.
+- **The category prize is shared across Visualize:** we're up against Visualize 1 (women's health, owner Verhulst) and Visualize 2 (malaria prevention, owner Amato/PATH). The same five judges score everyone.
+- **Likely competition:** evidence dashboards with buckets, bar charts and a guidance table. Competent, but alike. **Our edge:** turn evidence into action, make it physical, and be honest about the graph.
+
+### 2.2 The judges and what each wants (from Myra's notes)
+| Judge | Background | What impresses them | What we give them |
+|---|---|---|---|
+| **Dr. Chethan Sarabu** (wrote our challenge) | Pediatrician, clinical informatics, Cornell Tech | Real clinical workflow; patients and **caregivers**; wearables | EHR alert (CDS Hooks); **child/caregiver case**; pediatrics lens |
+| **Stefaan Verhulst** (GovLab, NYU) | Data for public good, responsible data reuse | Gaps turned into a research agenda; responsible data use | **"10 questions research must answer next"**; data-responsibility note |
+| **Daniel Gil-Sanchez** (World Bank data) | Data quality, reuse across countries | Reproducible; scales beyond one city | City toggle; versioned sources in `data/SOURCES.md` |
+| **Travis Rich** (Knowledge Futures) | Open infrastructure, provenance, versioned datasets | Every claim traceable; giving back | Sources on every line; **open, versioned label dataset**; missing-papers list for the graph |
+| **Nalini Edwin** (System comms) | Storytelling about the graph | A story she'd retell; the graph looking valuable | The bottle moment and the headline line (§7.5) |
+
+Only 1 of 5 judges is a clinician, so the main screen must make sense to non-clinicians too.
 
 | Brief asks for | Our answer | Status |
 |---|---|---|
-| Use the System graph to map the drug-to-heat evidence | Paper-level receipts, two-hop pathways (3.3), graph audit | Planned |
-| Action buckets (dose, hold/substitute, monitor, storage) | Master list is tagged by bucket | Data done |
+| Use the System graph to map the drug-to-heat evidence | Paper-level receipts, two-hop pathways, gap constellation, graph audit (§4.1, 6.4, 7.3) | Planned |
+| Action buckets (dose, hold/substitute, monitor, storage) | Master list tagged by bucket; periodic-table evidence map | Data done |
 | Evidence strength per bucket | Evidence tiers + FLAG/CHANGE meters | Data done; meters planned |
-| Prescribers involved | Prescriber column in the master list | Data done |
-| What a prescriber might reasonably change before or during a heat wave | Label action lines + Heat Dose Compass (3.4) | Planned |
-| Compare with guidance worldwide; show where it's missing or out of step | 8 guidance sources compared + quadrant (3.2) | Data done; visual planned |
-| *Optional:* wearables, and where the evidence runs out | Wearables panel (3.5c) | Research done |
-| *Optional:* NYC overlap of heat exposure and prescriptions | Playbook (3.5) + 3D NYC map (3.5d) | Planned |
+| Prescribers involved | Prescriber column; prescriber filters and icons | Data done |
+| What a prescriber might reasonably change | Drug Card: actions, Heat Dose Compass, substitutes, combination flags | Planned |
+| Compare with guidance worldwide; show gaps and conflicts | 8 guidance sources coded; evidence-vs-guidance quadrant | Data done; visual planned |
+| *Optional:* wearables, and where the evidence runs out | Wearables "evidence runs out" panel (§6.7) | Research done |
+| *Optional:* NYC heat × prescriptions overlap | Heat-Wave Readiness: call-first scatter, simulator, 3D NYC map | Planned |
+| Climate + health framing | Climate layer and NOAA forecasts (§6.5, 6.6) | Planned |
+| **Our standout** | **The core loop:** see risk → act → someone shows up (§4.0) | Planned |
 
-**Category criterion (Visualize):** "compelling and accurate visual stories for a non-specialist audience." The **public visual story** (§2) answers this, and it's weighted equally with the clinician tool.
+**Rule:** the evidence map is the core deliverable. Every other feature connects back to it. It must be readable **without a research background**: plain labels, visual encodings instead of statistics jargon, and a one-line "what this means" on every cell. That's how one deliverable satisfies both "non-specialist" and "clinician, pharmacist or public health official."
 
-**Rule:** the evidence map is the core content, shown two ways: as the story for non-specialists and as the tool for clinicians. Every other feature has to connect back to it:
-- the Compass answers "what to change"
-- Heat-Safe Delivery covers the storage bucket
-- the schizophrenia/SBH case is the worked example
+## 3. Audiences and design principles
 
-## 2. Who it's for
+### 3.1 Two sides, one knowledge base
 
-| User | What they need |
-|---|---|
-| **Prescribers / clinicians** (primary care, **pediatrics**, psychiatry, cardiology, endocrinology, nephrology, neurology), **the primary user** | Which of my patients to contact before a heat wave, what, if anything, to change, and an alert inside the EHR at the moment of prescribing |
-| **Pharmacists** (secondary) | A counseling line per drug, plus storage and delivery advice |
-| **Health department / emergency planners** (secondary) | Where in NYC to focus outreach, and which prescribers to alert first |
-| **Patients, caregivers and the public** (non-specialist; co-equal with clinicians for judging) | A story they can follow about why heat and medicine collide, plus a plain-language heat card for their own medicines and questions to ask their care team |
-| **System's team** (judges) | Evidence that their graph can power this, plus a precise account of where it falls short |
+| Side | Users | What it is |
+|---|---|---|
+| **Clinician tool** (primary, the judged deliverable) | Clinicians first (primary care, **pediatrics**, psychiatry, cardiology, endocrinology, nephrology, neurology). Pharmacists and public-health officials use the same views with their own filters. Researchers use the Evidence section. | Evidence map, Drug Cards, Heat-Wave Readiness, action items, Evidence/"nerd stats," EHR alert |
+| **Patient app: "My Medicine Cabinet"** | Patients, especially **older adults**, plus caregivers and trusted contacts | Medicine cabinet visual, sign-up questionnaire, **mandatory safety alert**, cooling-place texts, check-ins |
+| **System's team** (judges) | — | Proof the graph can power this, plus a precise audit of where it falls short |
 
-**Two things are being judged, and they pull in different directions:**
-- **The Visualize category:** "Design and communication, turning relationships in the graph into compelling and accurate visual stories for a **non-specialist audience**."
-- **The Challenge 3 deliverable:** a visual evidence map "which a **clinician, pharmacist or public health official** could use."
+**One knowledge base** (one row per drug) feeds both sides, so the clinician card, patient text and labels always agree, at different reading levels.
 
-**Audience decision (revised): one product, two equally weighted front doors that share one knowledge base.**
-1. **Public visual story (non-specialist front door, co-equal):** a scrolling, illustrated story, *"The Missing Label,"* that anyone can follow without medical training. It's the first thing judges see.
-   - **Open on a person:** a 78-year-old in the Bronx, on a diuretic and a bladder pill, with no AC.
-   - **The four ways heat and medicine collide,** each shown as a simple body diagram:
-     - sweat blocked
-     - water and salt lost
-     - drug builds up or absorbs faster
-     - drug spoiled before it's taken
-   - **The graph made visible:** drug → kidney / salt / water ← heat pathways, animated from real graph findings, with the gap shown openly ("the graph knows the pieces, but no one has connected them").
-   - **The guidance gap:** which rules exist, which are missing, which are out of step.
-   - **The place:** the Bronx / SBH neighborhood, and who is most exposed.
-   - **The doorstep:** a package of medicine heating up on a porch.
-   - **The ending:** the missing label, revealed, and a hand-off: "Clinicians: open the tool."
-   - **Rule:** accuracy is part of "compelling and accurate." Every number in the story has a receipt, and uncertainty is shown plainly (e.g. "we don't know yet").
-2. **"Check my medicines" (patient-facing feature inside the public story):** pick your medicines from a list and get a plain-language heat card for each.
-   - Each card says why heat matters for that drug, what to watch for, how to store it, and **questions to ask your doctor or pharmacist**.
-   - No dose advice, ever.
-   - Framed as "talk to your care team." Ties to the doorstep delivery text and the printed bottles.
-3. **Clinician tool (professional front door, meets the challenge deliverable):** clinician-first (see 2a). Pharmacists and public-health officials use the same views with their own filters.
-   - Contains: the evidence map, quadrant, pathways, Compass, playbook, delivery dashboard, EHR alert, Methods & receipts.
-   - Researchers are served by the Methods & receipts page.
-
-**Shared foundation:** one knowledge base feeds both front doors, so the patient card, the public story and the clinician card always say the same thing at different reading levels.
-
-**At judging:** start with the public story (non-specialist), then step through to the clinician tool (the challenge deliverable). The story wins the category; the tool wins the challenge.
-
-### 2a. Clinician-first design (our judge is a pediatrician and clinical informatician who works with SBH)
-- **Fit the workflow.**
-  - The core interaction is a clinician's own question: "I'm prescribing X, and a heat wave is coming. What do I need to know?"
-  - Answer in one card: bucket, FLAG/CHANGE, what to monitor, the Compass arrow, evidence strength, receipts.
-- **Show it inside the EHR (informatics).**
-  - Promote the **CDS Hooks card** from stretch to should-have.
-  - It's a working alert in the public CDS Hooks sandbox that fires when a flagged drug is ordered while the NWS forecast is high.
-  - Use real standards: RxNorm codes for drugs, FHIR MedicationRequest, and a SMART-on-FHIR-style patient context.
-  - A "heat-risk patient list" (all of a clinician's patients on flagged drugs) is the panel-management version.
-- **Include a pediatrics slice:**
-  - topiramate/zonisamide reduced sweating in children (all US zonisamide cases were age 18 or under)
-  - ADHD stimulants and exertional heat illness in teen athletes
-  - epinephrine auto-injectors and inhalers degrading in heat
+### 3.2 Clinician-first design
+- **The core question is the clinician's own:** "I'm prescribing X, a heat wave is coming. What do I need to know?" Answer it in one card.
+- **Readable in about 5 seconds.** Use familiar clinical chart types (risk lists, forest plots, heatmaps), action-bucket colors, plain labels, and no jargon without a tooltip. Less elementary than the patient side.
+- **Informatics:** real standards (RxNorm, FHIR MedicationRequest, SMART-on-FHIR-style context, CDS Hooks).
+- **Alert fatigue:** fire only when the drug is flagged **and** the forecast is high, never year-round.
+- **Pediatrics slice:**
+  - topiramate/zonisamide reduced sweating in children (all US zonisamide cases were age ≤18)
+  - ADHD stimulants and teen athletes
+  - epinephrine auto-injectors and inhalers in heat
   - asthma
-  - Pediatric drug-heat evidence is thin, so show that as a gap rather than hide it.
-- **Stay credible:** wording is "considerations for clinicians," not orders. Every claim has a receipt, and evidence tier and confounding are labeled. An informatician will check whether alerts would cause alert fatigue, so fire the card only when **drug is flagged AND forecast is high**, never year-round.
+  - Thin evidence is shown as a gap.
+- **Credible wording:** "considerations for clinicians," never orders. Every claim has a receipt, with evidence tier and confounding labeled.
 
-## 3. Product
+### 3.3 Visual style
+- **Light mode** on both sides. No dark mode.
+- **One color per action bucket,** used everywhere (grid, cards, map, cabinet, labels, props):
+  - Adjust dose
+  - Hold / substitute
+  - Monitor
+  - Store cool
+- **Fill intensity = evidence strength:** solid = strong, pale = weak, outline = mechanism/no study.
+- **Ring or "!" badge = guidance gap.**
+- Colors are colorblind-safe and always paired with icons or letters.
+- Older users on the patient side get large type, high contrast, simple words and big tap targets.
 
-**One heat-risk knowledge base, shown through several outputs.**
+### 3.4 Plain language (from Myra's notes)
+The plain version is what's on screen. The technical term sits one click or one tooltip away.
 
-### 3.1 The Missing Label (centerpiece)
-A redesigned drug label with a heat warning, for each drug or class (about 8 polished labels, about 25 in the database). Each label shows:
-- **Action bucket:** Adjust dose / Hold or substitute / Monitor closely / Store cool
+| Technical | Plain version |
+|---|---|
+| FLAG / CHANGE | "Check on this person" / "Rethink the medicine" *(see choice C7)* |
+| Odds ratio 2.43 | "About 2½ times the risk" |
+| Hyponatremia, acute kidney injury | "Low salt in the blood," "kidney strain" |
+| Anticholinergic | "Medicines that reduce sweating" |
+| Evidence tiers | 3-step meter: Strong / Some / Early signs *(see choice C8)* |
+| Sankey drug → mediator → heat | Medicine → what it does to your body → why heat makes it worse |
+
+- **Keep detail one click away:** sources, study numbers and the Evidence section stay. A non-specialist reads the plain line; a curious judge clicks through.
+
+### 3.5 Who the client is
+- **The client is any hospital or health system.** **SBH Health System (Bronx) is our example client,** the one we zoom in on for the demo. It isn't the only client (§3.7).
+- A health system is the right client because it It holds the medication lists, prescribers and patient phone numbers, so it can act. A health department can warn about heat but can't see who takes lithium.
+- **Day-to-day users:** psychiatry and primary care clinics, pharmacists, care coordinators.
+- **Secondary user:** NYC DOHMH, seeing aggregate neighborhood views only.
+- **Core insight:** for many patients, the right response isn't changing the drug but **a phone call and access to cooling** (Cincinnati 1999: working AC OR 0.03). FLAG says who to call; CHANGE says whose prescription to review.
+
+### 3.7 Scalable to any hospital or health system (required, 14 Nov)
+**Goal:** prove it isn't a one-off SBH demo, and that any health system could switch it on.
+
+**Why it scales (architecture):**
+- **Plugs into any EHR through standards:**
+  - SMART on FHIR app (runs inside Epic, Oracle Health/Cerner, athena and others)
+  - FHIR R4 to read the patient panel and medications
+  - CDS Hooks for the prescribing alert
+  - RxNorm for drug codes
+
+  No custom integration per hospital.
+- **One national knowledge base:** the drug rows (evidence, buckets, Compass, guidance) are the same everywhere. Local guidance can be added as extra columns.
+- **National data sources, so any US location works:**
+
+| Need | National source |
+|---|---|
+| Heat forecasts | NWS/CDC HeatRisk (by ZIP, nationwide); NOAA CPC outlooks |
+| Neighborhood vulnerability | CDC/ATSDR Social Vulnerability Index and Heat & Health Tracker (tract/county, national); NYC Heat Vulnerability Index as the local upgrade where it exists |
+| Health conditions by area | CDC PLACES (tract-level, national) |
+| Prescribing patterns | CMS Part D (national) |
+| Cooling places | OpenStreetMap (libraries, community centers, malls, nationwide) plus local cooling-center feeds where available |
+| Routing | OpenRouteService / OSRM on OpenStreetMap; local transit via GTFS (most US agencies publish it) |
+
+- **Per-health-system configuration, not code:** catchment ZIPs, clinics and prescribers, languages, local cooling-place list, escalation contacts, alert rules. A **multi-tenant** setup: each health system's data is kept separate.
+- **The patient app is the same everywhere.** Only the health system's name and local resources change.
+
+**How we show it in the demo:**
+- A **health-system switcher:** SBH (Bronx) is the default, then switch live to another health system in another city (e.g. a hospital in Phoenix or Houston). The map, heat forecast, cooling places, call list and languages all reconfigure from national data, with no code change.
+- An **onboarding / configuration screen:** "Add your health system": pick catchment, connect FHIR, choose languages. It shows how fast a new hospital gets started.
+- A **national view:** a US map of health systems or counties ranked by heat risk × heat-sensitive prescribing (Part D + HeatRisk), i.e. "where this matters most next summer."
+- A one-slide **architecture diagram:** EHR (FHIR / CDS Hooks) → our knowledge base + national data → clinician tool + patient app.
+
+### 3.6 Data responsibility note (for Verhulst)
+- Synthetic patients only.
+- Maps aggregated (hexagons / neighborhoods); no individual prescribers named.
+- Opt-in consent for patient data and alerts.
+- Open sources, versioned.
+
+## 4. The product
+
+### 4.0 The core loop (the standout): see risk → act → someone shows up
+1. **See:** the call-first scatter shows who is at risk now. It combines medications, combinations, the questionnaire and neighborhood heat.
+2. **Act:** the clinician selects patients and sends the **mandatory safety alert** (through do-not-disturb) with a personalized message and a cooling place.
+3. **Someone shows up:** if the patient doesn't acknowledge in time, the **trusted contact** is sent to check on them, timed by the escalation algorithm. Morning texts route people to an air-conditioned public place where others are around.
+4. **Close the loop:** the clinic board shows who acknowledged, who is at a cooling place, and who still needs a call. Post-heat-wave lab checks follow.
+
+### 4.1 Screen 1: Evidence Map (the deliverable)
+- **Main view: the "periodic table" of heat-sensitive medications.**
+  - Each tile is one drug or class.
+  - Tile color = bucket; fill = evidence strength; corner badge = evidence tier; small icons = prescribers; ring = guidance gap.
+  - Sort or filter by bucket, prescriber (e.g. pediatrics), or guidance gap.
+- **Toggle views:** evidence-vs-guidance quadrant; heat-risk pathways; node graph (§5).
+- **Featured example:** schizophrenia / antipsychotics (§6.3).
+- Clicking any tile opens the **Drug Card**.
+
+### 4.2 Drug Card (opens from any drug)
+Everything about one drug, in tabs or sections:
+- **The Missing Label:** a redesigned label with the heat warning: bucket, plain-language line (e.g. "During a heat wave, check lithium levels: dehydration can push them into the toxic range"), prescribers, disclaimer "Prototype. Considerations for clinicians, not instructions."
 - **Two meters:**
   - **FLAG:** how strongly this prescription identifies a person to contact
   - **CHANGE:** how strongly the evidence supports changing the drug itself
-- **Evidence by layer, each marked:** ① graph pathway, ② published literature not in the graph, ③ FDA adverse-event signal
-- **Prescribers involved**
-- **One plain-language line,** e.g. "During a heat wave, check lithium levels: dehydration can push them into the toxic range."
-- **Receipts:** every claim links to its finding and paper
-- **Disclaimer:** "Prototype. Considerations for clinicians, not instructions."
+- **Heat Dose Compass:** does heat make this drug act stronger (↑) or weaker (↓), and through what mechanism? Plus trigger, what to monitor and evidence strength. **Arrows only. No temperature slider, no numbers** (§6.2).
+- **Evidence:** the mini forest plot of System findings and the literature, with receipts. Each claim carries a chip: *in System graph* / *literature only* / *guidance only*.
+- **Guidance:** which of the 8 sources mention it, and what they say.
+- **Combinations:** common risky partners (§6.1).
+- **Lower heat-risk alternatives to consider:** 2–3 examples confirmed with prescribing sources, as spring-review considerations, never automatic switches. Each shows mechanism, evidence tier, what's lost by switching, and "never stop abruptly." Candidates to verify:
+  - oxybutynin → mirabegron
+  - combination/high-risk antipsychotics → review (aripiprazole not elevated in one BC study)
+  - topiramate → an anticonvulsant without carbonic-anhydrase activity, per neurology
+- **Patient wording preview:** exactly what this drug's patient-app notification says.
+- **EHR alert preview** (§4.6).
 
-### 3.2 Evidence vs. guidance quadrant
-- **x-axis:** evidence strength
-- **y-axis:** guidance coverage (how many of the 8 sources give a specific action)
-- **Marker size:** severity
-- **Hollow markers:** null findings
+### 4.3 Screen 2: Heat-Wave Readiness (climate + place)
+**Question it answers:** "Is heat coming, and what happens to our patients' medicines if it does?"
 
-The story it tells: guidance overstates the risk of common drug classes and is silent on rare, severe harms.
+- **Heat-wave probability bar + heat context strip** (§6.6): NOAA forecasts and historical odds; 7-day HeatRisk, overnight low and humidity for the selected ZIP (default: SBH area).
+- **Call-first scatter (core clinician visual):**
+  - each dot is a (synthetic) patient
+  - x = **personal** heat exposure (questionnaire home factors + neighborhood heat vulnerability)
+  - y = medication heat-risk stack (mechanisms + combination flags)
+  - color = main action bucket
+  - **The highest-risk patients are unmistakable:**
+    - a shaded, labeled top-right "call first" zone
+    - the top dots enlarged, outlined and numbered by rank
+    - a **ranked call list** beside the chart (rank, patient, drugs, why, action), linked both ways
+    - tier bands (call today / this week / routine)
+    - headline counts (e.g. "12 patients to call today")
+  - **Lasso or select dots → "send alert"** (the core loop)
+- **Heat-wave simulator:** "If a heat wave hit **now**, what happens to our current patients' medicines?"
+  - Pick severity and length (e.g. 3 days at HeatRisk orange, nights not cooling below 80°F), or replay a real past NYC heat wave.
+  - Outputs:
+    - patients on flagged drugs, by bucket and FLAG/CHANGE
+    - who to call first
+    - Compass view (stronger / weaker drugs)
+    - workload (calls, level checks)
+    - before/after if the plan is followed
+- **Playbook (72-hour plan),** in the SBH catchment:
+  - **Where:** neighborhoods by Heat Vulnerability Index × CDC PLACES conditions, plus cooling centers and pharmacies.
+  - **Who:** prescribers and areas with the most heat-risk prescriptions (CMS Part D, aggregate only).
+  - **What:** messages split into "contact" (FLAG) and "consider changing" (CHANGE).
+  - **Power-dependent equipment reminders.**
+  - **Demo ZIPs:** 10453, 10457, 10458, 10460 and nearby (confirm against SBH's 2025–27 Community Service Plan).
+- **3D NYC map** (built by Rachel and Myra; details to come). Layers:
+  - heat × prescriptions (hexagon-aggregated, no individuals)
+  - climate: street-level and surface heat, heat vulnerability, tree canopy, AC access, cooling centers, HeatRisk by ZIP
+  - **supply chain (visual only):** heat-risk deliveries, routes and doorstep exposure as a map layer. Deeper supply-chain work is in §11.
+  - bucket-colored toggles (e.g. "everyone on Hold/substitute drugs in high-heat blocks")
+- **Talking point:** "Today, the odds of a heat wave are zero, which is exactly when you should run the drill."
 
-### 3.3 Heat-risk pathways (the graph as a graph)
-A Sankey or network view:
+### 4.4 Action items
+**Principle:** after seeing who is at risk, the clinician acts in one click. The actions get people **cool, seen and connected**, against dying alone at home.
 
-```
-drug → (dehydration / low sodium / kidney injury / blood pressure) ← heat
-```
+1. **Mandatory safety alert (required, a key part of the product).**
+   - The notification **breaks through do-not-disturb and focus filters**, so the patient sees it whatever they're doing. It isn't a siren or a government broadcast.
+   - **How:** iOS Critical Alerts (needs Apple's entitlement approval) or Time-Sensitive notifications; Android high-priority channel allowed to bypass DND.
+   - **Sent as both an app push notification and an SMS** (decided 14 Nov), so it reaches people without the app or a smartphone too. A voice call stays an optional extra.
+   - Sent by the clinician, or automatically at high HeatRisk. Opt-in at sign-up. Used only on high-risk days.
+   - Message from the knowledge base, e.g. "Heat danger today. Your lithium and water pill make heat riskier. Go somewhere cool by 11 AM. Reply OK."
+2. **Trusted contact escalation.**
+   - At sign-up, the patient names a trusted family member or friend who lives **close enough**. The distance is computed (§4.4a), not fixed.
+   - No acknowledgement within the computed wait → the contact gets: "Please check on [name] in person or by phone," plus a **what to look for / what to do** checklist (confusion, hot dry skin → cool them, call 911).
+   - Contact doesn't respond → clinic call list → a human decides on a wellness check.
+3. **Morning cooling-place text (the most novel).**
+   - Early on a heat-risk day, text the person **a specific air-conditioned public place near them**: library, community center, rec center, gym, mall or official cooling center in their ZIP.
+   - Includes name, address, today's hours, walk/transit time, and **"get there before 11 AM, before it gets really hot."**
+   - **Why public places:** cool air **and other people around.** If someone gets sick, others notice.
+   - **Data:** NYC cooling centers (NYC Emergency Management / Open Data), NYPL / BPL / Queens Library branches and hours, NYC Parks rec centers. Check open that day and step-free if needed (questionnaire Q5).
+4. **Scheduled "I'm OK" check-ins** during a heat wave (e.g. 10 AM and 4 PM; one tap or reply). Silence triggers escalation.
+5. **Live "who hasn't checked in" board** for the clinic, ranked like the call-first scatter.
+6. **Neighbor buddy match** for people with no qualifying trusted contact (NYC's "Be a Buddy" program, *verify*).
+7. **Get AC before summer:** help apply for **NYS HEAP cooling assistance** (free or discounted AC), triggered by "no working AC."
+8. **Indoor temperature check:** a thermometer card or home sensor; a hot room plus no check-in escalates.
+9. **Post-heat-wave follow-up:** auto-schedule lithium level, sodium and kidney-function checks for flagged patients (clinician-approved).
+10. **Tailored fluid advice:** "drink more water" for most, but not blanket advice for fluid-restricted heart-failure patients or thiazide/SSRI users at risk of low sodium. Clinician sets this per patient.
+11. **Languages:** English and Spanish (SBH area).
 
-It's built from graph findings on both sides. Pathway scores are validated against drugs already known to be heat risks. Drugs with strong pathways that appear on no guidance list are flagged as **hidden heat drugs**, then checked against FDA adverse-event reports.
+**Safety rules for all actions:**
+- Opt-in consent.
+- Escalation stops at a **human** before any 911 or wellness-check request.
+- No dose instructions to patients.
+- Alerts only on high-risk days.
+- Every action logged (audit trail and nerd stats).
 
-### 3.4 Heat Dose Compass (from the judge's input)
-For each drug, which way heat pushes the dose's effect:
-- **↑ stronger:** insulin absorption, patches, lithium/digoxin buildup, added blood-pressure drop
-- **↓ weaker:** degraded epinephrine/insulin, patches peeling off, unreliable inhalers
-- **↕ depends**
+#### 4.4a Escalation timing and contact distance: derived, not guessed
+Both "how long to wait" and "how close the contact must be" come from a **time budget** set by medical evidence.
 
-Each entry also shows the mechanism, the trigger (forecast heat, fever, exertion, heat on a patch), what to monitor, and evidence strength. An optional body-temperature slider shows how risk grows; it's illustrative only, and **never gives a dose number**. A numeric "safe dose at this temperature" algorithm isn't feasible: there's no validated calibration data, and wearable core-temperature estimates aren't validated in medicated patients. See `docs/schizophrenia-sbh-focus.md` §3.
+1. **Time budget T_max:** the maximum time from a missed acknowledgement to a person physically present.
+   - Exertional heat stroke: cool to about 39°C within **30 min** of collapse.
+   - Classic heat stroke: mortality **more than halves** if cooled below 38.9°C **within an hour** of presentation ([PMC10227888](https://pmc.ncbi.nlm.nih.gov/articles/PMC10227888/); [Bouchama et al., Crit Care 2007](https://link.springer.com/doi/10.1186/cc5910)).
+   - Delayed treatment mortality up to about 80% vs about 10% with immediate cooling (illustrative, [Medscape](https://emedicine.medscape.com/article/166320-overview)).
+   - One cohort averaged 8.3 h from onset to treatment ([PMC12208087](https://pmc.ncbi.nlm.nih.gov/articles/PMC12208087/)).
+   - **Starting values** (refine from primary studies): very high risk / HeatRisk ≥3 / hot home **45 min**; high **60 min**; medium **90 min**. Leave time for cooling and EMS.
+2. **Split:** T_max = T_wait (patient acknowledges) + T_contact (contact responds) + T_travel (contact arrives).
+3. **T_travel = real travel time, not miles.**
+   - Route by walking, transit (MTA GTFS) or driving at that time of day (OpenRouteService / OSRM).
+   - Older walkers: about **0.77–0.9 m/s**, not 1.2 m/s ([Western et al., Age and Ageing 2025, PMC12682371](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12682371/)).
+4. **T_wait and T_contact from response-time data:**
+   - Start at the 90th percentile of published notification response times: Pielot et al. MobileHCI 2014 (DOI 10.1145/2628363.2628364), Pielot et al. 2018 (about 795k notifications), Mehrotra et al. CHI 2016. *Medians still to extract.*
+   - Then learn each person's own p90 from check-ins.
+   - Re-send the alert once at the halfway point.
+5. **Contact eligibility:** T_travel ≤ T_max − p90(patient) − p90(contact).
+   - It's computed per patient: tighter for higher risk and hotter days.
+   - No one qualifies → ask for a closer contact, or offer a buddy, plus priority call list.
+   - Several contacts are allowed; the fastest is alerted first.
+6. **Check-in frequency:** the worst-case time before anyone notices = check-in interval + T_max. More check-ins at 2–6 PM for very high risk; an indoor sensor can trigger one early.
+7. **Benchmarks:**
+   - France's heat-wave registers: regular calls; no answer → alert → possible in-person check by police or firefighters; exact timings not found ([Connexion France](https://www.connexionfrance.com/practical/how-to-sign-up-for-frances-heatwave-welfare-check-register/797620); [Paris REFLEX](https://www.paris.fr/pages/en-ligne-avec-les-personnes-fragiles-pendant-la-canicule-8156)).
+   - NYC EMS response times (NYC Open Data).
+8. **Research to do:**
+   - primary classic-heat-stroke time-to-cooling cohorts
+   - notification-study medians
+   - older-adult phone response times
+   - medical-alert (PERS) escalation standards
 
-### 3.5 NYC heat-wave playbook (demo focus: SBH Health System catchment, Bronx)
-Input: a heat wave, either a replay of a real past NYC heat wave or a live National Weather Service forecast. Output: a 72-hour plan.
-- **Where:** neighborhoods ranked by the NYC Heat Vulnerability Index × CDC PLACES prevalence of the conditions these drugs treat, with cooling centers and pharmacies overlaid
-- **Who:** prescriber specialties and areas with the most heat-risk prescriptions (CMS Part D), shown in aggregate only
-- **What:** the label messages, split into "contact these patients" (FLAG) and "consider changing" (CHANGE)
-- **Power outages:** reminders for people who rely on powered home medical equipment
-- **Demo scope:** the zip codes around St. Barnabas Hospital and SBH Behavioral Health (10453, 10457, 10458, 10460 and nearby; confirm against SBH's 2025–27 Community Service Plan). Our judge works with SBH.
+### 4.5 Patient app: "My Medicine Cabinet"
+**Why this design:** a cabinet of familiar bottles is easy to understand, especially for **older adults, who are most likely to die in heat.**
 
-### 3.5a Featured case: schizophrenia
-The deep-dive label and playbook path. Shows how illness and medication each contribute to risk:
-- BC 2021 heat dome: any antipsychotic OR 2.43; 2+ antipsychotics OR 4.05
-- Japan within-person study: no added drug effect
-- Bark 1998, Bronx Psychiatric Center: excess deaths, and prevention worked
+- **The cabinet:** a shelf of the patient's own medicines, colored by bucket.
+- **Medicines added two ways:** the patient adds them, or they're **added automatically** from the pharmacy or clinic record (FHIR MedicationRequest / dispense data; the synthetic panel in the demo).
+- **When heat is forecast,** bottles glow by risk, and notifications follow a fixed plain-language template:
+  > "⚠️ Heat warning for **[drug]**: in hot weather it can **[effect in plain words]** because **[why]**. Watch for **[symptoms]**, and **[safe action]**."
+- **Combinations** show as one combined warning.
+- **Personal flow:** *my medicines → what heat does to each → what to do* (a simplified Sankey).
+- **Notification timing:** follows the probability bar and HeatRisk (about 3 days before orange, the day of, after), plus the mandatory safety alert, cooling-place texts and check-ins (§4.4).
+- **Safety:** no dose changes, ever. Every message ends with "talk to your doctor or pharmacist." Text is pre-reviewed per drug and comes from the shared knowledge base.
 
-Label: **FLAG high, CHANGE moderate.** Review combination therapy before summer; set up check-in calls and cooling access during heat waves; never stop abruptly. See `docs/schizophrenia-sbh-focus.md` §1.
+#### 4.5b Customized patient messages (decided 14 Nov; method to be worked out)
+Every message is **tailored to the patient's needs**, never generic (e.g. no blanket "drink more water").
 
-### 3.5b Heat-Safe Delivery (supply chain, from the judge's input)
-A software layer over the pharmacy → carrier → patient chain. Details in `docs/supply-chain.md`.
-- **Before shipping:** a risk check using the drug's heat profile, the NWS forecast for the destination, and shipping speed. Recommends ship as-is, upgrade to next-day, add insulation, reroute to pickup, or hold.
-- **At delivery:** a text to the patient ("bring it inside within 30 min"), escalating to a caregiver if not confirmed.
-- **After delivery:** an exposure estimate (mean kinetic temperature from hourly weather) → use / check with pharmacist / replace.
-- **Dashboard:** heat-risk shipments across the SBH catchment.
-- **Hardware demo (optional):** an ESP32 temperature logger in a package that streams to the dashboard.
+**Inputs:**
+- their medications and combinations
+- diagnoses (e.g. heart-failure fluid limits, low-sodium risk)
+- questionnaire answers (AC, floor, living alone, mobility, where they spend the day)
+- age (child → parent/caregiver wording)
+- language
+- neighborhood heat and forecast
+- clinician-set flags (e.g. "fluid restricted")
 
-**Talking point:** we quantify the drug in the box (mean kinetic temperature, an industry standard) but not the drug in the body (the Compass shows direction only), because only one of the two has validated data.
+**Approach options:**
+1. **Rules from the knowledge base** (starting point): message blocks per drug, mechanism and situation, assembled by documented rules. Safe and checkable.
+2. **Learning from data** (later): learn which wording, timing and channel get acknowledged, per person or by group, from response and check-in history. This applies to **delivery** (when, how, which words), never to the medical content.
+3. Clinician review of the medical rules. An LLM may draft wording variants, but every variant is pre-approved, never generated live.
 
-### 3.5c Wearables panel (optional part of the brief)
-What research exists on using heart rate or skin temperature to personalize heat guidance, and where it runs out:
-- Heart-rate-based core-temperature estimators (e.g. ECTemp) are validated only in healthy soldiers, athletes and firefighters.
-- They miss many readings above 39°C.
-- They've never been validated in people on beta blockers (which blunt heart rate), stimulants or anticholinergics (which raise it), or in older, dialysis, MS or pregnant users.
+**Safety:** no dose advice; fluid advice only within clinician-set limits; every message ends with "talk to your doctor or pharmacist."
 
-Shown as a "where the evidence runs out" panel, linked from the Compass.
+#### 4.5a Sign-up questionnaire
+**Why:** most heat deaths happen at home, and neighborhood data can't see inside a home.
+- NYC heat mortality reports: most heat deaths are at home; lack of home cooling is key.
+- BC 2021: most who died were alone at home.
+- Cincinnati 1999: working AC OR 0.03.
+- Chicago 1995 (Semenza et al., NEJM 1996, *verify*): living alone, not leaving home and being bedbound raised risk; AC protected.
 
-### 3.5d 3D NYC map (team-owned, later)
-An open-source 3D map of NYC for the heat × prescriptions overlap and the SBH catchment. **Rachel and Myra will build this themselves later.** Details to be added.
+**Known from the pharmacy or clinic record (not asked):** age, medications, diagnoses (heart, kidney, diabetes, mental illness, dementia), pregnancy.
 
-### 3.6 Methods & receipts page
-- Data sources with versions and access dates
-- Graph coverage counts and the graph audit
-- Hand-check accuracy, agreement between the two guidance coders (kappa), citation verification rate
-- The evidence-scoring formula
-- Known limitations
+**Core 5 questions (team decision):**
+1. Do you have working AC at home?
+2. Where do you spend most of your day? (home / indoors with AC / outdoors or physical work)
+3. What floor do you live on?
+4. Do you live alone?
+5. Could you get to a cool place if you needed to?
 
-### 3.7 Stretch outputs (scalability)
-- **Heat Label API:** RxNorm code in → label JSON out
-- **EHR alert prototype** (CDS Hooks): fires when a flagged drug is prescribed during a high-heat forecast. **Promoted to should-have; see 2a.**
-- **City toggle:** e.g. Phoenix, to show it works outside NYC
-- **Physical props:**
-  - printed pill bottles with thermochromic heat-warning labels
-  - optional package temperature logger (see 3.5b)
+**Also needed for the action items:** ZIP / address; trusted contact(s) (name, phone, address or ZIP); opt-in to the safety alert; text / app / call preference; language.
 
-## 4. Data
+**Optional, asked over time:**
+- Does the AC work, and do you use it (cost)?
+- Do windows open? How hot does your home get?
+- Does someone check on you?
+- Do you leave home most days?
+- Do you use power-dependent equipment? Fridge medicines?
+- Do you get mail-order medicines, and where are they left?
+- Outdoor work or exercise?
+- Stable housing?
+- Do you know the signs of heat illness?
 
-### 4.1 Source tiers
+**How it's used (transparent):**
+- Answers + medication risk + neighborhood heat → a **personal heat readiness level** (low / medium / high / very high).
+- The patient sees which answers drove it, e.g. "no working AC + lives alone + on lithium and a diuretic."
+- Fixed, documented points per factor, weighted by the evidence above. The formula is shown in nerd stats.
+- **Feeds the call-first scatter's x-axis** (personal exposure).
+- **Triggers help:** HEAP AC, nearest cooling place, buddy offer, delivery to an indoor drop.
+- **Re-asked every spring.**
 
-| Tier | Sources | How it's used |
+**Privacy:**
+- Every question is optional, with its purpose shown.
+- Shared with the care team only with consent.
+- Collect the minimum; allow deletion.
+- **The demo uses synthetic answers only.**
+
+### 4.6 EHR alert (CDS Hooks): should-have
+- A working alert in the public CDS Hooks sandbox.
+- Fires when a flagged drug **or flagged combination** is ordered while the forecast is high (e.g. "adding a diuretic to a patient on lithium during a heat forecast").
+- Uses RxNorm codes, FHIR MedicationRequest, and a "heat-risk patient list" for panel management.
+
+### 4.7 Screen 3: Evidence / "nerd stats" (Methods & Receipts)
+A clearly labeled section that shows our results are legit:
+- **Evidence funnel:** records searched → screened → included.
+- **Graph audit:** in System / findings extracted / correct / mislabeled, plus System extraction accuracy.
+- **Data quality:** citations verified %, hand-check accuracy, guidance-coding agreement (Cohen's kappa).
+- **The scoring formulas:** evidence score, FLAG/CHANGE, personal readiness level.
+- **Per-drug forest plots and study lists.**
+- **Data sources** with versions and access dates; live System API status and counts.
+- **Escalation-timing assumptions** (§4.4a).
+- **Known limitations and confounding.**
+
+## 5. Visuals catalogue
+**Decision (14 Nov): prototype all of these.** The team will look at each and cut the ones that aren't effective. The **node graph is required**, the **call-first scatter is chosen**, and the **medicine cabinet is the patient-side centerpiece**.
+
+| # | Visual | Side | What it shows |
+|---|---|---|---|
+| 1 | **Periodic table** of heat-sensitive medications | Clinician | Main evidence map (§4.1) |
+| 2 | **Call-first scatter** + ranked list | Clinician | Who to call, ranked (§4.3) |
+| 3 | **Medicine cabinet / heat shelf** | Patient | My medicines glowing by risk (§4.5) |
+| 4 | **Node graph (required):** one interactive explorer with modes: Evidence X-ray (drug → mediator → heat harm from System), risk constellation (neighborhoods ↔ drugs ↔ mechanisms, arranged by heat vulnerability), combination web (one patient), gap constellation (implied-but-untested links, dashed) | Clinician | The "graph as a graph" |
+| 5 | **Evidence × guidance quadrant** | Clinician | Where guidance is missing or out of step; dots colored by bucket, sized by severity, hollow = null |
+| 6 | **Pathway Sankey** | Clinician | Drug → mediators → heat harms |
+| 7 | **Flow Sankey** | Both | Clinician: neighborhoods → drugs → mechanisms → actions. Patient: my medicines → heat effect → what to do |
+| 8 | **Mini forest plot** | Clinician (Drug Card) | Findings for one link, grouped by statistic type, with receipts |
+| 9 | **Neighborhood × drug heatmap** | Clinician | Where the lithium patients in the hottest blocks are, with no map needed |
+| 10 | **Treemap** | Clinician | Patients at risk, nested neighborhood → drug |
+| 11 | **Body diagram** | Both | Skin/sweat, kidneys, blood, brain, plus "outside the body" for storage; drugs pinned to where heat hits |
+| 12 | **Heat ladder** | Clinician | Drugs on a temperature axis where a threshold is known (e.g. hyponatremia above about 15°C); most in an "unknown threshold" zone |
+| 13 | **Prescriber swimlanes** | Clinician | "Which of these are mine?" by specialty |
+| 14 | **Calendar heatmap** | Clinician | Next 3 months by week: heat-wave probability, overlaid with refill and delivery dates |
+| 15 | **Evidence timeline** | Clinician | When each drug's heat evidence accumulated (System dates) |
+| 16 | **"Who was studied" bars** | Clinician | Share of evidence that includes children, women, older adults, non-US |
+| 17 | **Graph audit funnel** | Evidence section | Papers found → in System → extracted → correct / mislabeled |
+| 18 | **Combination matrix** (15 × 15) | Clinician | Every drug pair: shared mechanism / known evidence / untested (§7.4) |
+| 19 | **Heat-day timeline** | Clinician / demo | One heat day replayed: forecast → texts → check-ins → escalation → help arrives (§7.1) |
+| 20 | **3D NYC map** | Both | Heat, prescriptions, cooling places, deliveries (§4.3) |
+| 21 | **Heat-wave probability bar + context strip** | Both | Is heat coming (§6.6) |
+
+**Directed-edge rules (node graph and Sankeys):**
+- Arrows go from **drug or heat → harm.** We set the direction ourselves and don't trust the graph's source/target order: System warns about direction errors, and some links are stored backwards, e.g. "hyponatremia → hydrochlorothiazide."
+- Solid = higher risk; dashed/hollow = no effect found; different color = lower risk; thickness = number of studies.
+- Arrows mean "linked to," not "causes." Say this in the legend.
+- The main evidence map stays a grid; the network lives in the node-graph view.
+
+## 6. Supporting models and content
+
+### 6.1 Multiple medications (systems thinking)
+Risk is assessed **per patient across all their medications.**
+
+**What the evidence says about combinations:**
+- 2+ antipsychotics: OR 4.05 vs monotherapy 1.79 for heat-dome death (BC 2021)
+- ACE inhibitor + diuretic started together: highest dehydration/heat-illness admission ratio, 2.79 (Kalisch Ellett 2016)
+- Thiazide + SSRI: may cause about 30% of hyponatremia admissions (Swedish data)
+- The "triple whammy" (diuretic + NSAID + ACEi/ARB): **null** for in-hospital AKI in heat (Mangoni 2017). Shown honestly.
+- Polypharmacy / anticholinergic burden: linked to heat-wave admission, not death
+- Most combinations are untested in heat, and that's shown as a gap.
+
+**How we combine (no fake math):**
+- Group drugs by mechanism: sweat blocked, fluid/salt loss, kidney-cleared buildup, faster absorption, sedation, blood-pressure drop, storage-sensitive.
+- Flag **same-mechanism stacking** (sweat blockers summed with the Anticholinergic Burden scale).
+- Flag **cross-mechanism danger combos** (fluid-losing drug + kidney-cleared narrow-margin drug like lithium, digoxin or dabigatran).
+- Flag **known combos with direct evidence.**
+- **No single multiplied risk score.**
+
+**Where it appears:** call-first ranking, Drug Card "risky partners," patient combined warning, combination web and matrix, EHR alert. The synthetic panel (Synthea) generates realistic multi-drug lists.
+
+### 6.2 Heat Dose Compass (from the judge's input)
+- For each drug: ↑ stronger in heat (insulin absorption, patches, lithium/digoxin buildup, added blood-pressure drop), ↓ weaker (degraded epinephrine or insulin, patches peeling off, unreliable inhalers), or ↕ depends.
+- Each also shows mechanism, trigger (forecast heat, fever, exertion, heat on a patch), what to monitor and evidence strength.
+- **No numbers, and no temperature slider** (dropped 14 Nov). There isn't enough data: no validated calibration exists, and wearable core-temperature estimates aren't validated in medicated patients.
+- **Evidence:** Vanakoski & Seppälä, *Clin Pharmacokinet* 1998 (PMID 9571303): heat changes oral-drug kinetics only a little but raises levels from transdermal and subcutaneous drugs. Human data are very limited.
+- **Talking point:** "We show direction, not doses, because that's what the evidence supports."
+
+### 6.3 Featured case: schizophrenia and SBH
+- **Illness and medication both contribute,** plus poverty and isolation:
+  - BC 2021 heat dome (Chen et al., *Sci Rep* 2025): any antipsychotic OR 2.43; 2+ OR 4.05; haloperidol 3.31; clozapine 2.63; aripiprazole not elevated; income assistance 2.45
+  - Japan within-person study: no added drug effect
+  - Cincinnati 1999: many who died weren't taking their psychotropics; AC was the strongest protection
+  - Bark 1998, Bronx Psychiatric Center: psychiatric patients died at about twice the general population's rate in heat waves, and prevention after 1979 reduced it
+- **Label:** FLAG high, CHANGE moderate. Review combination therapy in spring; check-ins and cooling access during heat; never stop abruptly.
+- **SBH:**
+  - Bronx safety-net system serving mostly Medicaid and uninsured patients
+  - SBH Behavioral Health: 160,000+ visits a year; 49 adult psychiatric beds; psychiatric emergency care in an ED with about 100,000 visits a year
+- Details in `docs/schizophrenia-sbh-focus.md`.
+
+### 6.4 Heat-risk pathways and hidden heat drugs
+- **Pathway:** drug → (dehydration / low sodium / kidney injury / blood pressure) ← heat, built from System findings on both sides.
+- Validated against known heat-risk drugs ("rediscovers X of Y").
+- Drugs with strong pathways on no guidance list are **flagged as hidden heat drugs**. They're confirmed against the literature before any claim is made.
+- **Known blind spot:** anticholinergics act through sweating, and the graph has no anticholinergic × sweating findings. Say so.
+
+### 6.5 Climate layer
+**Purpose:** climate data exists so medicines are prescribed, taken, stored and delivered safely despite the heat. It's near-term operations, not climate prediction.
+
+| Horizon | What's needed | Data | Action |
+|---|---|---|---|
+| This season / next few years | When heat season starts, expected heat days, recent trends | NOAA 1991–2020 normals; recent NYC summers (NOAA GHCN-Daily, Central Park / LaGuardia) | Spring medication review; summer delivery rules |
+| Week | Is a heat wave coming, how bad, and do nights cool? | NWS/CDC **HeatRisk** 0–4 by ZIP ([WPC HeatRisk](https://www.wpc.ncep.noaa.gov/heatrisk/)); NWS API; advisories; heat index | Outreach list, safety alert, EHR alert (≥ orange) |
+| Day / hour | Hourly temperature, humidity, overnight low | NWS hourly forecast | Cooling-place timing ("before 11 AM"); check-ins |
+| After | Did the heat wave just end? | Same | Post-heat-wave labs |
+
+**Where heat lands:**
+- NYC Heat Vulnerability Index
+- NYC Hyperlocal Temperature Monitoring: about 475 street-level sensors, hourly, dataset `qdq3-9eqn`; **thin Bronx coverage, shown as a gap** ([data.gov](https://catalog.data.gov/dataset/hyperlocal-temperature-monitoring))
+- urban heat island data story and mobile sensor routes ([DOHMH](https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/urban-heat-island/))
+- Landsat surface temperature
+- tree canopy
+- NYC heat mortality reports (about 525 heat deaths a year citywide, mostly at home); heat-related ED visits
+
+**Things that compound heat:** nights that don't cool, humidity, air quality (AirNow), power outages.
+
+**In the product:** the heat context strip on every view; temperature thresholds shown where studies report one (most have none, shown as a gap); Compass and alerts tied to the HeatRisk level.
+
+### 6.6 Heat-wave forecasting: NOAA only
+- Day-by-day forecasts lose skill after about 10–14 days, so further out we give **odds, not dates.**
+
+| Time ahead | Source | Gives |
 |---|---|---|
-| **A. Scholarly evidence** | System Public Graph (API + Dataverse v2.1); our master list of 86 drug-risk rows and the research report (PMIDs/DOIs, verified through PubMed and Crossref) | Evidence meters and claims |
-| **B. Official, non-scholarly, verifiable** | FDA adverse-event reports (openFDA FAERS); FDA label text (openFDA / DailyMed); heat-health guidance documents (CDC, NYC DOHMH, UKHSA, Health Canada, ANSM, WHO Europe, Victoria, Germany); RxNorm; CMS Part D; CDC PLACES; NYC Heat Vulnerability Index; NYC Open Data (cooling centers, pharmacies); NOAA/NWS weather | Signals, label audit, guidance comparison, mapping, normalization |
-| **C. Unverifiable** (news reports of heat deaths, patient forums, social media) | **Optional; context only** | Only for the pitch hook or a "what patients are asking" panel. **Never counted as evidence.** Always labeled. No identifiable individuals quoted. |
+| 0–7 days | NWS/CDC HeatRisk; NWS API | Heat-risk level by ZIP, daily |
+| 6–14 days | NOAA CPC 6–10 / 8–14 day outlooks | Probability above / near / below normal |
+| 3–4 weeks | CPC week 3–4 outlook | Same, coarser |
+| 1–3 months | CPC monthly and seasonal outlooks | Same |
+| Any date | NOAA history (about 30 years) | Historical odds of a heat wave around this date |
 
-**Rule:** a source earns its place only if it changes a label, a ranking or a headline number. Otherwise it's noise and is cut.
+- **Probability bar:** the forecast where available, otherwise the CPC outlook shifting the historical odds. On 13 Nov it reads about 0%, so it's a drill; in July it's a live readiness check. Colors match HeatRisk; the source is labeled.
+- Heat-wave definition: NWS NYC advisory criteria (*to confirm*).
+- **No custom forecasting ML.**
 
-### 4.2 Data quality requirements
-- Drug names normalized to RxNorm ingredients and classes
-- Graph findings deduplicated to distinct papers, with effect direction tagged
-- Only findings that appear in both the API and the Dataverse CSV are kept (System says about 20% of findings are extracted inaccurately)
-- About 40 graph findings hand-checked against their abstracts, with accuracy reported
-- Guidance documents coded independently by both team members, with Cohen's kappa reported
-- Every public citation verified, or else marked as unverified
-- Versions and access dates pinned in `data/SOURCES.md`
+### 6.7 Wearables: where the evidence runs out
+- Heart-rate-based core-temperature estimators (e.g. ECTemp) are validated only in healthy soldiers, athletes and firefighters, and miss many readings above 39°C.
+- They've never been validated in people on beta blockers, stimulants or anticholinergics, or in older, dialysis, MS or pregnant users.
+- Shown as an "evidence runs out" panel linked from the Compass.
 
-### 4.2a Current quality of our research data (as of 13 Nov 2026)
+### 6.9 The medicine's whole journey (from Myra's notes): organizes the site
+Covers supply chain, clinician and patient in one picture: the systems thinking the hackathon favors. **Decided (C5):** the site is organized by these 6 stages, and each stage can also be viewed as a **map view** (3D NYC), a **graph view** (node graph) and a **patient-facing view** (Medicine Cabinet).
+
+| Stage | What heat does | Clinician / system action | Patient / caregiver action |
+|---|---|---|---|
+| **1. Prescribe** | Some drugs add heat risk | EHR alert during a heat forecast; review combinations before summer | — |
+| **2. Dispense / ship** | Mail-order packages go out of range (every shipment in the Utah study) | Pharmacy holds heat-sensitive mail orders or ships insulated during heat alerts | "Bring the package in right away" |
+| **3. Store at home** | Insulin and EpiPens degrade; outages spoil refrigerated drugs | Refill reminders before heat season; outage plan | Thermochromic bottle: "Too warm? Here's what to do" |
+| **4. Take it** | Insulin absorbs faster; patches release more drug; lithium builds up | Heat Dose Compass | Plain label line |
+| **5. Watch for warning signs** | Signs of heat illness differ by drug | Call list sorted by risk | "I feel dizzy" button that reaches the clinic |
+| **6. After the heat wave** | Refill and ER surges after outages (Hurricane Beryl, Houston) | Follow-up list; post-heat-wave labs | Check levels if advised |
+
+Sources: `research-notes/` and `report/Prescribed drug heat risks.md`. Verify before slides.
+
+### 6.8 Synthetic patient panel
+- **Demo:** Synthea (open-source synthetic FHIR patients), tuned to the SBH catchment's ages and conditions (CDC PLACES, Census), with multi-drug lists and synthetic questionnaire answers.
+- **Population view:** CMS Part D aggregates.
+- **Real deployment:** a clinic connects its own FHIR panel.
+- No real patient data is used at the hackathon.
+
+## 7. Scale-up ideas (the four strengths)
+
+### 7.1 Core loop: see risk → act → someone shows up
+- **Show the real software, not a staged scenario** (decided 14 Nov). No role-play with judges. Demo the working product: forecast → call-first scatter → send alert → push + SMS actually delivered → escalation logic → clinic board updating. *(Test DND-breakthrough and SMS delivery on our own phones beforehand.)*
+- **Heat-day timeline replay (visual 19):** one real past NYC heat day, minute by minute. 5 AM forecast → 6 AM cooling-place texts → 10 AM check-ins → 11:30 no reply → contact alerted → 11:52 contact arrives. Swimlanes for patient, system, contact and clinic.
+- **Lasso-to-act:** select the top-right dots on the call-first scatter → preview the personalized messages → send to all.
+- **Smart replies:** "OK" / "Need help" / "Can't get there." "Need help" or "can't get there" goes straight to the clinic call list.
+- **Patient → clinic buttons** (from Myra): **"I feel unwell / dizzy"** and **"I have no AC"** move that patient to the top of the clinician's call list in real time. That's the loop judges can see live.
+- **Child and caregiver case** (from Myra, aimed at Dr. Sarabu):
+  - Topiramate, a common pediatric epilepsy and migraine drug, can stop children sweating. Its FDA label notes this mostly in children.
+  - Children can't report symptoms, so the patient message goes to the **parent, and the school nurse or camp**: "Your child's medicine can make it hard to sweat. During hot days and sports, watch for…"
+  - Contrast to show: the label *does* mention it, yet heat guidance mostly doesn't.
+  - **Check that the citation is verified** before using it.
+- **Trusted-contact view:** a simple page with the patient's address, what to look for, what to do, and one tap to call 911.
+- **Cooling-place matching:** spread people across nearby places by distance and opening hours. Suggest neighbors go together ("cooling buddies").
+- **Outcome funnel on the clinic board:** at risk → alerted → acknowledged → at a cooling place → checked on.
+- **End-of-season report:** response times, places used, contacts triggered. It tunes each person's wait times (§4.4a).
+
+### 7.2 Evidence map + Drug Card
+- **Lenses** on the periodic table: by prescriber (a **pediatrics lens** for the judge), bucket, guidance gap, or "in the System graph."
+- **Confidence chips** on every claim: *System graph ✓* / *literature only* / *guidance only*.
+- **Compare mode:** two drugs side by side.
+- **Printable one-page heat counseling sheet per drug,** for pharmacists and clinic handouts; it matches the printed bottle props.
+- **Search any drug:** if it isn't in our 15, show what the System graph's two-hop pathways suggest, marked "not yet reviewed."
+- **Drug Card tabs:** Label · Compass · Evidence · Guidance · Combinations · Alternatives · Patient wording.
+
+### 7.3 Gap constellation + graph audit
+- **Research agenda ranked by local impact:** rank the implied-but-untested drug-heat links by **how many SBH-area patients they affect.** That's novel: gaps weighted by real burden.
+- **"Fix list" for System:** a CSV and one-page report of PMIDs that are indexed but have no findings, mislabeled findings (e.g. Martin-Latry "psychotropic drugs"), and direction errors. Hand it to System's judges.
+- **Before / after:** how many drug-heat links the graph shows now vs after our corrections.
+- **Coverage strip per drug:** share of its key papers with findings extracted in System.
+- **Live counts** from the API.
+- **"The 10 questions research must answer next"** (from Myra, for Verhulst): the top implied-but-untested links and evidence gaps, as one slide.
+- **Validate hidden heat drugs first** (from Myra): run the chain on known heat drugs (diuretics, lithium). If they rank high, the hidden list is credible; if not, drop the claim and lead with the audit. Lithium has no direct graph links, so check whether it shows up through the chain at all.
+- **Deliver the audit constructively:** three of five judges work on the graph or scholarly infrastructure. Every other team will praise the graph; we improve it.
+
+### 7.4 Combination flags
+- **15 × 15 combination matrix (visual 18):** each pair marked as shared mechanism / evidence-backed danger / untested. Untested cells feed the gap constellation.
+- **Top risky combos in the panel:** "the 5 combinations to review this spring" for the SBH synthetic panel.
+- **Anticholinergic Burden calculator** per patient.
+- **Combination-aware alerts:** in the EHR alert and the patient app.
+
+### 7.5 Headline line and pitch (from Myra's notes)
+**The line judges should walk away with:**
+> "Your medicine warns you about alcohol, not heat. We wrote the missing label, traced every word back to System's graph, and turned it into a call list a Bronx clinic could run on Thursday."
+
+**The physical wow: the warning appears in their hand.**
+1. A judge holds a plain pill bottle.
+2. As their hand warms it, a heat warning appears (thermochromic ink, activating near skin temperature, ~31°C/88°F).
+3. They scan the QR code, and the warning opens on their own phone (English or Spanish).
+4. They tap "I feel dizzy," and on the big screen the Bronx clinic's call list moves that patient to the top.
+
+**Backup if the stickers don't arrive:** a printed label with a QR code. The reveal is lost, but the phone moment stays.
+
+*Note (14 Nov): no hardware and no staged scenario, so the bottle reveal and the judge role-play below aren't in the plan. Kept for reference. The pitch is a walkthrough of the real software, organized by the 6-stage journey, switching between map, graph and patient views, and ending with the health-system switcher (§3.7).*
+
+**Myra's pitch run-of-show (3 minutes):**
+1. **0:00** Bottle in a judge's hand; the warning appears. "Your medicine warns about alcohol, not heat."
+2. **0:30** Journey map: heat affects the medicine from the pharmacy to the kitchen (§6.9).
+3. **1:00** The graph: the medicine → dehydration ← heat chain, hidden heat drugs, "your graph has 15 findings; here are 60 studies to add."
+4. **1:45** Live: heat forecast → EHR alert fires → clinician sends the label → judge's phone shows it (including the child version) → "I feel dizzy" → that patient tops the call list.
+5. **2:40** "Works for any city, every claim is sourced, the dataset is open, and here are the 10 questions research must answer next."
+
+*(Rachel's version adds the safety alert breaking through DND and the trusted-contact escalation as the live moment, §7.1. See choice C6.)*
+
+## 8. Data
+
+### 8.1 Source tiers
+| Tier | Sources | Use |
+|---|---|---|
+| **A. Scholarly** | System Public Graph (API + Dataverse v2.1); our literature review; master list and report | Evidence, claims |
+| **B. Official, verifiable** | Heat-health guidance (CDC, NYC DOHMH, UKHSA, Health Canada, ANSM, WHO Europe, Victoria, Germany); FDA label text; RxNorm; CMS Part D; CDC PLACES; NYC Heat Vulnerability Index; NYC Open Data (cooling centers, libraries, rec centers, pharmacies); NOAA/NWS; MTA GTFS | Guidance comparison, mapping, forecasts, routing, normalization |
+| **C. Unverifiable** (news, forums, social media) | Context only | Pitch hook at most. Never evidence. Always labeled. |
+
+**Rule:** a source earns its place only if it changes a label, a ranking or a headline number.
+
+### 8.2 Data quality requirements
+- Drug names normalized to RxNorm.
+- Graph findings deduplicated to distinct papers; direction tagged.
+- Keep API findings only if they also appear in the Dataverse CSV (System says about 20% are extracted inaccurately).
+- About 40 graph findings hand-checked against abstracts.
+- Guidance coded independently by both team members (kappa).
+- Every public citation verified, or marked unverified.
+- Versions and access dates in `data/SOURCES.md`.
+
+### 8.2a Automated verification: no human checking (decided 14 Nov)
+Every claim gets checked by machine, from several independent angles, and shows a **verification badge**.
+
+1. **Does the citation exist?** Check each PMID/DOI against PubMed / Crossref, and check the title matches. (We already found 50 of 51 PMIDs indexed in System.)
+2. **Is the number actually in the paper? (abstract grounding)** Fetch the abstract (PubMed / Europe PMC). Check that every number we show (e.g. "OR 2.43") **appears verbatim** in the abstract, along with the drug and outcome terms. It's simple string matching, cheap and very effective at catching made-up or mistyped numbers. An LLM reader is a second check for meaning (direction, population).
+3. **Does System agree? (double extraction with the graph)** For papers System has extracted, compare our value, direction and variables with System's `statistic_value`, CI and variable names.
+   - **Two independent extractions that agree** is the standard idea of "dual extraction" in systematic reviews, with System's pipeline as the second extractor.
+   - Disagreements are flagged, not silently resolved.
+4. **Is System's finding itself solid?** Keep API findings only if they also appear in the Dataverse CSV, as System recommends, since about 20% are extracted inaccurately.
+5. **Is the link corroborated?** Check that a matching System relationship exists (e.g. thiazide → hyponatremia, 5 studies) and that the effect direction is consistent across its findings.
+6. **Does the direction make sense?** OR/RR/HR > 1 = harm, and our claimed direction must match. Catches swapped cause and effect, a known System issue.
+
+**Badges (shown on claims; counts in nerd stats):**
+- **✓✓ Verified:** the number is in the abstract **and** System agrees.
+- **✓ Abstract-verified:** the number is in the abstract; System has no extraction.
+- **⚠ Conflict:** our value and System's disagree, or the direction doesn't match.
+- **? Unverified:** no abstract found or no number match. **Not shown on public labels.**
+
+**Limits, stated in nerd stats:**
+- System has findings for only some of our papers (8 of 51 so far), so most claims can reach ✓ but not ✓✓.
+- Abstract matching can't check numbers that only appear in full-text tables.
+- No human review was done.
+
+### 8.3 Current state of our data (13–14 Nov)
 **A good map, not yet verified data.**
-- The master list and report came from web searches and abstracts, mostly not full texts.
-- **Citation status of the 86 rows:**
-  - 40 have verified identifiers
-  - 16 are partly verified
-  - 5 are unverified
-  - 25 have no citation yet (basics drawn from guidance or general pharmacology)
-- **Severity ratings** are the compiler's judgment.
-- **Some figures** come from secondary or news sources (e.g. Nordon 2009, mail-order percentages).
-- **Checked against the System graph** (`data/master_list_graph_status.csv`):
-  - 38 of the 86 rows cite at least one PMID, 51 distinct PMIDs in all
-  - **50 of the 51 are indexed in the graph**, which confirms those PMIDs exist
-  - **Only 8 have extracted findings.** 42 are indexed with no findings.
-  - **PMID 42710533 (Harley 2026) isn't indexed.** Recheck that ID.
-  - Of the 8 with findings, Martin-Latry 2007 is mislabeled ("psychotropic drugs").
-- **Before anything goes public:**
-  1. Run the citation-verification script (PubMed/Crossref title match).
-  2. Read the abstract behind every number that appears on a label or slide.
-  3. Drop or mark anything that can't be confirmed.
+- The master list (86 rows) came from web searches and abstracts. Citations: 40 verified, 16 partly, 5 unverified, 25 with none.
+- Severity ratings are the compiler's judgment; some figures are from secondary sources.
+- **Checked against System** (`data/master_list_graph_status.csv`):
+  - 51 distinct PMIDs; **50 are indexed**, **8 have findings**, 42 have none
+  - PMID 42710533 isn't indexed (recheck the ID)
+  - Martin-Latry 2007 is mislabeled
+- **Graph coverage** (`docs/graph-check-results.md`): about 15 direct drug × heat findings; about 300 drug → mediator findings; heat → mortality / AKI / cardiovascular links present.
 
-### 4.3 Already in the repo
-- `data/Drug heat risk master list.xlsx` / `.csv`: 86 drug-risk rows, plus the guidance comparison
-- `data/graph_coverage.csv`, `data/graph_heat_relationships.csv`, `data/graph_heat_variable_hits.csv`: graph check output
-- `report/Prescribed drug heat risks.md`: cited research report
-- `docs/graph-check-results.md`: graph coverage results and how the landmark papers were filed
-- `data/master_list_graph_status.csv`: every master-list PMID looked up in the graph (indexed? findings?)
-- `docs/schizophrenia-sbh-focus.md`, `docs/supply-chain.md`: focus notes
+### 8.4 Getting better evidence: a mini systematic review with System built in
+1. **Search** PubMed (E-utilities) and Europe PMC (including open-access full text) with fixed drug × heat queries (MeSH: *Hot Temperature*, *Heat Stress Disorders*, *Heat Stroke*, *Extreme Heat*, *Hyperthermia*, *Hypohidrosis*, "heat wave"). Save the queries and counts.
+2. **Chase citations** from key reviews (Hospers 2024, Tews 2026, Kalisch Ellett 2016, Layton 2020, the 2025 schizophrenia review) via OpenAlex or Europe PMC.
+3. **System discovery:** scan the Dataverse associations CSV for drug + heat/temperature/summer variable names; pull the drug → mediator links.
+4. **Screen:** by LLM against fixed inclusion rules (**no human screening**, decided 14 Nov). Record counts.
+5. **Extract with System pre-filling:** LLM extraction from abstracts, then automated verification (§8.2a). Track System right / wrong / missing (this feeds the audit).
+6. **Grade** with the evidence tiers; tag direction and population.
+7. **Report the funnel** in the Evidence section.
 
-## 5. Evidence model
+### 8.5 What the System API can do
+| Capability | API | Use |
+|---|---|---|
+| Neighborhood around a concept | `/concepts/{id}/relationships` sorted by `num_studies` | Data-driven list of what links to heat harms |
+| Multi-hop paths | chained relationships | Pathways, hidden heat drugs |
+| Hypotheses (implied but untested) | drug → mediator + mediator → heat, without drug → heat | Gap constellation, research agenda |
+| Evidence weighting | `num_findings`, `num_studies` | Edge thickness, node size |
+| Evidence over time | `last_published_date`, study dates | Timeline, freshness badges |
+| Agreement | `statistic_value`, CI, `p_value` | Forest plots |
+| Who was studied | study `population` text | Coverage gaps (children, women…) |
+| Study design | `study_type` (often null) | Design mix |
+| Link to other data | Wikidata IDs | Drug classes, ATC, RxNorm |
+| Compare drugs on one outcome | filter by target concept | Ranked bars |
+| Stay current | live calls, `last_updated` | Live counts on Drug Cards |
+| Audit | study lookup by PMID | Evidence section, fix list |
 
-- **Evidence tiers (strongest to weakest):** RCT/meta-analysis → population study → small clinical study → case series → case report → lab/bench → label/guidance only → mechanism only
-- **Score inputs:** design weight × number of independent studies × consistency × how well the study population matches the people at risk. Graph pathway and FDA adverse-event signals are shown separately, never blended into the literature score.
-- **FLAG vs. CHANGE:** if the strongest within-person studies show no added risk from the drug, it scores high on FLAG and low on CHANGE.
-- **Null findings and conflicts are shown,** not hidden.
+**Limits:** 10,000 requests/day; closed beta (fields may change); about 20% of extractions wrong; filing incomplete. Cache locally and verify claims.
 
-## 6. Non-goals
+**Note:** System's API returns data only (JSON). There's no public visual explorer, so we build all the visuals.
 
-- No patient-specific medical advice, and no dosing instructions
+### 8.6 Already in the repo
+- `data/Drug heat risk master list.xlsx` / `.csv`: master list (86 rows) and guidance comparison
+- `data/graph_coverage.csv`, `graph_heat_relationships.csv`, `graph_heat_variable_hits.csv`, `master_list_graph_status.csv`: graph checks
+- `report/Prescribed drug heat risks.md`: research report
+- `docs/graph-check-results.md`, `docs/schizophrenia-sbh-focus.md`, `docs/supply-chain.md`, `docs/system-api-guide.md`, `docs/winning-plan.md`
+- `scripts/graph_check.py`, `scripts/build_master.py`
+
+### 8.7 Starting scope: 15 medications (we may add more)
+The knowledge base is one row per drug, and the views read from it, so adding drugs means adding rows, not code.
+
+Suggested 15 (to confirm):
+- lithium
+- loop diuretics
+- thiazides
+- ACE inhibitors/ARBs
+- SGLT2 inhibitors
+- insulin (incl. pumps)
+- metformin
+- anticholinergics (oxybutynin)
+- antipsychotics (incl. clozapine)
+- SSRIs
+- topiramate/zonisamide
+- ADHD stimulants
+- beta blockers
+- fentanyl/opioid patches
+- epinephrine auto-injectors
+
+## 9. Evidence model
+- **Tiers (strongest to weakest):** RCT/meta-analysis → population study → small clinical study → case series → case report → lab/bench → label/guidance only → mechanism only.
+- **Evidence score:** design weight × independent studies × consistency × population match. Graph pathways are shown separately, never blended in.
+- **FLAG vs CHANGE:** strong within-person studies showing no added drug effect → high FLAG, low CHANGE.
+- **Personal readiness level:** documented points from the questionnaire + medication stack + neighborhood heat (§4.5a).
+- **Null findings and conflicts are shown, not hidden.**
+
+## 10. Guardrails
+
+### 10.1 Non-goals
+- No patient dosing advice or dose numbers
 - No recreational or illicit drugs
-- No naming individual prescribers or patients
-- No brand names or pharmacy logos on the props
+- No naming individual prescribers or patients; no real patient data
+- No brand names or pharmacy logos on props
 - Not a replacement for clinical guidance
 
-## 7. Success criteria
+### 10.2 Success criteria
+- **Judging:** every rubric area visibly covered; a clean, rehearsed 3-minute demo of the core loop, with a recorded backup.
+- **Accuracy:** no unverified claim on a public label; every headline number traces to a repo file.
+- **Headline numbers:**
+  - graph coverage and audit
+  - pathway validation (X of Y known heat drugs rediscovered)
+  - hidden heat drugs flagged
+  - number of patients to call in the simulated heat wave
+  - escalation time-to-help
+- **Usefulness:** the core loop runs end to end on a replayed NYC heat day.
 
-**Judging:**
-- Every rubric area visibly covered: meaningful graph use, insight and usefulness, technical execution, communication
-- A clean, rehearsed 3-minute demo with a recorded backup
+### 10.3 Constraints
+- **Time (corrected from Myra's notes):** hacking runs **Sat 10 AM–3 PM**, and the Devpost deadline is **3:00 PM**. That's about 5 hours on Saturday plus Friday night, not 24 hours. Two people.
+- System API: closed beta, 10,000 requests/day; key in `.env` (gitignored).
+- Licenses: System Public Graph is CC BY-NC 4.0 (non-commercial, credit required).
+- November: no live heat, so replay mode.
+- iOS Critical Alerts need Apple's entitlement. For the demo, test what breaks through DND on the actual phones.
 
-**Accuracy:**
-- No unverified claim appears on a public label
-- Every headline number traces to a file in the repo
-
-**Headline numbers, ready to state:**
-- Graph coverage: findings and correctly filed papers
-- Label audit: X of Y labels carry no heat warning
-- Hidden heat drugs found, and how many FDA reports confirm
-- Pathway validation: share of known heat drugs rediscovered
-
-**Usefulness:** the playbook runs end to end for at least one real past NYC heat wave.
-
-## 8. Constraints
-
-- **Time:** about 24 build hours, two people
-- **API:** System API is a closed beta, 10,000 requests/day. Key stays in `.env` (gitignored). Field names may change.
-- **Licenses:** System Public Graph is CC BY-NC 4.0 (non-commercial, credit required). Check terms for each other source.
-- **Season:** November, so there's no live heat. The playbook uses a replay.
-
-## 9. Risks
-
+### 10.4 Risks
 | Risk | Mitigation |
 |---|---|
-| Thin graph coverage hurts the "meaningful graph use" score | Two-hop pathways + paper-level receipts + graph audit put the graph at the center |
-| Overclaiming from adverse-event reports or case reports | Label the evidence type everywhere; show confounding |
-| Labels mistaken for medical advice | Disclaimer on every label and prop; "considerations for clinicians" wording |
-| Live demo breaks | Recorded backup; replay mode by default |
-| Scope creep | Cut stretch outputs first; never cut the Methods page |
+| Thin graph coverage hurts "meaningful graph use" | Pathways, gap constellation, receipts and audit put the graph at the center |
+| Overclaiming | Evidence type labeled everywhere; confounding shown |
+| Read as medical advice | Disclaimers; "considerations for clinicians"; no patient dose advice |
+| Alert fatigue / false alarms | High-risk days only; computed waits; personal p90 |
+| Live demo breaks | Recorded backup; replay mode |
+| Scope creep | Core loop + evidence map first; §11 items only if time |
 
-## 10. Maybe (only if time allows)
+## 11. Add later if time
+- **Supply chain, in depth** (beyond the 3D-map layer): pre-ship risk check (forecast + drug profile + shipping speed → ship / upgrade / insulate / reroute / hold), "bring it inside" delivery texts, doorstep exposure via mean kinetic temperature, pharmacy dashboard. Talking point: we quantify the drug in the box, not in the body. Details: `docs/supply-chain.md`.
+- **Hardware:** package temperature logger (ESP32 + SHT31), or a home temperature sensor (§4.4, item 8). Myra's hardware concepts:
+  - **"Heat odometer" for medicines:** a tag (ESP32 + SHT31/DS18B20 + battery + e-ink or LED, ~$25–35) that keeps a running mean kinetic temperature for a drug kit or shipment. Example: "Lorazepam kit: 41 days at MKT 31°C, beyond what studies tested, rotate." Demo: pre-heat it, and lorazepam is flagged while midazolam is fine, matching the published data. **Honesty rule:** show "exposure beyond what study X tested," never an invented "% potency left."
+  - **Pharmacy fridge network for blackouts:** a live map of where insulin is still stored safely during an outage. Hard to demo with one device.
+  - **Thermochromic shipping label:** already sold by vendors (e.g. SpotSee), so it's a prop only.
+  - Myra's view: the storage sensor only if someone has done ESP32 work **and** the parts are in hand; 15 seconds of the pitch at most. No rubric criterion scores hardware, and the graph has no storage evidence.
+- **Publish the label dataset** as an open, versioned set (for Travis Rich).
+- **Thermochromic printed bottles** (props).
+- **Standalone public story site** ("The Missing Label" scrolling story: a person, the four ways heat and medicine collide, the graph pathways, the guidance gap, the Bronx, the doorstep, the reveal). Its opening can be the pitch intro.
+- **Heat Label API** (RxNorm code in → label JSON out).
+- **City toggle** (e.g. Phoenix).
+- **FDA label audit:** does each heat-risk drug's official label mention heat?
+- **Escalation trade-off simulation:** false alarms vs time-to-help on the synthetic panel.
+- **Long-range climate projections** (NPCC4; NPCC3 said 24–75 days ≥90°F/yr by the 2080s vs 10 in 1971–2000). At most one pitch line.
 
-- **FDA label audit:** scan official FDA label text (openFDA drug labels / DailyMed) for every heat-risk drug and check whether it mentions heat, hyperthermia, sweating or dehydration. Headline: "X of Y heat-risk drugs carry no heat warning on their official label."
+## 12. Decision log and open questions
 
-## 11. Open questions
+### 12.1 Decisions
+- **13 Nov:**
+  - The evidence map is the primary deliverable, readable by non-specialists.
+  - Clinician-first, with a pediatrics slice.
+  - Light mode.
+  - NOAA only for forecasting.
+  - Heat Dose Compass instead of a dose algorithm.
+  - Synthetic patients only.
+  - Directed arrows set by us.
+- **14 Nov:**
+  - The core loop is the standout.
+  - The **safety alert is mandatory**.
+  - Medicine Cabinet is the patient app.
+  - Prototype **all** visuals, then cut.
+  - Node graph required.
+  - Call-first scatter chosen.
+  - 15 drugs to start.
+  - Core 5 questions.
+  - Escalation timing derived from a time budget.
+- **Dropped (14 Nov):**
+  - the Compass temperature slider (not enough data)
+  - action items: cooling-place ride help, Con Edison life-sustaining-equipment enrollment, building door-knocks, NYC Advance Warning System
+  - custom forecasting ML
+  - FDA adverse-event (FAERS) disproportionality analysis (not something the team asked for)
 
-- Which ~8 drugs get polished labels? (Suggested: lithium, loop diuretics, topiramate, oxybutynin, fentanyl patch, insulin/pump, SGLT2 inhibitors, an antipsychotic)
-- Tech stack for the site and maps
-- Can thermochromic labels arrive in time?
-- Are we including the optional sensor?
-- Do we include any tier C (unverifiable) sources, and if so, only in the pitch?
+### 12.2 Choices: Rachel's spec vs Myra's notes (merged 14 Nov)
+**Rachel's decisions (14 Nov):**
+- **C1:** keep the **Medicine Cabinet app**.
+- **C2:** the safety alert is **mandatory**, sent as **both an app push notification (breaking through DND) and an SMS**.
+- **C3:** we **are** building the **3D map**.
+- **C4:** **build the node graph** to see it, and decide later whether to use it.
+- **C5:** **both.** The site is organized by the **6-stage journey**, and it can also be viewed as a **map view, a graph view and a patient-facing view**.
+- **C6:** **no staged or role-played scenario** (no "judge plays the patient"). The pitch shows off the real software working.
+- **C7:** keep **FLAG / CHANGE**.
+- **C8:** the **3-step meter (Strong / Some / Early signs)** is shown on the main screens. The **8-step tier detail** lives in **nerd stats**.
+- **No human checking of the evidence (14 Nov):** it isn't realistic in the time. Verification is **automated** (§8.2a), and nerd stats states this plainly.
+- **C9: YES, use the FDA adverse-event reports (FAERS via openFDA)** as a labeled **warning signal**, never as proof: anyone can report, there's no count of people taking each drug, and a report doesn't prove cause. It's used as a third evidence layer and to check "hidden heat drugs."
+- **C10:** patient messages are **customized to each patient's needs** (see §4.5b). The method is to be worked out and may involve learning from data.
+- **C11:** **no hardware**, so no thermochromic bottles. All hardware stays in §11.
+- **C12:** **don't scale down.** Keep the full scope; a lot can be done in 5 hours.
+- **SBH clarification:** SBH is an **example client to zoom in on**, not *the* client. The product must scale to **any hospital or health system** (§3.7).
+
+**The original conflict list:**
+
+| # | Topic | Spec (Rachel) | Myra's notes |
+|---|---|---|---|
+| C1 | **Patient side** | "My Medicine Cabinet" **app** (cabinet visual, questionnaire, notifications) | **Not an app:** one phone page the clinic sends, reached by QR code on the bottle or a text |
+| C2 | **Safety alert / live messaging** | Mandatory alert through DND; trusted contact; live judge demo | **Cut "live SMS"**; the clinic sends one label page |
+| C3 | **NYC map** | 3D NYC map (team builds) | **Cut "full NYC map"** |
+| C4 | **Node graph** | Required interactive node graph; prototype all 21 visuals | **Graph as a simple picture, not a network diagram**; one example per bucket |
+| C5 | **Site structure** | 3 screens (Evidence Map, Heat-Wave Readiness, Evidence) built around the core loop | The **6-stage medicine journey** organizes the site |
+| C6 | **Pitch live moment** | Safety alert breaks through DND, then trusted-contact escalation | Thermochromic bottle → QR → "I feel dizzy" → call list moves |
+| C7 | **FLAG / CHANGE names** | FLAG / CHANGE | "Check on this person" / "Rethink the medicine" |
+| C8 | **Evidence display** | 8 evidence tiers | 3-step meter: Strong / Some / Early signs (tiers kept underneath?) |
+| C9 | **FDA adverse-event evidence layer** | Dropped (FAERS removed 14 Nov) | Every claim tagged ① graph ② literature **③ FDA adverse-event reports** |
+| C10 | **Patient message content** | Tailored fluid advice; no blanket "drink water" (heart-failure fluid limits, low-sodium risk) | Example message says "Drink water… keep taking it" for everyone |
+| C11 | **Thermochromic bottles** | "Add later if time" | **Core: order tonight** |
+| C12 | **Scope vs time** | Prototype all 21 visuals, core loop, escalation algorithm, questionnaire | Must-haves are ~8 labels, patient page, call list, props, sized for **5 hours on Saturday** |
+
+### 12.3 Open questions
+- **"FDA verification" from the team's idea list:** what exactly does it mean? (Possibly checking FDA labels; to discuss.)
+- Confirm the 15 drugs, and which ~8 get polished labels.
+- Tech stack (site, node graph library, 3D map).
+- HeatRisk data access (API vs WPC data files); NYC heat-advisory criteria.
+- Verify: Semenza 1996; Be a Buddy; HEAP details; substitute examples; notification-study medians.
+- Do we use any tier C sources in the pitch?
