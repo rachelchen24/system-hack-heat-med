@@ -88,6 +88,11 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
     return { lat: data.patients.reduce((s, p) => s + p.lat, 0) / n, lon: data.patients.reduce((s, p) => s + p.lon, 0) / n };
   }, [data.patients]);
   const strip = useMemo(() => grid.times.map((_, t) => heatAt(grid, t, center.lat, center.lon)), [grid, center]);
+  // Horizontal position of hour t on the scrubber, matching the range thumb's center
+  // (it travels from THUMB_R to 100% - THUMB_R).
+  const THUMB_R = 8;
+  const at = (t: number) => `(${THUMB_R}px + (100% - ${2 * THUMB_R}px) * ${nHours > 1 ? t / (nHours - 1) : 0})`;
+  const halfHour = `((100% - ${2 * THUMB_R}px) / ${Math.max(1, nHours - 1)} / 2)`;
   const hereNow = (() => {
     const a = strip[idx], b = strip[Math.min(idx + 1, nHours - 1)];
     return a != null && b != null ? a + (b - a) * (tf - idx) : a;
@@ -161,16 +166,6 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setSelecting((s) => !s)}
-            aria-pressed={selecting}
-            className={`rounded-full border-2 px-4 py-2 text-sm font-semibold ${
-              selecting ? "border-layer-graph-fg bg-layer-graph-fg text-white" : "border-layer-graph-fg bg-layer-graph-bg text-layer-graph-fg hover:opacity-90"
-            }`}
-          >
-            {selecting ? "Cancel selecting" : "Select an area"}
-          </button>
-          <button
-            type="button"
             onClick={() => {
               if (step >= total) setStep(0);
               setPlaying((p) => !p);
@@ -218,8 +213,19 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
             area={area}
             onArea={pickArea}
           />
+          {/* Top-right corner of the map */}
+          <button
+            type="button"
+            onClick={() => setSelecting((s) => !s)}
+            aria-pressed={selecting}
+            className={`absolute right-3 top-3 z-20 rounded-full border-2 border-layer-graph-fg px-3.5 py-1.5 text-sm font-semibold shadow-sm ${
+              selecting ? "bg-layer-graph-fg text-white" : "bg-page text-layer-graph-fg hover:bg-layer-graph-bg"
+            }`}
+          >
+            {selecting ? "Cancel selecting" : "Select an area"}
+          </button>
           {selecting && (
-            <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-layer-graph-fg px-4 py-1.5 text-sm font-semibold text-white shadow">
+            <div className="pointer-events-none absolute bottom-10 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-layer-graph-fg px-4 py-1.5 text-sm font-semibold text-white shadow">
               Drag a box around the people you want to see · Esc to cancel
             </div>
           )}
@@ -296,9 +302,20 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
 
       {/* Scrubber over the heat strip */}
       <div>
-        <div className="flex h-7 overflow-hidden rounded" aria-hidden>
+        {/* Strip, slider and time scale share one horizontal scale: hour t sits at at(t), the same
+            spot as the slider thumb for that hour (the thumb's center is inset by its radius). */}
+        <div className="relative h-7 overflow-hidden rounded" aria-hidden>
           {strip.map((v, i) => (
-            <div key={i} className="flex-1" style={{ background: heatColor(v) }} title={`${fmtDate(grid.times[i])} ${fmtHour(Number(grid.times[i].slice(11, 13)))}: feels like ${v != null ? Math.round(v) : "—"}°F`} />
+            <div
+              key={i}
+              className="absolute inset-y-0"
+              style={{
+                left: i === 0 ? 0 : `calc(${at(i)} - ${halfHour})`,
+                right: i === nHours - 1 ? 0 : `calc(100% - ${at(i)} - ${halfHour})`,
+                background: heatColor(v),
+              }}
+              title={`${fmtDate(grid.times[i])} ${fmtHour(Number(grid.times[i].slice(11, 13)))}: feels like ${v != null ? Math.round(v) : "—"}°F`}
+            />
           ))}
         </div>
         <input
@@ -311,12 +328,32 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
             setStep(Number(e.target.value));
           }}
           aria-label="Time"
-          className="mt-1 w-full accent-[#d55e00]"
+          aria-valuetext={`${fmtDate(date)}, ${fmtHour(clock)}${hereNow != null ? `, feels like ${Math.round(hereNow)}°F` : ""}`}
+          className="mt-1 block w-full cursor-pointer accent-[#d55e00]"
         />
-        <div className="flex justify-between text-xs text-ink-muted">
-          {Array.from(new Set(grid.times.map((t) => t.slice(0, 10)))).map((d) => (
-            <span key={d}>{fmtDate(d)}</span>
-          ))}
+        {/* Time-of-day scale: tick every 3 h, label every 6 h (6 AM · noon · 6 PM), day name at midnight. */}
+        <div className="relative h-11 text-xs text-ink-muted" aria-hidden>
+          {grid.times.map((t, i) => {
+            const h = Number(t.slice(11, 13));
+            if (h % 3 !== 0) return null;
+            const midnight = h === 0;
+            const labelled = midnight || h % 6 === 0;
+            const now = idx === i;
+            // The very first label starts at the left edge instead of centering past it.
+            const edge = i === 0 ? "items-start" : "-translate-x-1/2 items-center";
+            return (
+              <span key={t} className={`absolute top-0 flex flex-col ${edge}`} style={{ left: `calc${at(i)}` }}>
+                <span className={`w-px ${midnight ? "h-3 bg-ink" : labelled ? "h-2 bg-current" : "h-1.5 bg-current opacity-50"}`} />
+                {midnight ? (
+                  <span className="mt-0.5 whitespace-nowrap font-semibold text-ink">{fmtDate(t)}</span>
+                ) : labelled ? (
+                  <span className={`mt-0.5 hidden whitespace-nowrap sm:block ${now ? "font-semibold text-ink" : ""}`}>
+                    {h === 12 ? "Noon" : fmtHour(h)}
+                  </span>
+                ) : null}
+              </span>
+            );
+          })}
         </div>
         <details className="mt-3 text-xs text-ink-muted">
           <summary className="cursor-pointer">Where this comes from</summary>
