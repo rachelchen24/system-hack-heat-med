@@ -221,13 +221,33 @@ def main():
                                                          "terms": set(), "kind": kind})["terms"].add(t)
     print(f"D. {len(var_hits)} matching variables ({c.stats()})")
     ids = sorted(var_hits)
+
+    def batch_assoc(side, chunk):
+        """OR-batched lookup; on a server error, split the batch in half (down to one-variable calls)."""
+        try:
+            return c.paged("/associations", page=100, cap=3000, filter=f"{side}:" + "||".join(chunk))
+        except RuntimeError as e:
+            if isinstance(e, BudgetExceeded):
+                raise
+            if len(chunk) == 1:
+                if side == "variable_1_id":  # the per-variable route returns both sides at once
+                    try:
+                        return c.paged(f"/variables/{chunk[0]}/associations", page=100, cap=1000)
+                    except RuntimeError as e2:
+                        if isinstance(e2, BudgetExceeded):
+                            raise
+                        print(f"  skipped variable {chunk[0]}: {str(e2)[-60:]}")
+                return []
+            mid = len(chunk) // 2
+            return batch_assoc(side, chunk[:mid]) + batch_assoc(side, chunk[mid:])
+
     try:
         for i in range(0, len(ids), 40):
             chunk = ids[i:i + 40]
             got = []
             if batch_ok is not False:
                 for side in ("variable_1_id", "variable_2_id"):
-                    got += c.paged("/associations", page=100, cap=3000, filter=f"{side}:" + "||".join(chunk))
+                    got += batch_assoc(side, chunk)
                 if batch_ok is None:
                     # verify OR semantics once against a single-variable call
                     single = c.paged(f"/variables/{chunk[0]}/associations", page=100, cap=1000)

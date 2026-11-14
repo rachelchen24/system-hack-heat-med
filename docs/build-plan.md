@@ -53,6 +53,14 @@ Needs: Step 1 formats and keys.
   - full scan of the **Dataverse associations CSV** (drug + heat/temperature variable names) and the list used for the API-vs-Dataverse cross-check
   - neighborhoods around the heat concepts
   - implied-but-untested links
+  - **Pulls for the 9 product questions (spec §8.5c).** Query all heat concepts: thermodynamic temperature, hyperthermia, heat illness, air temperature and heat wave. "Heat wave" alone has only 1 relationship.
+    - Q5, heat → harm: mortality, EMS, cardiac arrest, hospital mortality
+    - Q6, place factors: urban area, air conditioning, income, vegetation, housing
+    - Q7, patient factors: cardiovascular disease, kidney disease, age, pregnancy
+    - Q8, time-to-help: EMS, cardiac arrest
+    - Q9, storage: Dataverse variable-name scan for storage/stability terms, plus a study lookup for every storage paper we cite
+    - Q2: drug → same-harm findings to triangulate with FAERS
+    - Output: `data/processed/system_question_evidence.csv` with columns question, factor, concept, num_studies, num_findings, newest year, and "not in System" rows.
 - **FDA reports (openFDA FAERS):** report counts for each drug × heat reactions (heat stroke, hyperthermia, heat exhaustion, dehydration, hyponatremia, anhidrosis/hypohidrosis) and background counts for the signal math.
 - **Guidance:** text of the 8 guidance documents, for automated coding.
 - **Climate:**
@@ -94,6 +102,13 @@ Needs: Step 2 data.
 - **Guidance coding** (LLM, 8 sources × 15 drugs) → guidance coverage and gap badges.
 - **Pathways and hidden heat drugs:** chain System links, **validate on known heat drugs first**, flag candidates, check against FAERS signals.
 - **FAERS signal:** reporting ratios per drug × reaction, labeled "warning signal, not proof."
+- **System answers for the 9 questions (spec §8.5c):**
+  - Q2 triangulation: literature + System + FAERS agreement per drug
+  - Q3 label gap: System study count × "label mentions heat"
+  - Q4 guidance gap: System evidence strength × guidance coverage
+  - Q5–Q8: a System-support citation for every threshold, map layer, readiness-score factor and escalation number, or "not in System"
+  - Q9 storage coverage: "System has findings from N of our M storage papers"
+  - Thin and zero rows go into the gap constellation.
 - **Graph audit:** papers in System / extracted / correct / mislabeled; fix list; "10 questions research must answer next."
 - **Substitutes:** 2–3 per drug where prescribing sources support them.
 - **Output:** the real knowledge base, the audit outputs, and the numbers for nerd stats.
@@ -113,7 +128,9 @@ Needs: Step 1 (start on mock data), then Step 3's knowledge base.
 - Site shell organized by the **6-stage journey**, with **map / graph / patient view** switches.
 - **Periodic table** evidence map (3-step meter, bucket colors, prescriber icons, gap rings, lenses incl. pediatrics).
 - **Drug Card:** label, FLAG/CHANGE, Compass (arrows only), forest plot, badges, guidance, combinations, substitutes, patient-wording preview, EHR alert preview.
-- **Evidence-vs-guidance quadrant.**
+- **Evidence-vs-guidance quadrant** and **evidence-vs-label quadrant** (System study count on one axis).
+- **"3 sources agree" marker** on the Drug Card (literature + System + FAERS).
+- **"System evidence" chips** on every screen that answers one of the 9 questions (forecast threshold, map layers, scatter tooltip, escalation assumptions, storage card), each showing the study count or "not in System."
 - **Nerd stats:** 8-step tiers, evidence funnel, verification badge counts, graph audit and fix list, formulas, sources, limitations, escalation assumptions, and the DND-breakthrough caveat.
 - **Live System layer** (role 6): the Drug Card fetches live relationship counts and newest-evidence year from the System API through a cached Next.js API route; API status in nerd stats.
 

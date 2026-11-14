@@ -753,6 +753,8 @@ System is used in **six roles**, and each shows up visibly in the product (25% o
 | 5 | **Auditor (giving back)** | Papers indexed / extracted / correct / mislabeled; fix list (e.g. Martin-Latry mislabel, missing stimulant finding) | Graph audit funnel; fix-list handout for System's judges | 3 |
 | 6 | **Live layer** | Drug Cards fetch live relationship counts and newest-evidence year from the API (cached; 10,000 requests/day) | "Live from System" badge on cards; API status in nerd stats | 5 |
 
+**Per question:** §8.5c maps each of the 9 product questions to its System step.
+
 **Data flow:** a Python pipeline pulls from the System API and the Dataverse CSV → caches in `data/raw/system/` → verification and pathway scripts → knowledge-base JSON → app. The live layer only refreshes counts. Claims come from the verified knowledge base.
 
 **Headline numbers from System:**
@@ -778,6 +780,32 @@ System is used in **six roles**, and each shows up visibly in the product (25% o
   - Name-matched System findings have unreviewed `auto_flags_heuristic`. Filter flagged rows and BP-efficacy rows out of public views.
   - `system_hidden_drug_candidates.csv` is unvalidated. Never show it as findings.
 - **Rediscovery result (Dataverse):** diuretics rank 1–3 of 19, lithium 7, antipsychotics 11, anticholinergics 15. Thermoregulation (sweating / body temperature) is barely in the graph, and that's itself a gap finding.
+
+### 8.5c The 9 product questions, and how System answers each (Sat 14 Nov)
+The product is organized around 9 questions. **Every question gets a System step**, even where System is only a cross-check. Where the graph is thin, we say so on screen ("System has N studies on this"), and the thinness itself is a gap finding.
+
+**Probe (Sat 14 Nov, live API, top 1,000 relationships of each heat concept, sorted by study count):**
+- Heat evidence is mostly filed under **"thermodynamic temperature"** (201 relationships), with smaller sets under "hyperthermia" (95), "heat illness" (62) and "air temperature" (20).
+- **"heat wave" has only 1 relationship.**
+- So heat queries must cover all of these concepts, not just "heat wave."
+
+| # | Question | Our main data | What System does | System coverage (probe) | Output / where it shows |
+|---|---|---|---|---|---|
+| 1 | **Which medicines are risky, and how sure are we?** | Literature review (5,995 searched, 333 included), 105 verified citations | **Roles 1–4:** drug → mediator (dehydration, kidney injury, low sodium) ← heat pathways; second extractor for our numbers; corroboration counts; reverse check | **Strong** (about 300 drug → mediator findings) | 3-step meter, badges, pathway Sankey, node graph, Drug Card forest plot |
+| 2 | **Does real-world harm show up?** | FAERS signals (heat stroke, loss of sweating) vs comparison drugs | **Triangulation:** for each drug, does the FAERS signal line up with System findings for the same harm (e.g. drug → acute kidney injury, drug → hyponatremia)? Three-way agreement: literature + System + FAERS | **Some** (mediator outcomes yes; sweating/thermoregulation barely in graph) | "3 sources agree" marker on Drug Card; agreement matrix in nerd stats |
+| 3 | **Are patients warned?** | FDA label audit (28 of 45 drugs: no heat warning on any label) | **Evidence vs label gap:** System's study count per drug next to "label mentions heat? Y/N." Headline: "N drugs with X+ studies in System still carry no heat warning" | **None directly** (no label concepts); System supplies the evidence side | Label-gap quadrant (evidence strength × label warning); Missing Label |
+| 4 | **What does guidance say?** | 8 guidance sources coded per drug (mentioned vs specific action) | **Evidence vs guidance gap:** same idea, System evidence strength × guidance coverage. Drugs strong in System but missing from guidance = top gaps | **None directly**; System supplies the evidence side | Evidence-vs-guidance quadrant; gap badges |
+| 5 | **When is heat coming?** | NOAA/NWS, HeatRisk, 35 yrs NYC weather, replay heat wave | **Heat → harm evidence:** temperature → mortality rate (16 studies), → emergency medical services, → out-of-hospital cardiac arrest, hyperthermia → hospital mortality. Used to justify **why a HeatRisk level triggers action** | **Some** | Forecast strip footnote: "why this threshold: System, N studies"; nerd stats |
+| 6 | **Where is risk highest?** | HVI, AC access, CDC PLACES, SVI, Medicare prescribing by ZIP | **Place-factor evidence:** temperature ↔ urban area (5), air conditioning, income, vegetation (NDVI), housing. Each map layer gets a "System evidence" chip | **Thin** (mostly 1–5 studies each) | Map layer legend chips; thin coverage → gap constellation |
+| 7 | **Who to call?** | 300 synthetic Bronx patients | **Patient-factor weights:** temperature/heat illness ↔ cardiovascular disease, kidney disease, age group, pregnancy outcomes. Each readiness-score factor cites its System support (or "not in System") | **Some** for conditions; thin for age, living alone, isolation | Call-first scatter tooltip "why this patient"; scoring formula in nerd stats |
+| 8 | **Can help reach them?** | Real travel times to contacts and cooling places | **Time-to-help evidence:** temperature → EMS / cardiac arrest findings support the time budget (T_max). Response-time defaults stay from Pielot/Mehrotra (not in System) | **Thin** (1 study each) | Escalation assumptions panel: each number shows its source, System or not |
+| 9 | **Is the medicine itself still good?** | Thermal simulation + drug storage evidence | **Storage evidence check:** Dataverse CSV variable-name scan for storage/stability terms (insulin, epinephrine, temperature, potency, degradation); API study lookup for every storage paper we cite (e.g. insulin pens at 37 °C, already matched) | **Very thin** (no storage concepts linked to heat in the probe; individual papers do have findings) | Storage card: "System has findings from N of our M storage papers"; gap finding |
+
+**Rules:**
+- Never inflate a thin row. Show the real study count, and show "not in System" when it's zero.
+- Rows 3, 4 and 9 are where System is weakest, and that's a pitch point: the evidence exists for the drug risk, but labels, guidance and storage research haven't caught up.
+- All counts come from cached API pulls with the date. The numbers in the table are from the Sat 14 Nov probe and must be re-pulled by the pipeline before they go on screen.
+- Every new pull uses the existing client (`scripts/system_api_client.py`, cached, request log, daily budget).
 
 ### 8.6 Already in the repo
 - `data/Drug heat risk master list.xlsx` / `.csv`: master list (86 rows) and guidance comparison
@@ -940,3 +968,5 @@ Suggested 15 (to confirm):
 - Do we use any tier C sources in the pitch?
 - **System API key returned 403** on Myra's overnight run (Sat 14 Nov); System results so far are the Dataverse fallback. Get a working key and rerun the System scripts: roles 1–6 (§8.5a) and 25% of judging depend on it.
 - **Work split from 10:45 Sat:** Rachel = SQLite + core loop (send alert → simulated push/SMS on the phone → escalation with fast-forward → clinic board). Myra = System key rerun, then the evidence-side visuals in `web/` (forest plot, pathway Sankey, node graph, live System layer, CDS Hooks cards). The 3D map and call-first scatter go to whoever finishes first.
+- **Core loop built (Sat 14 Nov, 11:00):** `/board` (clinic board: replay-day call list, send / multi-send, live status, message log, +5/+15/+45 min fast-forward, reset) and `/phone/<id>` (demo phone: simulated push banner, simulated SMS thread, "I'm OK" / "I feel unwell" / "No AC"). All wording and timings come from `panel_scores_replay.json` (`safety_alert`, `contact_check`, `escalation.steps`); escalation steps fire when the board or phone polls, so fast-forward just shifts the demo clock. **Rule: no invented data; missing pieces show a labeled placeholder naming the file they'll come from.**
+- **Open:** the board can send to patients whose `why` says "not opted in to safety alerts: phone call is the only route" (e.g. P0149). Send should respect the questionnaire's `alert_opt_in` and route those patients straight to the call list.

@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS alerts (
     -- sent | acknowledged | escalated_contact | escalated_clinic | resolved
   wait_minutes      REAL,                                -- T_wait from lib/patient escalationPlan
   contact_id        TEXT,                                -- contact escalated to (contacts_routed.contact_id)
+  scenario          TEXT NOT NULL DEFAULT 'replay',      -- which panel_scores_<scenario>.json the steps came from
+  steps_done        INTEGER NOT NULL DEFAULT 0,          -- how many escalation.steps have fired
   sent_at           TEXT NOT NULL,                       -- demo time (ISO), see demo_clock
   ack_at            TEXT,
   escalated_at      TEXT,
@@ -48,6 +50,7 @@ CREATE TABLE IF NOT EXISTS messages (
   recipient   TEXT NOT NULL,                             -- patient | contact:<contact_id> | clinic
   channel     TEXT NOT NULL,                             -- push | sms | call_list
   body        TEXT NOT NULL,
+  note        TEXT,                                      -- the escalation step action that produced it
   simulated   INTEGER NOT NULL DEFAULT 1,
   read_at     TEXT,                                      -- phone marks the banner as seen
   created_at  TEXT NOT NULL                              -- demo time (ISO)

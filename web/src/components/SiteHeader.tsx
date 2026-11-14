@@ -6,6 +6,8 @@ const NAV = [
   { href: "/", label: "The story" },
   { href: "/map", label: "Evidence Map" },
   { href: "/readiness", label: "Heat-Wave Readiness" },
+  { href: "/board", label: "Clinic board" },
+  { href: "/phone", label: "Demo phone" },
   { href: "/evidence", label: "Evidence (nerd stats)" },
   { href: "/patient", label: "My Medicine Cabinet" },
 ];
