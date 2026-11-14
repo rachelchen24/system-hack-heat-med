@@ -5,7 +5,7 @@ Built for **Visualize Challenge 3** of the System Public Challenge (NYC, 13–14
 
 > Prototype. Synthetic patients only. Considerations for clinicians, not medical instructions.
 
-_Last updated: Sat 14 Nov 2026, 12:15 PM. Keep this file current whenever the plan, data or app changes._
+_Last updated: Sat 14 Nov 2026, 1:35 PM. Keep this file current whenever the plan, data or app changes._
 
 ---
 
@@ -16,6 +16,7 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 - **Risk groups** (High / Medium / Low), with one plain sentence of why for each patient, a **"Text this group"** button, and **"Why?"** to see the evidence.
 - **Heat + help map:** hottest and coolest neighborhoods, every patient as a colored dot, and the community resources near them.
 - **Medicines:** the evidence map the challenge asks for, as a simple grouped list showing what to do, how strong the evidence is, who prescribes it, and whether the label and guidance warn about heat.
+- **Messages:** one click from any patient opens the **conversation with that patient** (`/messages/[id]`): every alert and text sent, texts to their contact, their "I'm OK / unwell / No AC" replies, quick-reply templates, and a box to text them. The inbox (`/messages`) puts "Needs a call" first.
 - **Outreach that escalates:** if a High-risk patient doesn't reply, their caregiver or emergency contact is alerted.
 
 **For the patient** ("my heat plan," large type, 2D map by default with a 3D switch)
@@ -36,6 +37,7 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 6. **Colors:** the Okabe–Ito chip palette. Risk groups are **High = orange**, **Medium = yellow**, **Low = blue**.
 
 ## How the System Public Graph is used
+- **Patient cards show the graph directly:** click a patient (time-lapse, map) to see each of their medicines → body effect ← heat with System study counts, and which medicines stack on the same effect.
 - **Medicine → body effect ← heat pathways** (dehydration, low sodium, kidney strain, impaired sweating) explain *why* a medicine matters and how two medicines **stack**.
 - **Second extractor:** our extracted numbers are checked against System's findings for the same papers (verification badges).
 - **Gap finder and audit:** links the graph implies but no study has tested, plus a fix list of mislabeled findings.
@@ -68,7 +70,8 @@ Keys go in `.env` (see `.env.example`). Only `SYSTEM_API_KEY` is required; openF
 | `/map` | **Heat + help map** (being rebuilt; the old evidence map is moving to `/medicines`) |
 | `/medicines`, `/drug/[id]` | **Medicines:** grouped list and one page per medicine (evidence behind "See the evidence") |
 | `/phone`, `/phone/[id]` | **Patient app:** "my heat plan" and the simulated text thread |
-| `/replay` | **Heat-day time-lapse** (pitch opener; being built) |
+| `/messages`, `/messages/[id]` | **Messages:** clinician inbox and the conversation with one patient (simulated texts) |
+| `/replay` | **Heat-day time-lapse** (pitch opener) |
 | `/evidence` | **Methods** (nerd stats): verification, audit, formulas, sources |
 | `/api/*` | Knowledge base, System live layer, CDS Hooks, alert loop |
 
@@ -99,14 +102,16 @@ Keys go in `.env` (see `.env.example`). Only `SYSTEM_API_KEY` is required; openF
 | `data/processed/panel_scores_replay.json` | 300 synthetic Bronx patients scored for the replay heat day (risk level + reasons) |
 | `data/processed/synthetic/` | Synthetic patients, medicines, questionnaire answers, contacts, cooling-place matches |
 | `data/processed/community_resources_nyc.geojson` | **4,484 places that help in a heat wave:** cooling centers, libraries, senior centers, food pantries / soup kitchens, community centers, community organizations, homeless services (built by `scripts/community_resources.py`) |
-| `data/processed/replay_heatwave_hourly.csv` | Hourly heat for the replay heat wave |
+| `data/processed/replay_heatwave_hourly.csv` | Hourly heat for the replay heat wave (LaGuardia, Central Park) |
+| `data/processed/replay_hrrr_grid.json` | Hourly "feels like" °F on a 0.03° grid over NYC, June 22–26, 2025 (NOAA HRRR via Open-Meteo; `scripts/climate_hrrr_grid.py`) |
 | `data/processed/hvi_nta2020.geojson` | NYC Heat Vulnerability Index by neighborhood |
 | `data/processed/system_api_pathways.csv` | Medicine → body effect ← heat pathways from the System API |
 
 ## Status (Sat 14 Nov, 12:15 PM)
 - **Done:** data pipeline, knowledge base, synthetic panel and scores, System API rerun, alert loop (board + demo phone), community resources data.
 - **In progress (coding agent):** simplified navigation, heat + help map, risk groups, patient plan, simplified medicines page, "how heat and medicine add up."
-- **In progress (Claude, this session):** **heat-day time-lapse** at `/replay`: the replay heat day hour by hour, with the city heating up, patient dots by risk group, texts going out and check-ins coming back. Used as the pitch opener.
+- **Built:** **heat-day time-lapse** at `/replay` (pitch opener). Radar-style heat blobs from real hourly "feels like" temperatures (NOAA HRRR 3 km model via Open-Meteo, `data/processed/replay_hrrr_grid.json`), June 22–26, 2025, drawn under the streets and labels. The 300 synthetic patients are dots in their risk colors. **Click a patient** to see why they're at risk, **their medicines and how each adds to heat risk, with study counts from the System graph** (and which medicines stack), their nearest cool place with leave-by time, **"Show the way"** (one walking route at a time, OSRM), and **"Message"**. Not linked in the nav yet.
+- **Built:** **clinician messages** at `/messages` and `/messages/[id]`. Myra's agent adds the "Messages" buttons on the board, map and Why? panel (`docs/coding-agent-followup.md`).
 - **Open:** project name; the one specific use case for the pitch.
 - **Deadline:** Devpost by 2:45 PM (hard deadline 3:00 PM).
 

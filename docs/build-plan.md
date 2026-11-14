@@ -80,9 +80,13 @@ Scrape and merge **all community-based organizations and nonprofits that could h
 - One simple 3-column picture: **medicines → body effect ← heat**. Thick line = more studies in System. Click a line → "Why?" with System study counts.
 - A small version on the patient's plan: "Your two medicines both make it harder to stay cool."
 
-### P5b. Heat-day time-lapse (`/replay`, Claude on Rachel's machine, new files only)
+### P5b. Heat-day time-lapse (`/replay`) — REBUILT 1:35 (radar-style HRRR heat blobs under streets; click a patient → why, medicines + System evidence, nearest cool place, one route, message; no lines or rings) (new files: `web/src/app/replay/`, `web/src/components/replay/`, `web/src/lib/replay.ts`); add a nav link after Myra's agent finishes the nav
 - About 20 seconds of the replay heat day, hour by hour (`replay_heatwave_hourly.csv`): the map warms from blue to orange; patient dots in their risk-group colors pulse when their heat-risk hour hits; the clock, temperature and counters (texts sent, check-ins) tick. Play / pause / scrub. Pitch opener. Only real data; message and check-in timing comes from `panel_scores_replay.json`.
 - Rejected ideas (Rachel, Sat 14 Nov): cooling deserts, 3D "walk in their shoes," QR code for judges.
+
+### P5c. Clinician ↔ patient messages — BUILT 1:00 (Rachel's session; new files only)
+- `/messages` inbox and `/messages/[id]` conversation: thread of alerts, texts, contact texts and the patient's taps; quick replies; "Send heat safety alert"; free-text box (simulated, also lands on the demo phone).
+- **To do (Myra's agent, `docs/coding-agent-followup.md`):** a "Messages" button on every patient row, map card and Why? panel → `/messages/<id>`; Messages in the top nav; `/replay` in the footer.
 
 ### ─── line: above here = a complete demo ───
 

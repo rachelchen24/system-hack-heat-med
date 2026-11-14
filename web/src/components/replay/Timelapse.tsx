@@ -1,0 +1,372 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { HeatGrid, ReplayData, ReplayPatient } from "@/lib/replay";
+import { GROUP_COLORS, HEAT_STOPS, heatColor } from "./colors";
+
+const TimelapseMap = dynamic(() => import("./TimelapseMap"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-surface" />,
+});
+
+const STEPS_PER_HOUR = 6; // smooth morphing between hourly frames
+const SPEEDS = [
+  { label: "Slow", ms: 120 },
+  { label: "Normal", ms: 50 },
+  { label: "Fast", ms: 20 },
+];
+const HEATRISK_WORDS = ["Little or no risk", "Minor risk", "Moderate risk", "Major risk", "Extreme risk"];
+
+const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+const fmtDate = (d: string) => DAY.format(new Date(d.slice(0, 10) + "T12:00:00Z"));
+function fmtHour(h: number) {
+  const hh = Math.floor(h) % 24;
+  const mm = Math.round((h - Math.floor(h)) * 60) % 60;
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${h12}${mm ? ":" + String(mm).padStart(2, "0") : ""} ${hh < 12 ? "AM" : "PM"}`;
+}
+
+/** "Feels like" at a point, bilinear from the grid. */
+function heatAt(grid: HeatGrid, t: number, lat: number, lon: number): number | null {
+  const { lats, lons } = grid;
+  const gy = (lat - lats[0]) / (lats[1] - lats[0]);
+  const gx = (lon - lons[0]) / (lons[1] - lons[0]);
+  const i = Math.max(0, Math.min(lats.length - 2, Math.floor(gy)));
+  const j = Math.max(0, Math.min(lons.length - 2, Math.floor(gx)));
+  const fy = Math.min(1, Math.max(0, gy - i)), fx = Math.min(1, Math.max(0, gx - j));
+  const f = grid.f[t];
+  const v = [f[i][j], f[i][j + 1], f[i + 1][j], f[i + 1][j + 1]];
+  if (v.some((x) => x == null)) return null;
+  const [a, b, c, d] = v as number[];
+  return a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy;
+}
+
+export function Timelapse({ data }: { data: ReplayData }) {
+  const { grid } = data;
+  const nHours = grid.times.length;
+  const total = (nHours - 1) * STEPS_PER_HOUR;
+  // Start on the worst day's morning, so the first frame already shows something.
+  const startStep = Math.max(0, grid.times.findIndex((t) => t.startsWith(data.eventDate) && t.endsWith("06:00"))) * STEPS_PER_HOUR;
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [selected, setSelected] = useState<ReplayPatient | null>(null);
+  const [route, setRoute] = useState<[number, number][] | null>(null);
+  const [routeNote, setRouteNote] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!playing) return;
+    timer.current = setInterval(() => {
+      setStep((s) => {
+        if (s >= total) {
+          setPlaying(false);
+          return s;
+        }
+        return s + 1;
+      });
+    }, SPEEDS[speed].ms);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+  }, [playing, speed, total]);
+
+  const tf = step / STEPS_PER_HOUR;
+  const idx = Math.min(Math.floor(tf), nHours - 1);
+  const time = grid.times[idx];
+  const date = time.slice(0, 10);
+  const clock = Number(time.slice(11, 13)) + (tf - idx);
+
+  // Heat where the patients live (their average location), for the clock card and the strip.
+  const center = useMemo(() => {
+    const n = Math.max(1, data.patients.length);
+    return { lat: data.patients.reduce((s, p) => s + p.lat, 0) / n, lon: data.patients.reduce((s, p) => s + p.lon, 0) / n };
+  }, [data.patients]);
+  const strip = useMemo(() => grid.times.map((_, t) => heatAt(grid, t, center.lat, center.lon)), [grid, center]);
+  const hereNow = (() => {
+    const a = strip[idx], b = strip[Math.min(idx + 1, nHours - 1)];
+    return a != null && b != null ? a + (b - a) * (tf - idx) : a;
+  })();
+  const heatrisk = data.heatriskByDate[date];
+  const counts = useMemo(() => {
+    const c = { High: 0, Medium: 0, Low: 0 };
+    for (const p of data.patients) c[p.group]++;
+    return c;
+  }, [data.patients]);
+
+  function select(p: ReplayPatient | null) {
+    setSelected(p);
+    setRoute(null);
+    setRouteNote(null);
+  }
+
+  async function showWay() {
+    if (!selected?.place) return;
+    setRouteNote("Finding the way…");
+    const from = `${selected.lon},${selected.lat}`;
+    const to = `${selected.place.lon},${selected.place.lat}`;
+    const d = await fetch(`/api/route?from=${from}&to=${to}`).then((r) => r.json()).catch(() => null);
+    if (d?.ok && d.geometry?.coordinates) {
+      setRoute(d.geometry.coordinates);
+      setRouteNote(null);
+    } else {
+      setRoute([
+        [selected.lon, selected.lat],
+        [selected.place.lon, selected.place.lat],
+      ]);
+      setRouteNote("Street route unavailable right now; showing a straight line.");
+    }
+  }
+
+  return (
+    <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">The June 2025 heat wave, hour by hour</h1>
+          <p className="mt-1 text-ink-muted">Watch the heat roll over the city. Click any patient to see their plan.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (step >= total) setStep(0);
+              setPlaying((p) => !p);
+            }}
+            className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-page hover:opacity-90"
+          >
+            {playing ? "Pause" : step >= total ? "Replay" : "Play"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPlaying(false);
+              setStep(startStep);
+            }}
+            className="rounded-full border border-line-strong px-4 py-2 text-sm hover:bg-surface"
+          >
+            Jump to the worst day
+          </button>
+          <div className="flex overflow-hidden rounded-full border border-line-strong text-sm" role="group" aria-label="Speed">
+            {SPEEDS.map((s, i) => (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setSpeed(i)}
+                aria-pressed={i === speed}
+                className={`px-3 py-2 ${i === speed ? "bg-surface font-semibold" : "hover:bg-surface"}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="relative h-[64vh] min-h-[440px] overflow-hidden rounded-tile border border-line">
+          <TimelapseMap grid={grid} tf={tf} patients={data.patients} selected={selected} route={route} onSelect={select} />
+          <div className="pointer-events-none absolute left-3 top-3 rounded-tile bg-page/95 px-4 py-3 shadow-sm">
+            <div className="text-sm text-ink-muted">{fmtDate(date)}</div>
+            <div className="text-3xl font-bold tabular-nums">{fmtHour(clock)}</div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full" style={{ background: heatColor(hereNow) }} />
+              <span className="text-lg font-semibold tabular-nums">Feels like {hereNow != null ? Math.round(hereNow) : "—"}°F</span>
+            </div>
+            <div className="text-xs text-ink-muted">where the patients live</div>
+          </div>
+          <div className="absolute bottom-8 left-3 rounded-tile bg-page/95 px-3 py-2 text-xs shadow-sm">
+            <div className="font-semibold">Feels like</div>
+            <div
+              className="mt-1 h-2.5 w-44 rounded"
+              style={{
+                background: `linear-gradient(90deg, ${HEAT_STOPS.slice(1)
+                  .map(([, r, g, b]) => `rgb(${r},${g},${b})`)
+                  .join(",")})`,
+              }}
+            />
+            <div className="mt-0.5 flex w-44 justify-between text-ink-muted">
+              <span>88°</span>
+              <span>100°</span>
+              <span>116°+</span>
+            </div>
+          </div>
+        </div>
+
+        <aside className="flex flex-col gap-3">
+          {selected ? (
+            <PatientCard p={selected} onClose={() => select(null)} onShowWay={showWay} routeShown={!!route} routeNote={routeNote} />
+          ) : (
+            <>
+              <section className="rounded-tile border border-line bg-page p-4">
+                <h2 className="text-sm font-semibold text-ink-muted">Bronx heat warning that day</h2>
+                <p className="mt-1 text-xl font-bold">{heatrisk != null ? HEATRISK_WORDS[heatrisk] ?? `Level ${heatrisk}` : "No forecast on file"}</p>
+                {heatrisk != null && <p className="text-sm text-ink-muted">Level {heatrisk} of 4, National Weather Service HeatRisk</p>}
+              </section>
+              <section className="rounded-tile border border-line bg-page p-4">
+                <h2 className="text-sm font-semibold text-ink-muted">Patients by risk (synthetic)</h2>
+                <ul className="mt-2 space-y-1.5">
+                  {(["High", "Medium", "Low"] as const).map((g) => (
+                    <li key={g} className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block h-3.5 w-3.5 rounded-full" style={{ background: GROUP_COLORS[g].css, outline: g === "Medium" ? `1px solid ${GROUP_COLORS.Medium.ink}` : undefined }} />
+                        {g}
+                      </span>
+                      <span className="font-semibold tabular-nums">{counts[g]}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section className="rounded-tile border border-dashed border-line-strong bg-surface p-4 text-sm">
+                <p className="font-semibold">Click a patient on the map</p>
+                <p className="mt-1 text-ink-muted">See why they&apos;re at risk, how their medicines and the heat add up, where their nearest cool place is, and the way there. Then message them.</p>
+              </section>
+            </>
+          )}
+        </aside>
+      </div>
+
+      {/* Scrubber over the heat strip */}
+      <div>
+        <div className="flex h-7 overflow-hidden rounded" aria-hidden>
+          {strip.map((v, i) => (
+            <div key={i} className="flex-1" style={{ background: heatColor(v) }} title={`${fmtDate(grid.times[i])} ${fmtHour(Number(grid.times[i].slice(11, 13)))}: feels like ${v != null ? Math.round(v) : "—"}°F`} />
+          ))}
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={total}
+          value={step}
+          onChange={(e) => {
+            setPlaying(false);
+            setStep(Number(e.target.value));
+          }}
+          aria-label="Time"
+          className="mt-1 w-full accent-[#d55e00]"
+        />
+        <div className="flex justify-between text-xs text-ink-muted">
+          {Array.from(new Set(grid.times.map((t) => t.slice(0, 10)))).map((d) => (
+            <span key={d}>{fmtDate(d)}</span>
+          ))}
+        </div>
+        <details className="mt-3 text-xs text-ink-muted">
+          <summary className="cursor-pointer">Where this comes from</summary>
+          <ul className="mt-1 list-disc pl-5">
+            {data.sources.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+            <li>Map: © OpenStreetMap contributors, OpenFreeMap. Weather data by Open-Meteo.com (CC BY 4.0).</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+function PatientCard({
+  p,
+  onClose,
+  onShowWay,
+  routeShown,
+  routeNote,
+}: {
+  p: ReplayPatient;
+  onClose: () => void;
+  onShowWay: () => void;
+  routeShown: boolean;
+  routeNote: string | null;
+}) {
+  const c = GROUP_COLORS[p.group];
+  return (
+    <section className="flex max-h-[64vh] flex-col overflow-y-auto rounded-tile border border-line bg-page">
+      <div className="flex items-start justify-between gap-2 border-b border-line p-4">
+        <div>
+          <h2 className="text-lg font-bold">{p.name}</h2>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5 text-xs font-semibold" style={{ borderColor: c.ink, background: c.tint, color: c.ink }}>
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: c.css }} />
+              {p.group} risk
+            </span>
+            <span className="text-ink-muted">{p.age} · synthetic patient</span>
+          </div>
+        </div>
+        <button type="button" onClick={onClose} className="rounded-full px-2 text-xl leading-none text-ink-muted hover:bg-surface" aria-label="Close">
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-4 p-4 text-sm">
+        {p.why.length > 0 && (
+          <div>
+            <h3 className="font-semibold">Why</h3>
+            <p className="mt-0.5 text-ink-muted">{p.why.join(" · ")}</p>
+          </div>
+        )}
+
+        {p.meds.length > 0 && (
+          <div>
+            <h3 className="font-semibold">Their medicines and the heat</h3>
+            {p.shared.length > 0 && (
+              <p className="mt-1 rounded-tile px-3 py-2 font-semibold" style={{ background: GROUP_COLORS.High.tint, color: GROUP_COLORS.High.ink }}>
+                {p.shared.map((s) => `${s.meds.join(" and ")} both raise the risk of ${s.effect}`).join(". ")}, and so does the heat.
+              </p>
+            )}
+            <ul className="mt-2 space-y-2">
+              {p.meds.map((m) => (
+                <li key={m.name}>
+                  <span className="font-semibold capitalize">{m.name}</span>
+                  {m.links.length ? (
+                    <ul className="mt-0.5 space-y-0.5 text-ink-muted">
+                      {m.links.slice(0, 3).map((l) => (
+                        <li key={l.effect}>
+                          → {l.effect} ← heat{" "}
+                          <span className="text-xs">
+                            ({l.drugStudies} {l.drugStudies === 1 ? "study" : "studies"} for the medicine, {l.heatStudies} for heat, in the System graph)
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-ink-muted"> — no medicine → body-effect link in the System graph yet</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {p.place ? (
+          <div>
+            <h3 className="font-semibold">Nearest cool place</h3>
+            <p className="mt-0.5">{p.place.name}</p>
+            {p.place.address && <p className="text-ink-muted">{p.place.address}</p>}
+            <p className="mt-1">
+              {p.place.walkMin != null && <>About {Math.round(p.place.walkMin)} min walk. </>}
+              {p.place.leaveBy && <>Leave by {p.place.leaveBy}</>}
+              {p.place.arriveBy && <>, arrive by {p.place.arriveBy}</>}
+              {p.place.hours && <> (open {p.place.hours})</>}
+            </p>
+            {p.place.needsHelp && <p className="mt-1 font-semibold" style={{ color: GROUP_COLORS.High.ink }}>Needs someone to go with them.</p>}
+            <button
+              type="button"
+              onClick={onShowWay}
+              className="mt-2 rounded-full border-2 px-4 py-1.5 font-semibold"
+              style={{ borderColor: GROUP_COLORS.Low.ink, color: GROUP_COLORS.Low.ink, background: GROUP_COLORS.Low.tint }}
+            >
+              {routeShown ? "Showing the way" : "Show the way"}
+            </button>
+            {routeNote && <p className="mt-1 text-xs text-ink-muted">{routeNote}</p>}
+          </div>
+        ) : (
+          <p className="text-ink-muted">No cool place matched for this patient.</p>
+        )}
+
+        <Link href={`/messages/${p.id}`} className="block rounded-full bg-ink px-4 py-2 text-center font-semibold text-page hover:opacity-90">
+          Message {p.name.split(" ")[0]}
+        </Link>
+      </div>
+    </section>
+  );
+}

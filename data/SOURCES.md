@@ -17,3 +17,6 @@ Started Sat 14 Nov 2026. Add a line for every dataset that reaches the app.
 | `cooling_places_nyc.geojson` (already in repo) | NYC Emergency Management Cool Options (cooling centers, spray showers, pools), OSM indoor places, libraries, Parks rec centers | see the script that built it |
 
 **Limits:** directories change; hours are mostly missing; the NYC Service list is from 2019. The map card says "Hours and services can change. Call ahead."
+
+## Replay heat map (`data/processed/replay_hrrr_grid.json`, built by `scripts/climate_hrrr_grid.py`, accessed 2026-11-14)
+Hourly apparent ("feels like") temperature, °F, on a 15 × 20 grid (0.03°) over NYC for June 22–26, 2025, from NOAA's HRRR 3 km model (archived forecasts) via the Open-Meteo Historical Forecast API (https://open-meteo.com, CC BY 4.0). Raw responses are in `data/raw/climate/hrrr_openmeteo/`. It's model output, not station measurements.
