@@ -23,7 +23,7 @@ export const STAGES: Stage[] = [
     clinician: "Alert in the health record during a heat forecast; review combinations before summer.",
     patient: "—",
     links: [
-      { href: "/map", label: "Evidence Map" },
+      { href: "/medicines", label: "Evidence Map" },
       { href: "/api/cds-hooks", label: "EHR alert (CDS Hooks)" },
     ],
   },
@@ -52,7 +52,7 @@ export const STAGES: Stage[] = [
     heat: "Some medicines act stronger in heat, some weaker.",
     clinician: "Heat Dose Compass on every Drug Card.",
     patient: "One plain line on the label.",
-    links: [{ href: "/map", label: "Drug Cards" }],
+    links: [{ href: "/medicines", label: "Drug Cards" }],
   },
   {
     id: "watch",

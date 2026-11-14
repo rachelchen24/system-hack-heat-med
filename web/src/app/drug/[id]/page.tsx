@@ -56,7 +56,7 @@ export default async function DrugPage({ params }: PageProps<"/drug/[id]">) {
 
   return (
     <article className="space-y-5">
-      <Link href="/map" className="text-sm underline">
+      <Link href="/medicines" className="text-sm underline">
         ← Evidence Map
       </Link>
       <KbSourceBanner source={source} file={file} />
