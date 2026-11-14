@@ -1,0 +1,313 @@
+<title>Cool-Aid and the System API</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one reading column; each "job" System did is a band with one chart and its numbers.
+     Colors are Cool-Aid's design tokens (web/src/styles/tokens.css). The app is light-mode only, so this page is too. */
+  :root {
+    --page:#ffffff; --surface:#f7f7f5; --line:#d4d4d0; --line-strong:#6b6b66;
+    --ink:#141414; --muted:#4b5563;
+    --teal:#0e7c86; --teal-ink:#0a5f66; --teal-tint:#d9f0f1;
+    --graph:#3730a3; --graph-bg:#eef2ff;
+    --lit:#166534; --lit-bg:#f0fdf4;
+    --fda:#9a3412; --fda-bg:#fff7ed;
+    --pat:#9c3d74; --pat-bg:#f6e4ee;
+    --ok:#065f46; --ok-bg:#d1fae5;
+    --warn:#92400e; --warn-bg:#fef3c7;
+    --unv:#374151; --unv-bg:#e5e7eb;
+    --heat:#d55e00;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--page); color: var(--ink); font: 16px/1.55 var(--font); }
+  .wrap { max-width: 940px; margin: 0 auto; padding-block: 36px 64px;
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+  h1 { font-size: clamp(28px, 4.4vw, 40px); letter-spacing: -.01em; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 17px; }
+  p { margin: 0; max-width: 68ch; }
+  .muted { color: var(--muted); }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--graph); }
+  section { display: grid; gap: 14px; padding-block: 34px; border-top: 1px solid var(--line); }
+  header { display: grid; gap: 14px; padding-bottom: 28px; }
+  .lede { font-size: 19px; }
+  .say { border-left: 4px solid var(--teal); background: var(--teal-tint); color: var(--teal-ink); padding: 10px 14px; border-radius: 0 8px 8px 0; font-weight: 600; max-width: none; }
+  .say::before { content: "Say it: "; font-weight: 800; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+  .tile .n { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile .t { font-size: 13.5px; color: var(--muted); line-height: 1.35; }
+  .jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .job { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+  .job b { color: var(--graph); }
+  .job .k { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .lanes { display: grid; gap: 8px; }
+  .lane { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; align-items: start; border-radius: 10px; padding: 10px 14px; border: 1px solid; }
+  .lane h3 { font-size: 15px; }
+  .lane ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+  .lane li + li { margin-top: 2px; }
+  @media (max-width: 560px) { .lane { grid-template-columns: 1fr; gap: 4px; } }
+  .chart { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: var(--font); }
+  .rules { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+  .rules li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; align-items: start; }
+  .chip { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; font-size: 12px; font-weight: 800; border: 1px solid; }
+  table { border-collapse: collapse; font-size: 14px; width: 100%; }
+  th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  code { font-family: var(--mono); font-size: .9em; }
+  .foot { font-size: 13px; color: var(--muted); }
+  .files { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Cool-Aid · System Public Graph</span>
+    <h1>How Cool-Aid used the System API</h1>
+    <p class="lede">Cool-Aid tells a clinic which patients are at risk in a heat wave because of their medicines and their home. Every risk claim has to rest on evidence. The System API was where we found that evidence and how we checked it.</p>
+    <p class="say">System found the links between 15 medicines and heat, checked the numbers we quote, and caught its own mistakes.</p>
+    <div class="tiles">
+      <div class="tile"><div class="n">15,001</div><div class="t">System findings pulled for our 15 medicine groups, heat and 4 body effects</div></div>
+      <div class="tile"><div class="n">38</div><div class="t">medicine → body effect ← heat pathways; 22 never studied directly</div></div>
+      <div class="tile"><div class="n">80 / 83</div><div class="t">papers we cite are in System (the bulk download had 7)</div></div>
+      <div class="tile"><div class="n">0</div><div class="t">number or direction conflicts between System and our extraction</div></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-data">
+    <span class="eyebrow">The data</span>
+    <h2 id="h-data">Five kinds of data, joined on shared keys</h2>
+    <p class="muted">System is one of five sources. The others give place, regulation and patients. They join on paper IDs (PMID, DOI), medicine group, ZIP code and date.</p>
+    <div class="lanes">
+      <div class="lane" style="border-color:var(--graph);background:var(--graph-bg)">
+        <h3 style="color:var(--graph)">System Public Graph</h3>
+        <ul>
+          <li>Live API: 40.3M studies, 5.9M findings, 627k relationships</li>
+          <li>Harvard Dataverse v2.1 bulk release: 2.0M findings, 845k studies, checksums verified</li>
+          <li>PubMed E-utilities for publication dates (1,207 PMIDs)</li>
+        </ul>
+      </div>
+      <div class="lane" style="border-color:var(--lit);background:var(--lit-bg)">
+        <h3 style="color:var(--lit)">Literature</h3>
+        <ul>
+          <li>PubMed + Europe PMC search: 5,995 unique records, 1,965 chased citations</li>
+          <li>Screened down to 333 included papers and 367 extraction rows</li>
+          <li>Our cited list: 83 distinct papers</li>
+        </ul>
+      </div>
+      <div class="lane" style="border-color:var(--fda);background:var(--fda-bg)">
+        <h3 style="color:var(--fda)">Regulatory &amp; guidance</h3>
+        <ul>
+          <li>openFDA drug labels: 5,938 label sections audited → 299 heat sentences</li>
+          <li>FAERS adverse events (21M reports) → 403 signal rows, compared against negative-control drugs</li>
+          <li>13 heat-health guidance documents → 306 guidance codes</li>
+        </ul>
+      </div>
+      <div class="lane" style="border-color:var(--teal);background:var(--teal-tint)">
+        <h3 style="color:var(--teal-ink)">Place &amp; climate (Bronx)</h3>
+        <ul>
+          <li>NWS HeatRisk forecasts; NOAA station history (26,196 station-days, 183 heat waves)</li>
+          <li>Heat Vulnerability Index, SVI (2,324 tracts), CDC PLACES, air-conditioning access</li>
+          <li>1,868 cooling places, 520 pharmacies; Medicare Part D prescribing by ZIP</li>
+        </ul>
+      </div>
+      <div class="lane" style="border-color:var(--pat);background:var(--pat-bg)">
+        <h3 style="color:var(--pat)">Patients (synthetic)</h3>
+        <ul>
+          <li>300 patients, 952 medicines, 327 contacts, calibrated to PLACES, SVI and Part D</li>
+          <li>No real patient data anywhere in the app</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted">Everything flows into one knowledge base: <b>15 medicine groups, 101 claims</b>, each with a source and a verification badge. The app reads only that.</p>
+  </section>
+
+  <section aria-labelledby="h-jobs">
+    <span class="eyebrow">What System did</span>
+    <h2 id="h-jobs">Four jobs for the System API</h2>
+    <div class="jobs">
+      <div class="job"><b>1 · Find</b><span class="k">38 pathways</span><span class="muted">from 15,001 findings: how each medicine and heat hit the same weak spot</span></div>
+      <div class="job"><b>2 · Check</b><span class="k">14 numbers ✓✓</span><span class="muted">System extracted the same value from the same paper as us</span></div>
+      <div class="job"><b>3 · Spot gaps</b><span class="k">0 – 2 studies</span><span class="muted">for the sweat-blocking medicines, the ones classic heat advice worries about most</span></div>
+      <div class="job"><b>4 · Feed the app</b><span class="k">live</span><span class="muted">study counts on every medicine card and in the "how heat and medicine add up" picture</span></div>
+    </div>
+    <p class="muted">1,902 API calls in total, under the 10,000-a-day limit. Every response is cached, so the whole run can be repeated without spending calls.</p>
+  </section>
+
+  <section aria-labelledby="h-find">
+    <span class="eyebrow">Job 1 · Find</span>
+    <h2 id="h-find">From 5.9 million findings to 38 pathways</h2>
+    <p>We asked System for every finding that names one of our medicines, heat, or one of four body effects: dehydration, low sodium, kidney injury and low blood pressure. Then we kept the findings that connect a medicine or heat to one of those effects. Joining the two sides gives a two-step pathway: <b>medicine → body effect ← heat</b>.</p>
+    <div class="chart" id="find" role="img" aria-label="Funnel: 5.9 million findings, 15,001 match our terms, 912 link a medicine or heat to a body effect, 806 after dropping blood-pressure efficacy trials, 38 pathways"></div>
+    <p class="say">Most of these pathways were never studied as "this drug in the heat". System lets us connect two well-studied halves.</p>
+  </section>
+
+  <section aria-labelledby="h-check">
+    <span class="eyebrow">Job 2 · Check</span>
+    <h2 id="h-check">System as a second, independent reader</h2>
+    <p>We extracted every number we quote from paper abstracts ourselves. System extracts findings from papers too, so we compared, paper by paper: same number, same meaning, same direction.</p>
+    <div class="chart" id="check" role="img" aria-label="83 papers we cite, 80 in System, 15 with findings; 7 papers with the same number as ours, 3 papers where System mislabeled the drug"></div>
+    <div class="chart" id="badges" role="img" aria-label="Verification badges for 105 numbers before and after the API check: double-verified went from 5 to 14"></div>
+    <p class="say">Where System read the same paper, it got the same number every time. Zero conflicts.</p>
+  </section>
+
+  <section aria-labelledby="h-gaps">
+    <span class="eyebrow">Job 3 · Spot gaps</span>
+    <h2 id="h-gaps">Where the evidence is thin</h2>
+    <p>Counting System studies per medicine group shows where the evidence sits. Kidney and fluid drugs are well covered. The medicines that stop sweating or raise body heat (anticholinergics, topiramate, stimulants) are almost absent. That gap is itself a finding: the graph under-represents the mechanism behind several classic heat drugs, so Cool-Aid labels those claims "Early signs" instead of overstating them.</p>
+    <div class="chart" id="gaps" role="img" aria-label="System studies linking each medicine group to a heat-related body effect"></div>
+  </section>
+
+  <section aria-labelledby="h-more">
+    <span class="eyebrow">Bonus</span>
+    <h2 id="h-more">What System found that we missed</h2>
+    <p>We also ran the check in reverse: what does System know about our papers that we didn't use?</p>
+    <div class="tiles">
+      <div class="tile"><div class="n">36</div><div class="t">findings on papers we cite that we hadn't used</div></div>
+      <div class="tile"><div class="n">15</div><div class="t">strong System links to papers missing from our list</div></div>
+      <div class="tile"><div class="n">OR 2.21</div><div class="t">outdoor temperature → drug-induced low sodium (PMID 28737683), now on our review list</div></div>
+      <div class="tile"><div class="n">1</div><div class="t">new lithium paper: blood level vs temperature (PMID 25163443, n=63)</div></div>
+    </div>
+    <p class="muted">These sit on a review list (<code>data/processed/system_audit_fix_list.csv</code>). Nothing goes into the app until a person checks it against the abstract.</p>
+  </section>
+
+  <section aria-labelledby="h-rules">
+    <span class="eyebrow">Ground rules</span>
+    <h2 id="h-rules">How we kept System honest, and ourselves</h2>
+    <ul class="rules">
+      <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓</span><span><b>Our numbers must appear word for word in the abstract.</b> If they don't, the claim is hidden from public views. System can't rescue it.</span></li>
+      <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓✓</span><span><b>Double-verified only when System agrees.</b> 14 numbers. Under System's own advice (about 20% of API extractions are inaccurate, so keep a finding only if it is also in the Dataverse release), 5 survive. We report both.</span></li>
+      <li><span class="chip" style="color:var(--warn);background:var(--warn-bg);border-color:var(--warn)">⚠</span><span><b>A System mislabel never downgrades our claim.</b> In 3 papers (7 numbers) System had our number but the wrong drug or none. Our claim keeps ✓; the error goes on a fix list for System.</span></li>
+      <li><span class="chip" style="color:var(--graph);background:var(--graph-bg);border-color:var(--graph)">↗</span><span><b>Corroboration is labeled as such.</b> A System relationship that agrees with a claim but isn't the same result shows as ↗, never as proof.</span></li>
+      <li><span class="chip" style="color:var(--unv);background:var(--unv-bg);border-color:var(--unv)">!</span><span><b>No dose advice, no invented data.</b> Every label and number in the app comes from a file with a source.</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-talk">
+    <span class="eyebrow">For the slides</span>
+    <h2 id="h-talk">Three lines to say on stage</h2>
+    <table>
+      <tr><th>Point</th><th>Line</th><th>Number to show</th></tr>
+      <tr><td>Find</td><td>System connected 15 medicines to heat through the body effects they share.</td><td>15,001 findings → 38 pathways</td></tr>
+      <tr><td>Check</td><td>We used System as a second reader for every number we quote.</td><td>80 of 83 papers · 14 ✓✓ · 0 conflicts</td></tr>
+      <tr><td>Honesty</td><td>When System was wrong, we caught it and kept our claim, and we show where evidence is thin.</td><td>3 mislabels caught · sweat-blocking drugs 0–2 studies</td></tr>
+    </table>
+  </section>
+
+  <section aria-labelledby="h-files">
+    <span class="eyebrow">More visuals in docs/</span>
+    <h2 id="h-files">Other pictures you can drop into slides</h2>
+    <div class="files">
+      <span><code>data-pipeline.svg</code>: how all five data sources were gathered, joined and filtered</span>
+      <span><code>system-funnel.html</code> / <code>.png</code>: the two System funnels</span>
+      <span><code>system-cleaning-chart.html</code> / <code>.png</code>: badges before and after the API check</span>
+      <span><code>data-cleaning-charts.html</code>: every cleaning step, with a log</span>
+    </div>
+    <p class="foot">Sources: <code>data/processed/system_api_findings.csv</code>, <code>system_api_pathways.csv</code>, <code>system_api_verification_summary.json</code>, <code>system_audit_fix_list.csv</code>, <code>knowledge_base.json</code>. System API run 14 Nov 2026. Patients are synthetic. Not medical advice.</p>
+  </section>
+</div>
+
+<script>
+const C = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = n => n.toLocaleString('en-US');
+
+// Job 1: stepped funnel, band width on a log scale (5.9M vs 38 would not show otherwise).
+(function () {
+  const steps = [
+    { n: 5944001, s: '5.9M', label: 'All findings in System', d: 'from 40.3M indexed studies', solid: false },
+    { n: 15001, label: 'Name a medicine, heat or a body effect', d: '15 medicine groups · heat · 4 effects', solid: false },
+    { n: 912, label: 'Link a medicine or heat to a body effect', d: '546 studies', solid: false },
+    { n: 806, label: 'Drop blood-pressure efficacy trials', d: 'medicine→effect 588 · heat→effect 204 · direct 14', solid: false },
+    { n: 38, label: 'Two-step pathways', d: 'medicine → effect ← heat · 22 never tested directly', solid: true },
+  ];
+  const W = 860, bandH = 44, gap = 10, maxW = 340, minW = 56, cx = 180, tx = 380;
+  const lo = Math.log10(38), hi = Math.log10(5944001);
+  const wd = v => minW + (maxW - minW) * (Math.log10(v) - lo) / (hi - lo);
+  const H = steps.length * (bandH + gap) - gap;
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  steps.forEach((st, i) => {
+    const y = i * (bandH + gap), w = wd(st.n);
+    if (i) { const pw = wd(steps[i - 1].n), py = y - gap;
+      s += `<polygon points="${cx - pw / 2},${py} ${cx + pw / 2},${py} ${cx + w / 2},${y} ${cx - w / 2},${y}" fill="${C('--graph')}" opacity=".12"/>`; }
+    s += `<rect x="${cx - w / 2}" y="${y}" width="${w}" height="${bandH}" rx="6" fill="${st.solid ? C('--graph') : C('--graph-bg')}" stroke="${C('--graph')}"/>`;
+    s += `<text x="${cx}" y="${y + bandH / 2 + 7}" text-anchor="middle" font-size="20" font-weight="800" fill="${st.solid ? C('--page') : C('--graph')}">${st.s || fmt(st.n)}</text>`;
+    s += `<text x="${tx}" y="${y + 18}" font-size="15" font-weight="700" fill="${C('--ink')}">${st.label}</text>`;
+    s += `<text x="${tx}" y="${y + 36}" font-size="13" fill="${C('--muted')}">${st.d}</text>`;
+  });
+  document.getElementById('find').innerHTML = s + '</svg>';
+})();
+
+// Job 2a: paper check, 83 → 80 → 15 → split.
+(function () {
+  const W = 860, H = 230, x0 = 200, scale = 600 / 83;
+  const rows = [
+    { n: 83, label: 'Papers we cite' },
+    { n: 80, label: 'In System' },
+    { n: 15, label: 'System extracted findings' },
+  ];
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  rows.forEach((r, i) => {
+    const y = i * 52, w = r.n * scale;
+    s += `<text x="${x0 - 12}" y="${y + 26}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">${r.label}</text>`;
+    s += `<rect x="${x0}" y="${y + 6}" width="${w}" height="30" rx="4" fill="${C('--graph-bg')}" stroke="${C('--graph')}"/>`;
+    s += `<text x="${x0 + w + 8}" y="${y + 27}" font-size="15" font-weight="800" fill="${C('--graph')}">${r.n}</text>`;
+  });
+  const y = 3 * 52, wOk = 7 * scale, wW = 3 * scale, wRest = 5 * scale;
+  s += `<text x="${x0 - 12}" y="${y + 26}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">What System showed</text>`;
+  s += `<rect x="${x0}" y="${y + 6}" width="${wOk - 2}" height="30" rx="4" fill="${C('--ok')}"/>`;
+  s += `<rect x="${x0 + wOk}" y="${y + 6}" width="${wW - 2}" height="30" rx="4" fill="${C('--warn-bg')}" stroke="${C('--warn')}"/>`;
+  s += `<rect x="${x0 + wOk + wW}" y="${y + 6}" width="${wRest - 2}" height="30" rx="4" fill="${C('--unv-bg')}" stroke="${C('--line-strong')}"/>`;
+  const lx = x0 + wOk + wW + wRest + 12;
+  s += `<text x="${lx}" y="${y + 18}" font-size="13.5" fill="${C('--ok')}" font-weight="700">✓✓ 7 papers: same number as ours (14 numbers)</text>`;
+  s += `<text x="${lx}" y="${y + 36}" font-size="13.5" fill="${C('--warn')}" font-weight="700">⚠ 3 papers: right number, wrong drug in System</text>`;
+  s += `<text x="${lx}" y="${y + 54}" font-size="13.5" fill="${C('--muted')}">5 papers: findings on other results, not our number</text>`;
+  document.getElementById('check').innerHTML = s + '</svg>';
+})();
+
+// Job 2b: badges for the 105 numbers we quote, before (Dataverse bulk) and after (live API).
+(function () {
+  const rows = [{ label: 'Before', sub: 'bulk download only', v: [5, 74, 0, 26] }, { label: 'After', sub: 'live System API', v: [14, 58, 7, 26] }];
+  const cats = [
+    { k: '✓✓', fill: C('--ok'), ink: C('--page'), stroke: C('--ok') },
+    { k: '✓', fill: C('--ok-bg'), ink: C('--ok'), stroke: C('--ok') },
+    { k: '⚠', fill: C('--warn-bg'), ink: C('--warn'), stroke: C('--warn') },
+    { k: '?', fill: C('--unv-bg'), ink: C('--unv'), stroke: C('--line-strong') },
+  ];
+  const W = 860, x0 = 200, pw = 640, bh = 40, H = 2 * (bh + 18) + 24;
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  s += `<text x="${x0}" y="12" font-size="13" fill="${C('--muted')}">105 numbers we quote, by badge</text>`;
+  rows.forEach((r, i) => {
+    const y = 22 + i * (bh + 18);
+    s += `<text x="${x0 - 12}" y="${y + 18}" text-anchor="end" font-size="14" font-weight="700" fill="${C('--ink')}">${r.label}</text>`;
+    s += `<text x="${x0 - 12}" y="${y + 34}" text-anchor="end" font-size="12" fill="${C('--muted')}">${r.sub}</text>`;
+    let x = x0;
+    r.v.forEach((v, j) => { if (!v) return; const w = pw * v / 105, c = cats[j];
+      s += `<rect x="${x + 1}" y="${y}" width="${w - 2}" height="${bh}" rx="4" fill="${c.fill}" stroke="${c.stroke}"/>`;
+      s += `<text x="${x + w / 2}" y="${y + bh / 2 + 5}" text-anchor="middle" font-size="13" font-weight="800" fill="${c.ink}">${w > 56 ? c.k + ' ' + v : v}</text>`;
+      x += w; });
+  });
+  document.getElementById('badges').innerHTML = s + '</svg>';
+})();
+
+// Job 3: System studies per medicine group (non-blood-pressure body effects).
+(function () {
+  const d = [['ACE inhibitors / ARBs', 57], ['Loop diuretics', 44], ['SGLT2 inhibitors', 41], ['Thiazides', 29], ['SSRIs', 22], ['Insulin', 14],
+    ['Metformin', 13], ['Beta blockers', 13], ['Opioid patches', 13], ['Antipsychotics', 12], ['Lithium', 2], ['Anticholinergics', 2],
+    ['ADHD stimulants', 1], ['Topiramate / zonisamide', 0], ['Epinephrine auto-injectors', 0]];
+  const thin = new Set(['Anticholinergics', 'ADHD stimulants', 'Topiramate / zonisamide']);
+  const W = 860, x0 = 210, pw = 560, rh = 24, H = d.length * rh + 30;
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  [0, 20, 40, 60].forEach(t => { const x = x0 + pw * t / 60;
+    s += `<line x1="${x}" x2="${x}" y1="0" y2="${d.length * rh}" stroke="${C('--line')}" stroke-dasharray="2 3"/>`;
+    s += `<text x="${x}" y="${d.length * rh + 18}" text-anchor="middle" font-size="12" fill="${C('--muted')}">${t}</text>`; });
+  d.forEach(([name, n], i) => { const y = i * rh, w = Math.max(3, pw * n / 60), hot = thin.has(name);
+    s += `<text x="${x0 - 10}" y="${y + 16}" text-anchor="end" font-size="13" fill="${C('--ink')}" ${hot ? 'font-weight="700"' : ''}>${name}</text>`;
+    s += `<rect x="${x0}" y="${y + 4}" width="${w}" height="${rh - 8}" rx="3" fill="${hot ? C('--heat') : C('--graph')}"/>`;
+    s += `<text x="${x0 + w + 6}" y="${y + 16}" font-size="12.5" font-weight="700" fill="${C('--ink')}">${n}${n === 0 ? ' · gap' : ''}</text>`; });
+  s += `<text x="${x0 + pw + 18}" y="${d.length * rh + 18}" font-size="12" fill="${C('--muted')}">studies</text>`;
+  document.getElementById('gaps').innerHTML = s + '</svg>';
+})();
+</script>

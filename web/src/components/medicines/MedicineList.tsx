@@ -50,7 +50,28 @@ function Strength({ meter }: { meter: DrugRecord["evidence"]["meter"] | undefine
   );
 }
 
-const COLS = "md:grid md:grid-cols-[minmax(0,2.4fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] md:gap-4";
+/** Heat Dose Compass (knowledge base `compass`): does heat make this medicine act stronger or weaker?
+ *  Direction only, never a dose. The chip's tooltip is the compass "meaning" line from the knowledge base. */
+function HeatDirection({ compass }: { compass: DrugRecord["compass"] | undefined }) {
+  if (!compass?.arrow) return <span className="text-sm text-missing">—</span>;
+  const mattersMore = /^effect matters more/i.test(compass.meaning ?? "");
+  const kind =
+    compass.arrow === "up"
+      ? { cls: "border-hold-ink bg-hold-tint text-hold-ink", text: mattersMore ? "↑ Matters more" : "↑ Stronger" }
+      : compass.arrow === "down"
+        ? { cls: "border-store-ink bg-store-tint text-store-ink", text: "↓ Weaker" }
+        : { cls: "border-monitor-ink bg-monitor-tint text-monitor-ink", text: "↕ Depends" };
+  return (
+    <span
+      title={compass.meaning}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border-2 px-2.5 py-0.5 text-sm font-semibold ${kind.cls}`}
+    >
+      {kind.text}
+    </span>
+  );
+}
+
+const COLS = "md:grid md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)] md:gap-4";
 
 const BAR: Record<string, string> = { hold_or_substitute: "hold", adjust_dose: "adjust", monitor: "monitor", storage: "store" };
 
@@ -89,6 +110,7 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
 
             <div className={`hidden border-b border-line px-4 py-1.5 text-xs font-semibold text-ink-muted ${COLS}`}>
               <span>Medicine</span>
+              <span title="Heat Dose Compass: does heat make it act stronger or weaker? Direction only, no doses.">In heat</span>
               <span>Evidence</span>
               <span>Prescriber</span>
               <span>Label warns?</span>
@@ -111,6 +133,12 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                       <p className="truncate text-sm text-ink-muted" title={d.label_line || undefined}>{d.label_line || "—"}</p>
                     </div>
                     <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 md:contents">
+                      <div>
+                        <dt className="text-xs text-ink-muted md:sr-only">In heat</dt>
+                        <dd>
+                          <HeatDirection compass={d.compass} />
+                        </dd>
+                      </div>
                       <div className="md:block">
                         <dt className="text-xs text-ink-muted md:sr-only">Evidence</dt>
                         <dd>

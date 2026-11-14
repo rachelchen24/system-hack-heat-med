@@ -17,7 +17,7 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 **For the clinician**
 - **Risk groups** (High / Medium / Low), with one plain sentence of why for each patient, a **"Text this group"** button, and **"Why?"** to see the evidence.
 - **Heat + help map:** hottest and coolest neighborhoods, every patient as a colored dot, and the community resources near them.
-- **Medicines:** the evidence map the challenge asks for, as a simple grouped list showing what to do, how strong the evidence is, who prescribes it, and whether the label and guidance warn about heat.
+- **Medicines:** the evidence map the challenge asks for, now with an **"In heat" column** (↑ stronger / ↓ weaker / ↕ depends, from the Heat Dose Compass), as a simple grouped list showing what to do, how strong the evidence is, who prescribes it, and whether the label and guidance warn about heat.
 - **Messages:** one click from any patient opens the **conversation with that patient** (`/messages/[id]`): every alert and text sent, texts to their contact, their "I'm OK / unwell / No AC" replies, quick-reply templates, and a box to text them. The inbox (`/messages`) puts "Needs a call" first.
 - **Outreach that escalates:** if a High-risk patient doesn't reply, their caregiver or emergency contact is alerted.
 
@@ -45,6 +45,7 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 - **Gap finder and audit:** links the graph implies but no study has tested, plus a fix list of mislabeled findings.
 - **Evidence behind 9 product questions**, from "which medicines are risky?" to "is the medicine still good?" (`spec.md` §8.5c).
 - **Live layer:** relationship counts fetched from the API.
+- **Presentation write-up:** `docs/system-api-story.html` covers the data we had and the four jobs System did (find, check, spot gaps, feed the app), with charts and lines to say on stage. More pictures: `docs/data-pipeline.svg`, `docs/system-funnel.html`, `docs/system-cleaning-chart.html`, `docs/data-cleaning-charts.html`.
 
 ## What we built on (advisor's models), and how we go further
 - **CDC CHILL'D-Out questionnaire** (Cooling, Housing, Isolation & mobility, eLectricity, Learning, Drugs, Outside): our intake questionnaire is modeled on it. We score the answers into risk groups, fill in **Drugs** from the medication list, and act on each answer.

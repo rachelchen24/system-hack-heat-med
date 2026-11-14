@@ -155,7 +155,8 @@ export default function TimelapseMap({
       getIcon: (p: ReplayPatient) =>
         selected?.id === p.id
           ? personIcon(GROUP_COLORS[p.group].rgb, [20, 20, 20], 2)
-          : personIcon(GROUP_COLORS[p.group].rgb, p.group === "Medium" ? [122, 92, 0] : [255, 255, 255]),
+          // White outline on every group so people stay visible on the heat ramp (matches ClinicianMap).
+          : personIcon(GROUP_COLORS[p.group].rgb, [255, 255, 255], 2.4),
       getSize: (p: ReplayPatient) => (selected?.id === p.id ? 30 : 18),
       sizeUnits: "pixels",
       loadOptions: { image: { type: "image" } },

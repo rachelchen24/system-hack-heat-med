@@ -141,3 +141,38 @@ export function patientMessage(p: PanelPatient, kind: string): PanelMessage | nu
 export function contactMessage(p: PanelPatient): PanelMessage | null {
   return (p.messages ?? []).find((m) => m.kind === "contact_check") ?? null;
 }
+
+// ---- English reading copies (scripts/compute_messages_en.ts) ----
+// Same lib/patient rules with language forced to "en". Used only to let English readers view a
+// Spanish-speaking patient's screen (?lang=en). Patients are still sent their own language.
+
+export const EN_MESSAGES_FILE = "data/processed/panel_messages_en_replay.json";
+const enCache = globalThis as unknown as { __panelEn?: { mtime: number; byId: Map<string, PanelMessage[]> } };
+
+function englishMessages(patientId: string): PanelMessage[] | null {
+  const f = path.join(REPO_ROOT, EN_MESSAGES_FILE);
+  if (!fs.existsSync(f)) return null;
+  const mtime = fs.statSync(f).mtimeMs;
+  if (enCache.__panelEn?.mtime !== mtime) {
+    const raw = JSON.parse(fs.readFileSync(f, "utf8")) as { messages: Record<string, PanelMessage[]> };
+    for (const ms of Object.values(raw.messages))
+      for (const m of ms) if (typeof m.text === "string") m.text = m.text.replace(/\s*\(HeatRisk \d\)/g, "");
+    enCache.__panelEn = { mtime, byId: new Map(Object.entries(raw.messages)) };
+  }
+  return enCache.__panelEn.byId.get(patientId) ?? null;
+}
+
+/**
+ * English version of a message this patient was sent: find which of their messages the text is
+ * (by kind + audience), return the English build of the same one. Null if there's no match or
+ * the English file hasn't been generated (callers then keep the original text).
+ */
+export function englishFor(patientId: string, text: string, s: Scenario = "replay"): string | null {
+  const p = getPanelPatient(patientId, s);
+  // Messages saved before the "(HeatRisk N)" strip still carry it; ignore it when matching.
+  const plain = text.replace(/\s*\(HeatRisk \d\)/g, "");
+  const orig = p?.messages?.find((m) => m.text === plain);
+  if (!orig) return null;
+  const en = englishMessages(patientId)?.find((m) => m.kind === orig.kind && m.audience === orig.audience);
+  return en?.text ?? null;
+}

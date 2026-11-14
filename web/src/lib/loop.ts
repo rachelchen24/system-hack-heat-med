@@ -8,7 +8,7 @@
 // If a piece is missing, the message body says so in [brackets] instead of inventing text.
 
 import { db, demoNow } from "@/lib/db";
-import { contactMessage, getPanelPatient, patientMessage, type Scenario } from "@/lib/panel";
+import { contactMessage, englishFor, getPanelPatient, patientMessage, type Scenario } from "@/lib/panel";
 import { riskGroup } from "@/lib/risk";
 
 export type AlertStatus = "sent" | "acknowledged" | "escalated_contact" | "escalated_clinic" | "resolved";
@@ -206,11 +206,18 @@ export function boardState() {
 }
 
 /** What the demo phone shows: messages to this patient + its latest alert status. */
-export function inbox(patientId: string) {
+export function inbox(patientId: string, lang?: "en" | "es") {
   tick();
-  const messages = db()
+  const rows = db()
     .prepare(`SELECT * FROM messages WHERE patient_id = ? AND recipient = 'patient' ORDER BY created_at ASC, id ASC`)
     .all(patientId) as unknown as MessageRow[];
+  // ?lang=en: show the English build of the same message (reading copy; the patient was sent their own language).
+  const messages = lang === "en"
+    ? rows.map((m) => {
+        const en = englishFor(patientId, m.body);
+        return en ? { ...m, body: en } : m;
+      })
+    : rows;
   const latest = db().prepare(`SELECT * FROM alerts WHERE patient_id = ? ORDER BY id DESC LIMIT 1`).get(patientId) as unknown as AlertRow | undefined;
   return { demo_time: demoNow().toISOString(), messages, alert: latest ?? null };
 }

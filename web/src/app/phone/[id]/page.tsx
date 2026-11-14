@@ -20,15 +20,21 @@ function splitLabel(label: string): { title: string; signs: string | null } {
 
 // Patient "my heat plan" (P3). Everything comes from panel_scores_replay.json,
 // replay_heatwave_hourly.csv and the map component's files. Map first: "where do I go?"
-export default function PhonePage({ params }: { params: Promise<{ id: string }> }) {
+// ?lang=en|es overrides the patient's language (same rule as /phone/signup), so English readers
+// can see a Spanish-speaking patient's screen. Message texts switch to the English build
+// (data/processed/panel_messages_en_replay.json, scripts/compute_messages_en.ts).
+type SearchParams = Promise<{ lang?: string }>;
+
+export default function PhonePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   return (
     <Suspense fallback={<p className="text-ink-muted">Loading…</p>}>
-      <PhoneForPatient params={params} />
+      <PhoneForPatient params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-const hourLong = (h: number) => (h === 0 || h === 24 ? "midnight" : h < 12 ? `${h} AM` : h === 12 ? "noon" : `${h - 12} PM`);
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const hourLong =(h: number) => (h === 0 || h === 24 ? "midnight" : h < 12 ? `${h} AM` : h === 12 ? "noon" : `${h - 12} PM`);
 const hourLongEs = (h: number) =>
   h === 0 || h === 24 ? "la medianoche" : h === 12 ? "el mediodía" : `${h % 12 === 1 ? "la" : "las"} ${h % 12} ${h < 12 ? "a.m." : "p.m."}`;
 
@@ -39,9 +45,11 @@ const T = {
     eyebrow: "Heat wave · June 24",
     synthetic: "Synthetic patient",
     replay: "Heat wave replay, June 24, 2025.",
-    safest: "Best time to go out",
-    stayInside: (a: number, b: number) => `Stay inside ${hourLong(a)} to ${hourLong(b)}.`,
+    safest: "Stay inside",
+    // Heading says "Stay inside", so this line is just the hours ("11 AM to 7 PM.").
+    stayInside: (a: number, b: number) => cap(`${hourLong(a)} to ${hourLong(b)}.`),
     noHot: "No very hot hours today.",
+    noRisk: "No heat risk today",
     hourly: "Hourly heat today",
     hourByHour: "Hour by hour",
     feels: (h: number, f: number) => `${hourLong(h)}: feels like ${f}°F`,
@@ -61,9 +69,10 @@ const T = {
     eyebrow: "Ola de calor · 24 de junio",
     synthetic: "Paciente de prueba",
     replay: "Repetición de la ola de calor, 24 de junio de 2025.",
-    safest: "La mejor hora para salir",
-    stayInside: (a: number, b: number) => `Quédese adentro de ${hourLongEs(a)} a ${hourLongEs(b)}.`.replace(/\.\.$/, "."),
+    safest: "Quédese adentro",
+    stayInside: (a: number, b: number) => cap(`De ${hourLongEs(a)} a ${hourLongEs(b)}.`.replace(/\.\.$/, ".")),
     noHot: "Hoy no hay horas de mucho calor.",
+    noRisk: "Hoy no hay riesgo por calor",
     hourly: "Calor por hora hoy",
     hourByHour: "Hora por hora",
     feels: (h: number, f: number) => `${hourLongEs(h)}: se siente como ${f}°F`,
@@ -83,8 +92,9 @@ const T = {
 /** First sentence only, so the headline reason stays one short line. */
 const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim();
 
-async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) {
+async function PhoneForPatient({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   const { id } = await params;
+  const { lang: langParam } = await searchParams;
   const p = getPanelPatient(id, "replay");
   if (!p) {
     return <Placeholder title={`Demo phone: ${id}`}>Patient not found in data/processed/panel_scores_replay.json</Placeholder>;
@@ -97,7 +107,7 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
   const symptoms = [...(p.stacking?.symptoms ?? [])].sort((a, b) => Number(b.stacked) - Number(a.stacked)).slice(0, 4);
   const masked = p.stacking?.maskedSigns ?? [];
   const contact = p.escalation?.contacts?.find((c) => c.contactId === p.escalation?.firstContactId);
-  const es = p.language === "es";
+  const es = (langParam === "en" || langParam === "es" ? langParam : p.language) === "es";
   const t = es ? T.es : T.en;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mechanisms = ((p as any).stacking?.mechanisms ?? []) as { defense: string; label: string; drugs: string[] }[];
@@ -110,6 +120,14 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
 
   const plan = (
     <div className="space-y-8">
+      {/* Language switch: shown when the patient's language isn't English, or when it's been overridden. */}
+      {(p.language !== "en" || langParam) && (
+        <p className="-mb-4 text-right text-base">
+          <Link href={`/phone/${p.patientId}?lang=${es ? "en" : "es"}`} className="underline underline-offset-4 text-muted-foreground hover:text-ink">
+            {es ? "Read in English" : "Ver en español"}
+          </Link>
+        </p>
+      )}
       {/* 1. Risk headline (hero, same style as the home hero) + the map: "where do I go?" first */}
       <section className="space-y-2 text-center">
         <p className="text-base font-medium text-muted-foreground">{t.eyebrow}</p>
@@ -124,9 +142,10 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
 
       <HelpContacts contacts={helpContactsFor(p.patientId)} lang={lang} sourceFile={HELP_FILE} />
 
-      {/* 2. Best time to go out: hour by hour (same hourly data as the time-lapse) */}
+      {/* 2. Stay inside: the hot hours, hour by hour (same hourly data as the time-lapse) */}
       <section className="space-y-3 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-patient-lg font-semibold tracking-tight">{t.safest}</h2>
+        {/* Hot hours → "Stay inside" + the hours. No hot hours → "No heat risk today" (no contradiction). */}
+        <h2 className="text-patient-lg font-semibold tracking-tight">{hours.length && !hot.length ? t.noRisk : t.safest}</h2>
         {hours.length ? (
           <>
             <p className="font-semibold">{hot.length ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1) : t.noHot}</p>

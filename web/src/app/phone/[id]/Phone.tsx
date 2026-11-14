@@ -31,10 +31,10 @@ export function Phone({ patientId, firstName, language, children, checkInNote, f
 
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch(`/api/loop/inbox/${patientId}`, { cache: "no-store" });
+      const r = await fetch(`/api/loop/inbox/${patientId}?lang=${language}`, { cache: "no-store" });
       setInbox(await r.json());
     } catch { /* keep last state; phone may be briefly off Wi-Fi */ }
-  }, [patientId]);
+  }, [patientId, language]);
 
   useEffect(() => {
     const first = setTimeout(refresh, 0);
