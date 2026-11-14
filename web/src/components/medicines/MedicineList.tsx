@@ -18,7 +18,7 @@ function YesNo({ value, yes, no }: { value: boolean | null; yes: string; no: str
         —<span className="sr-only">Not checked yet</span>
       </span>
     );
-  // Yes = blue (Store-cool) chip; No = orange (Hold) chip: a missing warning is the problem.
+  // Yes = teal (Store-cool) chip; No = orange (Hold) chip: a missing warning is the problem.
   return value ? (
     <span className="inline-flex items-center gap-1 rounded-full border-2 border-store-ink bg-store-tint px-2.5 py-0.5 text-sm font-semibold text-store-ink">
       <span aria-hidden>✓</span>

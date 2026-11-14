@@ -1,4 +1,4 @@
-// Risk-group chip styles (Okabe–Ito palette: High = orange, Medium = yellow, Low = blue).
+// Risk-group chip styles (Okabe–Ito palette: High = orange, Medium = yellow, Low = teal).
 export type RiskGroup = "High" | "Medium" | "Low";
 
 export const GROUP_STYLE: Record<RiskGroup, { solid: string; tint: string; ink: string }> = {

@@ -1,5 +1,5 @@
 // Colors for the time-lapse, in the app's Okabe–Ito palette (tokens.css).
-// Risk groups: High = orange (Hold vermillion), Medium = yellow, Low = blue (Store-cool blue).
+// Risk groups: High = orange (Hold vermillion), Medium = yellow, Low = teal (Store-cool teal).
 export const GROUP_COLORS = {
   High: { css: "#d55e00", rgb: [213, 94, 0] as [number, number, number], tint: "#fbe3d6", ink: "#a0410a" },
   Medium: { css: "#f0c419", rgb: [240, 196, 25] as [number, number, number], tint: "#fdf4d3", ink: "#7a5c00" },
