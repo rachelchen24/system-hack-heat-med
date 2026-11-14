@@ -59,7 +59,7 @@
   .take { background: var(--teal-tint); color: var(--teal-ink); border-radius: var(--radius); padding: 12px 16px; font-weight: 600; }
 
   .lanes { display: grid; gap: 8px; }
-  .lane { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 14px; align-items: start; border-radius: var(--radius); padding: 12px 16px; border: 1px solid; }
+  .lane { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 14px; align-items: baseline; font-size: 14.5px; border-radius: var(--radius); padding: 12px 16px; border: 1px solid; }
   .lane h3 { font-size: 15px; font-weight: 700; }
   .lane ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
   .lane li + li { margin-top: 2px; }
@@ -102,121 +102,101 @@
     <section class="hero">
       <p class="eyebrow">Heat wave forecast · Bronx clinic · June 24, 2025 (replay)</p>
       <h1>How Cool-Aid uses the System API</h1>
-      <p>Cool-Aid tells a clinic which patients are at risk in a heat wave because of their medicines and their home. Every risk claim rests on published evidence. The System API is where we found that evidence, and how we checked it.</p>
+      <p>Which patients are at risk in a heat wave because of their medicines? System is how we found the evidence, and how we checked it.</p>
     </section>
 
     <div class="stats">
-      <div class="stat"><div class="n">15,001</div><div class="t">System findings pulled for 15 medicine groups, heat and 4 body effects</div></div>
-      <div class="stat"><div class="n">38</div><div class="t">medicine → body effect ← heat pathways, 22 never studied directly</div></div>
-      <div class="stat"><div class="n">80 of 83</div><div class="t">papers we cite are in System (the bulk download had 7)</div></div>
-      <div class="stat"><div class="n">0</div><div class="t">number or direction conflicts between System and our own reading</div></div>
+      <div class="stat"><div class="n">15,001</div><div class="t">System findings pulled</div></div>
+      <div class="stat"><div class="n">38</div><div class="t">medicine → body ← heat pathways</div></div>
+      <div class="stat"><div class="n">80 of 83</div><div class="t">cited papers found in System</div></div>
+      <div class="stat"><div class="n">0</div><div class="t">conflicts with our numbers</div></div>
     </div>
 
     <section class="card" aria-labelledby="h-data">
       <span class="tag plain">The data</span>
-      <h2 id="h-data">Five kinds of data, joined into one evidence base</h2>
-      <p class="muted">System is one of five sources. The others add place, regulation and patients. They connect on paper IDs, medicine group, ZIP code and date.</p>
+      <h2 id="h-data">Five data sources, one evidence base</h2>
       <div class="lanes">
         <div class="lane" style="border-color:var(--graph);background:var(--graph-bg)">
           <h3 style="color:var(--graph)">System Public Graph</h3>
-          <ul>
-            <li>Live API: 40.3M studies, 5.9M findings, 627k relationships</li>
-            <li>Harvard Dataverse v2.1 bulk release: 2.0M findings, 845k studies</li>
-            <li>PubMed for publication dates (1,207 papers)</li>
-          </ul>
+<p>Live API (40.3M studies) + Dataverse bulk release</p>
         </div>
         <div class="lane" style="border-color:var(--lit);background:var(--lit-bg)">
           <h3 style="color:var(--lit)">Medical literature</h3>
-          <ul>
-            <li>PubMed + Europe PMC: 5,995 unique records, 1,965 chased citations</li>
-            <li>Screened to 333 included papers; 83 papers cited in the app</li>
-          </ul>
+<p>5,995 records screened → 83 papers cited</p>
         </div>
         <div class="lane" style="border-color:var(--fda);background:var(--fda-bg)">
           <h3 style="color:var(--fda)">FDA &amp; guidance</h3>
-          <ul>
-            <li>FDA drug labels: 5,938 sections audited, 299 heat sentences found</li>
-            <li>FDA adverse-event reports (21M) compared against control drugs</li>
-            <li>13 heat-health guidance documents from CDC, NHS, Health Canada and others</li>
-          </ul>
+<p>Drug labels, adverse-event reports, 13 guidance documents</p>
         </div>
         <div class="lane" style="border-color:var(--teal);background:var(--teal-tint)">
           <h3 style="color:var(--teal-ink)">Place &amp; climate</h3>
-          <ul>
-            <li>National Weather Service HeatRisk; NOAA station history (183 Bronx heat waves)</li>
-            <li>Heat Vulnerability Index, Social Vulnerability Index, air-conditioning access</li>
-            <li>1,868 cooling places and 520 pharmacies; Medicare prescribing by ZIP</li>
-          </ul>
+<p>HeatRisk forecasts, vulnerability maps, 1,868 cooling places</p>
         </div>
         <div class="lane" style="border-color:var(--pat);background:var(--pat-bg)">
           <h3 style="color:var(--pat)">Patients (synthetic)</h3>
-          <ul>
-            <li>300 patients with 952 medicines, matched to real Bronx health and prescribing rates</li>
-            <li>No real patient data anywhere</li>
-          </ul>
+<p>300 synthetic patients, no real data</p>
         </div>
       </div>
-      <div class="kb"><span class="muted">All of it becomes</span><span class="pill">15 medicine groups</span><span class="arrow">·</span><span class="pill">101 claims</span><span class="muted">each with a source and a verification badge.</span></div>
+      <div class="kb"><span class="muted">→</span><span class="pill">15 medicine groups</span><span class="pill">101 sourced claims</span></div>
     </section>
 
     <section class="card" aria-labelledby="h-jobs">
       <span class="tag sys">System API</span>
-      <h2 id="h-jobs">Four jobs the System API does for Cool-Aid</h2>
+      <h2 id="h-jobs">Four jobs for System</h2>
       <div class="jobs">
-        <div class="job"><span class="h">FIND</span><span class="k">38 pathways</span><span class="d">How each medicine and heat hit the same weak spot in the body</span></div>
-        <div class="job"><span class="h">CHECK</span><span class="k">14 numbers ✓✓</span><span class="d">System read the same paper and got the same value as us</span></div>
-        <div class="job"><span class="h">SPOT GAPS</span><span class="k">0 to 2 studies</span><span class="d">for the sweat-blocking medicines, a gap in the evidence itself</span></div>
-        <div class="job"><span class="h">POWER THE APP</span><span class="k">Live</span><span class="d">Study counts on every medicine card and in the medicines picture</span></div>
+        <div class="job"><span class="h">FIND</span><span class="k">38 pathways</span><span class="d">medicine and heat, same weak spot</span></div>
+        <div class="job"><span class="h">CHECK</span><span class="k">14 numbers ✓✓</span><span class="d">same paper, same value</span></div>
+        <div class="job"><span class="h">SPOT GAPS</span><span class="k">0 to 2 studies</span><span class="d">for sweat-blocking medicines</span></div>
+        <div class="job"><span class="h">POWER THE APP</span><span class="k">Live</span><span class="d">study counts in the app</span></div>
       </div>
-      <p class="muted">1,902 API calls, within System's 10,000-a-day limit. Every response is saved, so the whole analysis can be rerun.</p>
+      <p class="muted">1,902 API calls, all cached and rerunnable.</p>
     </section>
 
     <section class="card" aria-labelledby="h-find">
       <span class="tag sys">Find</span>
       <h2 id="h-find">From 5.9 million findings to 38 pathways</h2>
-      <p>We asked System for every finding about our medicines, heat, or four body effects: dehydration, low sodium, kidney injury and low blood pressure. We kept the findings that link a medicine or heat to one of those effects, then joined the two sides: <b>medicine → body effect ← heat</b>.</p>
+      <p>Join two well-studied halves: <b>medicine → body effect ← heat</b>.</p>
       <div class="chart" id="find" role="img" aria-label="Funnel: 5.9 million findings, 15,001 match our terms, 912 link a medicine or heat to a body effect, 806 after dropping blood-pressure trials, 38 pathways"></div>
-      <p class="take">Most of these pathways were never studied as "this drug in the heat". System connects two well-studied halves.</p>
+      <p class="take">22 of 38 were never studied directly.</p>
     </section>
 
     <section class="card" aria-labelledby="h-check">
       <span class="tag sys">Check</span>
       <h2 id="h-check">System as a second, independent reader</h2>
-      <p>We read every number we quote from the paper's abstract ourselves. System extracts findings from papers too, so we compared them paper by paper: same number, same meaning, same direction.</p>
+      <p>We read every number ourselves. System reads them too. We compared.</p>
       <div class="chart" id="check" role="img" aria-label="83 papers we cite, 80 in System, 15 with findings; 7 papers with the same number as ours, 3 papers where System mislabeled the drug, 5 with other results"></div>
       <div class="chart" id="badges" role="img" aria-label="Badges for the 105 numbers we quote before and after the System API check: double-verified went from 5 to 14"></div>
-      <p class="take">Where System read the same paper, it got the same number every time: zero conflicts.</p>
+      <p class="take">Same paper, same number, every time.</p>
     </section>
 
     <section class="card" aria-labelledby="h-gaps">
       <span class="tag sys">Spot gaps</span>
       <h2 id="h-gaps">Where the evidence is thin</h2>
-      <p>Counting System's studies per medicine group shows where the evidence is. Kidney and fluid drugs are well covered. Medicines that stop sweating or raise body heat are almost absent, even though heat guidance worries about them most. Cool-Aid labels those claims "Early signs" instead of overstating them.</p>
+      <p>Sweat-blocking medicines barely appear, so Cool-Aid marks them "Early signs".</p>
       <div class="chart" id="gaps" role="img" aria-label="System studies linking each medicine group to a heat-related body effect"></div>
     </section>
 
     <section class="card" aria-labelledby="h-more">
       <span class="tag sys">Reverse check</span>
       <h2 id="h-more">What System found that we missed</h2>
-      <p>We also ran the check backwards: what does System know about our papers that we didn't use?</p>
       <div class="stats">
-        <div class="stat"><div class="n">36</div><div class="t">findings on papers we cite that we hadn't used</div></div>
-        <div class="stat"><div class="n">15</div><div class="t">strong System links to papers not on our list</div></div>
-        <div class="stat"><div class="n">OR 2.21</div><div class="t">hot weather → drug-induced low sodium, a study we now review</div></div>
-        <div class="stat"><div class="n">n = 63</div><div class="t">a new lithium study: blood level vs outdoor temperature</div></div>
+        <div class="stat"><div class="n">36</div><div class="t">unused findings on our papers</div></div>
+        <div class="stat"><div class="n">15</div><div class="t">papers we were missing</div></div>
+        <div class="stat"><div class="n">OR 2.21</div><div class="t">heat → drug-induced low sodium</div></div>
+        <div class="stat"><div class="n">n = 63</div><div class="t">new lithium-vs-temperature study</div></div>
       </div>
-      <p class="muted">New evidence goes on a review list. Nothing reaches the app until a person checks it against the paper.</p>
+      <p class="muted">A person checks each one before it reaches the app.</p>
     </section>
 
     <section class="card" aria-labelledby="h-rules">
       <span class="tag plain">Trust</span>
-      <h2 id="h-rules">How we keep the evidence honest</h2>
+      <h2 id="h-rules">Ground rules</h2>
       <ul class="rules">
-        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓</span><span><b>Every number must appear word for word in its abstract.</b> If it doesn't, the claim is hidden. System can't rescue it.</span></li>
-        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓✓</span><span><b>Double-verified only when System agrees.</b> 14 numbers. System advises that about 20% of its API extractions are inaccurate; counting only findings also in its curated bulk release, 5 remain. We report both.</span></li>
-        <li><span class="chip" style="color:var(--warn);background:var(--warn-bg);border-color:var(--warn)">⚠</span><span><b>A System mistake never downgrades our claim.</b> In 3 papers System had our number but named the wrong drug. Our claim stays ✓, and the error goes to a fix list for System.</span></li>
-        <li><span class="chip" style="color:var(--graph);background:var(--graph-bg);border-color:var(--graph)">↗</span><span><b>Support is labeled as support.</b> A System link that agrees with a claim but isn't the same result shows as ↗, never as proof.</span></li>
-        <li><span class="chip" style="color:var(--heat-ink);background:var(--heat-tint);border-color:var(--heat-ink)">!</span><span><b>No dose advice. No invented data.</b> Every label and number in Cool-Aid comes from a source you can open.</span></li>
+        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓</span><span>Every number appears word for word in its abstract.</span></li>
+        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓✓</span><span>Double-verified only when System agrees (14; 5 under System's strictest rule).</span></li>
+        <li><span class="chip" style="color:var(--warn);background:var(--warn-bg);border-color:var(--warn)">⚠</span><span>System's mistakes go on a fix list. They never downgrade our claim.</span></li>
+        <li><span class="chip" style="color:var(--graph);background:var(--graph-bg);border-color:var(--graph)">↗</span><span>Supporting links are labeled as support, not proof.</span></li>
+        <li><span class="chip" style="color:var(--heat-ink);background:var(--heat-tint);border-color:var(--heat-ink)">!</span><span>No dose advice. No invented data.</span></li>
       </ul>
     </section>
   </div>
@@ -225,7 +205,7 @@
 <footer class="gutter">
   <div class="inner">
     <p>Prototype with synthetic patients. Not medical advice.</p>
-    <p>Built on the System Public Graph (live API and Harvard Dataverse v2.1, accessed 14 Nov 2026), PubMed, Europe PMC, openFDA, the National Weather Service, NOAA, CDC and NYC open data.</p>
+    <p>Sources: System Public Graph (14 Nov 2026), PubMed, openFDA, NWS, NOAA, CDC, NYC open data.</p>
   </div>
 </footer>
 
@@ -237,11 +217,11 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
 // Find: stepped funnel; band width on a log scale (5.9M next to 38 would not show otherwise).
 (function () {
   const steps = [
-    { n: 5944001, s: '5.9M', label: 'All findings in System', d: 'from 40.3M indexed studies' },
-    { n: 15001, label: 'About our medicines, heat or a body effect', d: '15 medicine groups · heat · 4 body effects' },
-    { n: 912, label: 'Link a medicine or heat to a body effect', d: 'from 546 studies' },
-    { n: 806, label: 'Drop blood-pressure drug trials', d: 'medicine → effect 588 · heat → effect 204 · direct 14' },
-    { n: 38, label: 'Two-step pathways', d: 'medicine → effect ← heat · 22 never tested directly', solid: true },
+    { n: 5944001, s: '5.9M', label: 'All findings in System' },
+    { n: 15001, label: 'About our medicines or heat' },
+    { n: 912, label: 'Linked to a body effect' },
+    { n: 806, label: 'Minus blood-pressure trials' },
+    { n: 38, label: 'Pathways', solid: true },
   ];
   const W = 900, bandH = 46, gap = 10, maxW = 360, minW = 60, cx = 190, tx = 400;
   const lo = Math.log10(38), hi = Math.log10(5944001);
@@ -254,8 +234,7 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
       s += `<polygon points="${cx - pw / 2},${py} ${cx + pw / 2},${py} ${cx + w / 2},${y} ${cx - w / 2},${y}" fill="${C('--teal')}" opacity=".14"/>`; }
     s += `<rect x="${cx - w / 2}" y="${y}" width="${w}" height="${bandH}" rx="8" fill="${st.solid ? C('--teal') : C('--teal-tint')}" stroke="${C('--teal')}" stroke-width="1.5"/>`;
     s += `<text x="${cx}" y="${y + bandH / 2 + 7}" text-anchor="middle" font-size="20" font-weight="700" fill="${st.solid ? '#ffffff' : C('--teal-ink')}">${st.s || fmt(st.n)}</text>`;
-    s += `<text x="${tx}" y="${y + 19}" font-size="15" font-weight="700" fill="${C('--ink')}">${st.label}</text>`;
-    s += `<text x="${tx}" y="${y + 37}" font-size="13" fill="${C('--muted')}">${st.d}</text>`;
+    s += `<text x="${tx}" y="${y + bandH / 2 + 5}" font-size="15" font-weight="700" fill="${C('--ink')}">${st.label}</text>`;
   });
   s += `<text x="${cx}" y="${H - 4}" text-anchor="middle" font-size="12" fill="${C('--muted')}">band width on a log scale</text>`;
   document.getElementById('find').innerHTML = s + '</svg>';
@@ -279,9 +258,9 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
   s += `<rect x="${x0 + a}" y="${y + 6}" width="${b - 2}" height="30" rx="6" fill="${C('--warn-bg')}" stroke="${C('--warn')}" stroke-width="1.5"/>`;
   s += `<rect x="${x0 + a + b}" y="${y + 6}" width="${c - 2}" height="30" rx="6" fill="${C('--unv-bg')}" stroke="${C('--line-strong')}"/>`;
   const lx = x0 + a + b + c + 14;
-  s += `<text x="${lx}" y="${y + 14}" font-size="13.5" font-weight="700" fill="${C('--ok')}">✓✓ 7 papers: same number as ours (14 numbers)</text>`;
-  s += `<text x="${lx}" y="${y + 33}" font-size="13.5" font-weight="700" fill="${C('--warn')}">⚠ 3 papers: right number, wrong drug in System</text>`;
-  s += `<text x="${lx}" y="${y + 52}" font-size="13.5" fill="${C('--muted')}">5 papers: findings about other results</text>`;
+  s += `<text x="${lx}" y="${y + 14}" font-size="13.5" font-weight="700" fill="${C('--ok')}">✓✓ 7 papers: same number</text>`;
+  s += `<text x="${lx}" y="${y + 33}" font-size="13.5" font-weight="700" fill="${C('--warn')}">⚠ 3 papers: System mislabel</text>`;
+  s += `<text x="${lx}" y="${y + 52}" font-size="13.5" fill="${C('--muted')}">5 papers: other results</text>`;
   document.getElementById('check').innerHTML = s + '</svg>';
 })();
 
@@ -296,7 +275,7 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
   ];
   const W = 900, x0 = 210, pw = 650, bh = 40, top = 26, H = top + 2 * (bh + 16);
   let s = `<svg viewBox="0 0 ${W} ${H}" ${F}>`;
-  s += `<text x="${x0}" y="14" font-size="13" font-weight="600" fill="${C('--muted')}">The 105 numbers we quote, by verification badge</text>`;
+  s += `<text x="${x0}" y="14" font-size="13" font-weight="600" fill="${C('--muted')}">105 numbers we quote</text>`;
   rows.forEach((r, i) => {
     const y = top + i * (bh + 16);
     s += `<text x="${x0 - 12}" y="${y + 18}" text-anchor="end" font-size="14" font-weight="700" fill="${C('--ink')}">${r.label}</text>`;
@@ -318,7 +297,7 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
   const thin = new Set(['Anticholinergics', 'ADHD stimulants', 'Topiramate / zonisamide']);
   const W = 900, x0 = 220, pw = 580, rh = 26, top = 30, H = top + d.length * rh + 26;
   let s = `<svg viewBox="0 0 ${W} ${H}" ${F}>`;
-  s += `<rect x="${x0}" y="4" width="12" height="12" rx="3" fill="${C('--teal')}"/><text x="${x0 + 18}" y="14" font-size="12.5" fill="${C('--muted')}">studies linking the medicine to dehydration, low sodium or kidney injury</text>`;
+  s += `<rect x="${x0}" y="4" width="12" height="12" rx="3" fill="${C('--teal')}"/><text x="${x0 + 18}" y="14" font-size="12.5" fill="${C('--muted')}">System studies per medicine</text>`;
   s += `<rect x="${x0}" y="20" width="0" height="0" fill="none"/>`;
   [0, 20, 40, 60].forEach(t => { const x = x0 + pw * t / 60;
     s += `<line x1="${x}" x2="${x}" y1="${top}" y2="${top + d.length * rh}" stroke="${C('--line')}" stroke-dasharray="2 3"/>`;
@@ -326,7 +305,7 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
   d.forEach(([name, n], i) => { const y = top + i * rh, w = Math.max(3, pw * n / 60), hot = thin.has(name);
     s += `<text x="${x0 - 10}" y="${y + 17}" text-anchor="end" font-size="13" fill="${C('--ink')}" ${hot ? 'font-weight="700"' : ''}>${name}</text>`;
     s += `<rect x="${x0}" y="${y + 5}" width="${w}" height="${rh - 10}" rx="4" fill="${hot ? C('--heat') : C('--teal')}"/>`;
-    s += `<text x="${x0 + w + 6}" y="${y + 17}" font-size="12.5" font-weight="700" fill="${hot ? C('--heat-ink') : C('--ink')}">${n}${hot ? ' · sweat or body heat' : n === 0 ? ' · none' : ''}</text>`; });
+    s += `<text x="${x0 + w + 6}" y="${y + 17}" font-size="12.5" font-weight="700" fill="${hot ? C('--heat-ink') : C('--ink')}">${n}</text>`; });
   document.getElementById('gaps').innerHTML = s + '</svg>';
 })();
 </script>
