@@ -2,12 +2,12 @@
 // Clinician heat + help map (/map): neighborhoods shaded by heat, help places, synthetic patients
 // colored by risk group. Click a dot, a place or a neighborhood for a card.
 import { useEffect, useMemo, useState } from "react";
-import { GeoJsonLayer, IconLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import type { PickingInfo } from "@deck.gl/core";
 import { HEAT_HEX, HEAT_RGB, RISK_CSS, RISK_GROUPS, RISK_RGB, type RiskGroup } from "./colors";
 import type { HeatArea, HelpPlace, HelpPoint, MapPatient } from "./data";
 import { boundsOf, directionsUrl } from "./format";
-import { DEFAULT_HELP_TYPES, HELP_TYPES, helpIconUrl } from "./helpTypes";
+import { DEFAULT_HELP_TYPES, HELP_FAMILIES, HELP_TYPES, helpFamily } from "./helpTypes";
 import MapCanvas from "./MapCanvas";
 import { ThreeDToggle } from "./ThreeDToggle";
 
@@ -23,12 +23,12 @@ interface Layers {
   files: { heat: string; help: string };
 }
 
-const HEAT_WORDS = ["Among the coolest neighborhoods", "Cooler than most", "In the middle", "Hotter than most", "Among the hottest neighborhoods"];
+const HEAT_WORDS = ["Among the coolest neighborhoods", "Cooler than most", "In the middle for heat", "Hotter than most", "Among the hottest neighborhoods"];
 
 function GroupChip({ g, children }: { g: RiskGroup; children?: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-sm font-semibold"
+      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-semibold"
       style={{ background: RISK_CSS[g].tint, color: RISK_CSS[g].ink, borderColor: RISK_CSS[g].ink }}
     >
       <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: RISK_CSS[g].solid, outline: g === "Medium" ? `1px solid ${RISK_CSS.Medium.ink}` : undefined }} />
@@ -82,9 +82,9 @@ function SendButton({ patients, label }: { patients: MapPatient[]; label: string
 
 function Card({ title, onClose, children }: { title: React.ReactNode; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 rounded-2xl border border-[var(--ui-line,#d4d4d0)] bg-white p-4 shadow-sm">
+    <div className="space-y-3 rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-lg font-bold leading-snug">{title}</div>
+        <div className="text-base font-bold leading-snug">{title}</div>
         <button type="button" onClick={onClose} aria-label="Close" className="rounded-full px-2 text-xl leading-none text-[var(--ui-ink-muted,#4b5563)]">×</button>
       </div>
       {children}
@@ -93,28 +93,25 @@ function Card({ title, onClose, children }: { title: React.ReactNode; onClose: (
 }
 
 function PatientCard({ p, onClose }: { p: MapPatient; onClose: () => void }) {
-  const [why, setWhy] = useState(false);
+  const [more, setMore] = useState(false);
   return (
-    <Card title={<>{p.name} <span className="text-sm font-normal text-[var(--ui-ink-muted,#4b5563)]">(synthetic)</span></>} onClose={onClose}>
+    <Card title={p.name} onClose={onClose}>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <GroupChip g={p.group}>{p.group} risk</GroupChip>
-        <span>Age {p.age}</span>
-        <span>· ZIP {p.zip}</span>
+        <span className="text-[var(--ui-ink-muted,#4b5563)]">Age {p.age}</span>
       </div>
-      <p className="text-base">{p.why}</p>
-      {!p.textOk && <p className="text-sm text-[var(--ui-ink-muted,#4b5563)]">Asked not to get texts: call instead.</p>}
-      <div className="grid grid-cols-2 gap-2">
-        <SendButton patients={[p]} label="Text" />
-        <button type="button" aria-expanded={why} onClick={() => setWhy((v) => !v)} className="h-fit rounded-full border border-[var(--ui-line-strong,#6b6b66)] px-4 py-2 text-sm font-semibold">
-          Why?
-        </button>
-      </div>
-      {why && (
-        <div className="space-y-2 rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-3 text-sm">
-          <p className="font-semibold">Everything that adds to their heat risk:</p>
+      <p className="text-sm">{p.why}</p>
+      <SendButton patients={[p]} label="Text" />
+      <button type="button" aria-expanded={more} onClick={() => setMore((v) => !v)} className="text-sm font-semibold underline underline-offset-2">
+        {more ? "Less" : "More"}
+      </button>
+      {more && (
+        <div className="space-y-2 text-sm">
+          <p className="text-[var(--ui-ink-muted,#4b5563)]">Synthetic patient (not a real person). ZIP {p.zip}.{!p.textOk && " Asked not to get texts: call instead."}</p>
+          <p className="font-semibold">Why they are at risk</p>
           <ul className="list-disc space-y-0.5 pl-5">{p.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
-          <p className="text-[var(--ui-ink-muted,#4b5563)]">
-            From data/processed/panel_scores_replay.json (readiness drivers). Medicines and sources: <a className="underline" href="/board">Patients</a>. Their plan: <a className="underline" href={`/phone/${p.id}`}>Patient app</a>.
+          <p>
+            <a className="underline" href="/board">Medicines and sources</a> · <a className="underline" href={`/phone/${p.id}`}>Their plan</a>
           </p>
         </div>
       )}
@@ -135,49 +132,66 @@ function PlaceCard({ id, onClose }: { id: string; onClose: () => void }) {
   }, [id]);
   if (err) return <Card title="Place" onClose={onClose}><p className="text-sm">Could not load this place.</p></Card>;
   if (!place || place.id !== id) return <Card title="Loading…" onClose={onClose}><span /></Card>;
-  const rows: [string, React.ReactNode][] = [];
   const addr = [place.address, place.borough, place.zip].filter(Boolean).join(", ");
-  if (addr) rows.push(["Address", addr]);
-  if (place.hours) rows.push(["Hours", place.hours]);
-  if (place.phone) rows.push(["Phone", <a key="ph" className="underline" href={`tel:${place.phone}`}>{place.phone}</a>]);
-  if (place.website) rows.push(["Website", <a key="w" className="break-all underline" href={place.website} target="_blank" rel="noreferrer">{place.website.replace(/^https?:\/\//, "")}</a>]);
-  if (place.services) rows.push(["Services", place.services.length > 180 ? `${place.services.slice(0, 177).trimEnd()}…` : place.services]);
-  if (place.languages) rows.push(["Languages", place.languages]);
+  const extra: [string, React.ReactNode][] = [];
+  if (place.website) extra.push(["Website", <a key="w" className="break-all underline" href={place.website} target="_blank" rel="noreferrer">{place.website.replace(/^https?:\/\//, "")}</a>]);
+  if (place.services) extra.push(["Services", place.services.length > 180 ? `${place.services.slice(0, 177).trimEnd()}…` : place.services]);
+  if (place.languages) extra.push(["Languages", place.languages]);
+  const fam = HELP_FAMILIES[helpFamily(place.type)];
   return (
     <Card title={place.name} onClose={onClose}>
-      <p className="flex items-center gap-2 text-sm font-semibold text-[#00694c]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={helpIconUrl(place.type)} alt="" width={20} height={20} /> {place.type}
+      <p className="flex items-center gap-2 text-sm text-[var(--ui-ink-muted,#4b5563)]">
+        <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: fam.hex }} /> {place.type}
       </p>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        {rows.map(([k, v]) => (
-          <div key={k} className="contents"><dt className="font-semibold">{k}</dt><dd>{v}</dd></div>
-        ))}
-      </dl>
-      <p className="text-sm text-[var(--ui-ink-muted,#4b5563)]">Hours and services can change. Call ahead.</p>
-      <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[#00694c] px-4 py-2 text-center text-sm font-semibold text-white">
+      <div className="space-y-0.5 text-sm">
+        {addr && <p>{addr}</p>}
+        {place.hours && <p>{place.hours}</p>}
+        {place.phone && <p><a className="underline" href={`tel:${place.phone}`}>{place.phone}</a></p>}
+      </div>
+      <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[var(--ui-ink,#141414)] px-4 py-2 text-center text-sm font-semibold text-white">
         Directions
       </a>
-      {place.source && <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">Source: {place.source}{place.accessed ? `, accessed ${place.accessed}` : ""}.</p>}
+      <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">Hours and services can change. Call ahead.</p>
+      <PlaceMore extra={extra} source={place.source ? `${place.source}${place.accessed ? `, accessed ${place.accessed}` : ""}` : null} />
     </Card>
+  );
+}
+
+function PlaceMore({ extra, source }: { extra: [string, React.ReactNode][]; source: string | null }) {
+  const [more, setMore] = useState(false);
+  if (!extra.length && !source) return null;
+  return (
+    <>
+      <button type="button" aria-expanded={more} onClick={() => setMore((v) => !v)} className="text-sm font-semibold underline underline-offset-2">
+        {more ? "Less" : "More"}
+      </button>
+      {more && (
+        <dl className="space-y-1.5 text-sm">
+          {extra.map(([k, v]) => (
+            <div key={k}><dt className="font-semibold">{k}</dt><dd>{v}</dd></div>
+          ))}
+          {source && <div><dt className="font-semibold">Source</dt><dd className="text-[var(--ui-ink-muted,#4b5563)]">{source}</dd></div>}
+        </dl>
+      )}
+    </>
   );
 }
 
 function AreaCard({ area, patients, onPick, onClose }: { area: HeatArea; patients: MapPatient[]; onPick: (id: string) => void; onClose: () => void }) {
   const by = (g: RiskGroup) => patients.filter((p) => p.group === g);
   return (
-    <Card title={<>{area.properties.name}<span className="block text-sm font-normal text-[var(--ui-ink-muted,#4b5563)]">{area.properties.borough} · {HEAT_WORDS[area.properties.hvi - 1] ?? ""} for heat</span></>} onClose={onClose}>
+    <Card title={<>{area.properties.name}<span className="block text-sm font-normal text-[var(--ui-ink-muted,#4b5563)]">{HEAT_WORDS[area.properties.hvi - 1] ?? ""}</span></>} onClose={onClose}>
       {patients.length === 0 ? (
-        <p className="text-sm">No synthetic patients live here.</p>
+        <p className="text-sm">No patients live here.</p>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm">{patients.length} synthetic patient{patients.length === 1 ? "" : "s"} live here.</p>
+          <p className="text-sm">{patients.length} patient{patients.length === 1 ? "" : "s"} live here.</p>
           {RISK_GROUPS.map((g) => {
             const ps = by(g);
             if (!ps.length) return null;
             return (
-              <div key={g} className="space-y-2 rounded-xl border p-3" style={{ borderColor: RISK_CSS[g].tint, background: "white" }}>
-                <div className="flex items-center justify-between"><GroupChip g={g}>{g} · {ps.length}</GroupChip></div>
+              <div key={g} className="space-y-2 border-t border-[var(--ui-line,#d4d4d0)] pt-3">
+                <GroupChip g={g}>{g} risk · {ps.length}</GroupChip>
                 <ul className="max-h-32 space-y-0.5 overflow-auto text-sm">
                   {ps.map((p) => (
                     <li key={p.id}><button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => onPick(p.id)}>{p.name}, {p.age}</button></li>
@@ -198,7 +212,6 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
   const [loadErr, setLoadErr] = useState(false);
   const [groups, setGroups] = useState<Set<RiskGroup>>(new Set(RISK_GROUPS));
   const [showHeat, setShowHeat] = useState(true);
-  const [showHelp, setShowHelp] = useState(true);
   const [helpTypes, setHelpTypes] = useState<Set<string>>(new Set(DEFAULT_HELP_TYPES));
   const [threeD, setThreeD] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
@@ -220,7 +233,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
     if (layers?.heat && showHeat) {
       out.push(new GeoJsonLayer<HeatArea["properties"]>({
         id: "heat", data: layers.heat as never, pickable: true, stroked: true, filled: true,
-        getFillColor: (f) => [...HEAT_RGB[Math.min(4, Math.max(0, f.properties.hvi - 1))], threeD ? 90 : 150] as [number, number, number, number],
+        getFillColor: (f) => [...HEAT_RGB[Math.min(4, Math.max(0, f.properties.hvi - 1))], threeD ? 90 : 140] as [number, number, number, number],
         updateTriggers: { getFillColor: threeD },
         getLineColor: [255, 255, 255, 200], lineWidthUnits: "pixels", getLineWidth: 0.6,
         onClick: (info: PickingInfo) => { const f = info.object as HeatArea | undefined; if (f) setSel({ kind: "area", nta: f.properties.nta }); },
@@ -232,36 +245,38 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
         getLineColor: [20, 20, 20, 255], lineWidthUnits: "pixels", getLineWidth: 3,
       }));
     }
-    if (layers?.help && showHelp) {
-      const big = zoom >= 13;
-      out.push(new IconLayer<HelpPoint>({
-        id: "help", data: helpVisible, pickable: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
+    if (layers?.help) {
+      // Small, muted dots: one color per family. Patient dots stay bigger and on top.
+      const r = zoom >= 14 ? 5 : zoom >= 12.5 ? 3.5 : 2.5;
+      out.push(new ScatterplotLayer<HelpPoint>({
+        id: "help", data: helpVisible, pickable: true, billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
         getPosition: (d) => [d.lon, d.lat],
-        getIcon: (d) => ({ url: helpIconUrl(d.type), id: d.type, width: 32, height: 32 }),
-        getSize: big ? 24 : zoom >= 12 ? 14 : 9, sizeUnits: "pixels",
-        updateTriggers: { getSize: [big, zoom >= 12] },
+        getRadius: r, radiusUnits: "pixels", radiusMinPixels: 2,
+        getFillColor: (d) => [...HELP_FAMILIES[helpFamily(d.type)].rgb, 210] as [number, number, number, number],
+        stroked: true, lineWidthUnits: "pixels", getLineWidth: 1, getLineColor: [255, 255, 255, 230],
+        updateTriggers: { getRadius: r },
         onClick: (info: PickingInfo) => { const d = info.object as HelpPoint | undefined; if (d) setSel({ kind: "place", id: d.id }); },
       }));
     }
     out.push(new ScatterplotLayer<MapPatient>({
       id: "patients", data: visiblePatients, pickable: true, billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
       getPosition: (d) => [d.lon, d.lat],
-      getRadius: (d) => (selPatient?.id === d.id ? 10 : 6), radiusUnits: "pixels",
+      getRadius: (d) => (selPatient?.id === d.id ? 11 : 7), radiusUnits: "pixels",
       getFillColor: (d) => RISK_RGB[d.group].solid,
       stroked: true, lineWidthUnits: "pixels",
       getLineColor: (d) => (selPatient?.id === d.id ? [20, 20, 20] : d.group === "Medium" ? RISK_RGB.Medium.ink : [255, 255, 255]),
-      getLineWidth: (d) => (selPatient?.id === d.id ? 3 : d.group === "Medium" ? 1.2 : 1.5),
+      getLineWidth: (d) => (selPatient?.id === d.id ? 3 : d.group === "Medium" ? 1.5 : 2),
       updateTriggers: { getRadius: selPatient?.id, getLineColor: selPatient?.id, getLineWidth: selPatient?.id },
       onClick: (info: PickingInfo) => { const d = info.object as MapPatient | undefined; if (d) setSel({ kind: "patient", id: d.id }); },
     }));
     return out;
-  }, [layers, showHeat, showHelp, helpVisible, visiblePatients, selArea, selPatient, zoom, threeD]);
+  }, [layers, showHeat, helpVisible, visiblePatients, selArea, selPatient, zoom, threeD]);
 
   const getTooltip = ({ object, layer }: PickingInfo) => {
     if (!object || !layer) return null;
-    if (layer.id === "patients") { const p = object as MapPatient; return { text: `${p.name} (${p.group})` }; }
+    if (layer.id === "patients") { const p = object as MapPatient; return { text: `${p.name}: ${p.group} risk` }; }
     if (layer.id === "help") { const h = object as HelpPoint; return { text: `${h.name}\n${h.type}` }; }
-    if (layer.id === "heat") { const f = object as HeatArea; return { text: `${f.properties.name}\nClick to see patients here` }; }
+    if (layer.id === "heat") { const f = object as HeatArea; return { text: f.properties.name }; }
     return null;
   };
 
@@ -278,34 +293,28 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
 
   const toggle = <T,>(set: Set<T>, v: T) => { const n = new Set(set); if (n.has(v)) n.delete(v); else n.add(v); return n; };
   const areaPatients = selArea ? patients.filter((p) => p.nta === selArea.properties.nta && groups.has(p.group)) : [];
+  const mainTypes = HELP_TYPES.filter((t) => t.main);
+  const moreTypes = HELP_TYPES.filter((t) => !t.main);
+  const moreOn = moreTypes.filter((t) => helpTypes.has(t.type)).length;
+
+  const typeRow = (t: (typeof HELP_TYPES)[number]) => (
+    <label key={t.type} className="flex items-center gap-2 py-0.5">
+      <input type="checkbox" checked={helpTypes.has(t.type)} onChange={() => setHelpTypes((s) => toggle(s, t.type))} />
+      <span aria-hidden className="inline-block h-2 w-2 rounded-full" style={{ background: HELP_FAMILIES[t.family].hex }} />
+      <span>{t.label}</span>
+    </label>
+  );
+
+  const heading = "text-xs font-semibold uppercase tracking-wide text-[var(--ui-ink-muted,#4b5563)]";
 
   const panel = (
-    <div className="space-y-5">
+    <div className="space-y-5 text-sm">
       {sel?.kind === "patient" && selPatient && <PatientCard key={selPatient.id} p={selPatient} onClose={() => setSel(null)} />}
       {sel?.kind === "place" && <PlaceCard id={sel.id} onClose={() => setSel(null)} />}
       {selArea && <AreaCard area={selArea} patients={areaPatients} onPick={(id) => setSel({ kind: "patient", id })} onClose={() => setSel(null)} />}
-      {!sel && (
-        <p className="rounded-2xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-sm">
-          Click a dot to see a patient. Click a neighborhood to see everyone who lives there and text a group.
-        </p>
-      )}
 
-      <label className="block space-y-1 text-sm">
-        <span className="font-bold">Pick a neighborhood</span>
-        <select
-          className="w-full rounded-lg border border-[var(--ui-line-strong,#6b6b66)] bg-white px-2 py-1.5"
-          value={selArea?.properties.nta ?? ""}
-          onChange={(e) => setSel(e.target.value ? { kind: "area", nta: e.target.value } : null)}
-        >
-          <option value="">Neighborhoods with patients…</option>
-          {areaOptions.map((o) => (
-            <option key={o.nta} value={o.nta}>{o.name} ({o.n} patients{o.high ? `, ${o.high} high` : ""})</option>
-          ))}
-        </select>
-      </label>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-bold">Synthetic patients, by heat risk</legend>
+      <section className="space-y-2">
+        <h2 className={heading}>Patients</h2>
         <div className="flex flex-wrap gap-2">
           {RISK_GROUPS.map((g) => (
             <button
@@ -313,53 +322,63 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
               type="button"
               aria-pressed={groups.has(g)}
               onClick={() => setGroups((s) => toggle(s, g))}
-              className="rounded-full border px-3 py-1 text-sm font-semibold transition-opacity"
-              style={{ background: groups.has(g) ? RISK_CSS[g].tint : "white", color: RISK_CSS[g].ink, borderColor: RISK_CSS[g].ink, opacity: groups.has(g) ? 1 : 0.55 }}
+              className="rounded-full border px-3 py-1 font-semibold transition-opacity"
+              style={{ background: groups.has(g) ? RISK_CSS[g].tint : "white", color: RISK_CSS[g].ink, borderColor: RISK_CSS[g].ink, opacity: groups.has(g) ? 1 : 0.5 }}
             >
               <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: RISK_CSS[g].solid, outline: g === "Medium" ? `1px solid ${RISK_CSS.Medium.ink}` : undefined }} />
-              {g} {counts[g]}
+              {g} risk · {counts[g]}
             </button>
           ))}
         </div>
-      </fieldset>
-
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-bold">
-          <input type="checkbox" checked={showHeat} onChange={(e) => setShowHeat(e.target.checked)} /> Neighborhood heat
-        </label>
-        <div className="flex items-center gap-2 text-xs text-[var(--ui-ink-muted,#4b5563)]">
-          <span>Cooler</span>
-          <span className="h-3 flex-1 rounded-full" style={{ background: `linear-gradient(to right, ${HEAT_HEX.join(",")})` }} />
-          <span>Hotter</span>
-        </div>
-      </div>
-
-      <fieldset className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-bold">
-          <input type="checkbox" checked={showHelp} onChange={(e) => setShowHelp(e.target.checked)} /> Places that help in a heat wave
-        </label>
-        <div className="grid gap-1 pl-1 text-sm">
-          {HELP_TYPES.map((t) => (
-            <label key={t.type} className="flex items-center gap-2">
-              <input type="checkbox" disabled={!showHelp} checked={helpTypes.has(t.type)} onChange={() => setHelpTypes((s) => toggle(s, t.type))} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={helpIconUrl(t.type)} alt="" width={18} height={18} />
-              <span>{t.label}</span>
-              {t.type === "Outdoor spray shower / pool" && <span className="text-xs text-[var(--ui-ink-muted,#4b5563)]">(outdoors)</span>}
-            </label>
+        <select
+          aria-label="Pick a neighborhood"
+          className="w-full rounded-lg border border-[var(--ui-line,#d4d4d0)] bg-white px-2 py-1.5"
+          value={selArea?.properties.nta ?? ""}
+          onChange={(e) => setSel(e.target.value ? { kind: "area", nta: e.target.value } : null)}
+        >
+          <option value="">Pick a neighborhood to text a group…</option>
+          {areaOptions.map((o) => (
+            <option key={o.nta} value={o.nta}>{o.name} ({o.n} patients{o.high ? `, ${o.high} high risk` : ""})</option>
           ))}
-        </div>
-      </fieldset>
+        </select>
+      </section>
 
-      <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">
-        Patients are synthetic (no real people): {files.panel}, {files.patients}. Heat: {layers?.files.heat ?? "data/processed/hvi_nta2020.geojson"} (NYC heat vulnerability index). Places: {layers?.files.help ?? "data/processed/community_resources_nyc.geojson"}. Basemap © OpenFreeMap, OpenMapTiles, OpenStreetMap contributors.
-      </p>
+      <section className="space-y-2">
+        <h2 className={heading}>Neighborhood heat</h2>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={showHeat} onChange={(e) => setShowHeat(e.target.checked)} />
+          <span className="flex flex-1 items-center gap-2 text-[var(--ui-ink-muted,#4b5563)]">
+            <span>Hotter</span>
+            <span className="h-2.5 flex-1 rounded-full" style={{ background: `linear-gradient(to right, ${[...HEAT_HEX].reverse().join(",")})` }} />
+            <span>Cooler</span>
+          </span>
+        </label>
+      </section>
+
+      <section className="space-y-1">
+        <h2 className={heading}>Places to cool off</h2>
+        <div className="grid">{mainTypes.map(typeRow)}</div>
+        <details className="pt-1">
+          <summary className="cursor-pointer font-semibold">More places{moreOn ? ` (${moreOn} on)` : ""}</summary>
+          <div className="grid pt-1">{moreTypes.map(typeRow)}</div>
+        </details>
+      </section>
+
+      <details className="border-t border-[var(--ui-line,#d4d4d0)] pt-3 text-xs text-[var(--ui-ink-muted,#4b5563)]">
+        <summary className="cursor-pointer font-semibold">Sources</summary>
+        <ul className="mt-2 space-y-1">
+          <li>Patients are synthetic (no real people): {files.panel}, {files.patients}.</li>
+          <li>Neighborhood heat: {layers?.files.heat ?? "data/processed/hvi_nta2020.geojson"} (NYC heat vulnerability index).</li>
+          <li>Places: {layers?.files.help ?? "data/processed/community_resources_nyc.geojson"}.</li>
+          <li>Basemap © OpenFreeMap, OpenMapTiles, OpenStreetMap contributors.</li>
+        </ul>
+      </details>
     </div>
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="relative self-start overflow-hidden rounded-2xl border border-[var(--ui-line,#d4d4d0)]">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="relative min-w-0 self-start overflow-hidden rounded-xl border border-[var(--ui-line,#d4d4d0)]">
         <MapCanvas
           layers={deckLayers}
           initialView={{ longitude: -73.89, latitude: 40.85, zoom: 11.5 }}
@@ -368,15 +387,15 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
           getTooltip={getTooltip}
           onZoom={setZoom}
           height="min(72vh, 760px)"
-          ariaLabel="Map of synthetic patients, neighborhood heat and help places"
+          ariaLabel="Map of synthetic patients, neighborhood heat and places to cool off"
         />
         <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
           <ThreeDToggle on={threeD} onChange={setThreeD} />
-          {!layers && !loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Loading heat and places…</span>}
+          {!layers && !loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Loading…</span>}
           {loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Could not load heat and places.</span>}
         </div>
       </div>
-      <aside aria-label="Map details and filters">{panel}</aside>
+      <aside aria-label="Map details and filters" className="min-w-0">{panel}</aside>
     </div>
   );
 }
