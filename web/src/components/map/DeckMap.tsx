@@ -59,7 +59,8 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
     const m = ref.current?.getMap();
     if (!m) return;
     setBuildings(m, on);
-    m.easeTo({ pitch: on ? 45 : 0, bearing: on ? -17 : 0, duration: 700 });
+    // Buildings show from zoom 13; zoom in a little so the 3D view has something to show.
+    m.easeTo({ pitch: on ? 45 : 0, bearing: on ? -17 : 0, ...(on && m.getZoom() < 14.5 ? { zoom: 14.5 } : {}), duration: 700 });
   }, []);
 
   useEffect(() => {
@@ -67,7 +68,9 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
     apply3D(threeD);
   }, [threeD, apply3D]);
 
+  const firstFit = useRef(true);
   useEffect(() => {
+    if (firstFit.current) { firstFit.current = false; return; }
     if (!fitBounds) return;
     ref.current?.fitBounds(fitBounds, { padding: 48, maxZoom: 16, duration: 600 });
   }, [fitBounds]);
@@ -77,7 +80,11 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
       <Map
         ref={ref}
         mapLib={maplibregl}
-        initialViewState={{ ...initialView, pitch: 0, bearing: 0 }}
+        initialViewState={
+          fitBounds
+            ? { bounds: fitBounds, fitBoundsOptions: { padding: 48, maxZoom: 16 }, pitch: 0, bearing: 0 }
+            : { ...initialView, pitch: 0, bearing: 0 }
+        }
         mapStyle={BASEMAP_STYLE}
         style={{ width: "100%", height: "100%" }}
         maxPitch={60}

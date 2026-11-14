@@ -1,6 +1,7 @@
 // Server-only loader for <PatientPlanMap>. Sources (nothing invented):
 //   home            data/processed/synthetic/patients.csv (home_lat, home_lon)
-//   nearest help    data/processed/synthetic/cooling_match.csv (rank 1: place, walk_min, leave_by)
+//   nearest help    data/processed/synthetic/cooling_match.csv (rank 1: place, walk_min)
+//   leave by        panel_scores_replay.json cooling.best.leaveBy (same as the text), else cooling_match.csv leave_by
 //   can reach alone data/processed/synthetic/questionnaire.csv (q5_can_reach_cool_place)
 //   subway          data/processed/subway_stations_nyc.geojson (nearest by straight line)
 //   hottest hours   data/processed/replay_heatwave_hourly.csv (demo day, LaGuardia, feels-like >= 95°F)
@@ -12,6 +13,7 @@ import { getPanelPatient, loadPanel } from "@/lib/panel";
 import type { RiskGroup } from "./colors";
 import { readCsv } from "./csv";
 import { riskGroup } from "./data";
+import { clock } from "./format";
 
 export const PLAN_FILES = {
   patients: "data/processed/synthetic/patients.csv",
@@ -113,13 +115,16 @@ export function getPatientPlanMapData(patientId: string): PatientPlanMapData {
 
   let place: PlanPlace | null = null;
   if (crow && num(crow.place_lat) !== null && num(crow.place_lon) !== null) {
+    const best = pp?.cooling?.best as (Record<string, unknown> | null | undefined);
     const arrive = /before ([^.]+)\./.exec(crow.text_line ?? "");
     place = {
       name: crow.place_name, type: crow.place_type, address: [crow.address, crow.borough, crow.zip].filter(Boolean).join(", "),
       phone: crow.phone || null, hours: crow.hours_ref_day_raw || null,
       lat: Number(crow.place_lat), lon: Number(crow.place_lon),
       walkMin: num(crow.walk_min), walkKm: num(crow.walk_dist_km),
-      leaveBy: crow.leave_by || null, arriveBefore: arrive ? arrive[1] : null,
+      // Same leave-by the patient's text uses: panel cooling.best first, then cooling_match.csv.
+      leaveBy: (best?.leaveBy as string | undefined) || crow.leave_by || null,
+      arriveBefore: (best?.arriveBy ? clock(best.arriveBy as string) : null) ?? (arrive ? arrive[1] : null),
       officialCoolingCenter: crow.official_cooling_center === "true",
       notes: (crow.notes ?? "").split(";").map((s) => s.trim()).filter(Boolean),
     };

@@ -333,7 +333,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--ui-line,#d4d4d0)]">
+      <div className="relative self-start overflow-hidden rounded-2xl border border-[var(--ui-line,#d4d4d0)]">
         <MapCanvas
           layers={deckLayers}
           initialView={{ longitude: -73.89, latitude: 40.85, zoom: 11.5 }}
