@@ -125,7 +125,7 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
         <h2 className="text-patient-lg font-semibold tracking-tight">{t.safest}</h2>
         {hours.length ? (
           <>
-            <p>{hot.length ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1) : t.noHot}</p>
+            <p className="font-semibold">{hot.length ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1) : t.noHot}</p>
             <div aria-label={t.hourByHour}>
               <HourByHour
                 hours={hours.map((h) => ({ hour: h.hour, f: h.heatIndexF ?? h.tempF }))}
@@ -140,24 +140,25 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
         )}
       </section>
 
-      {/* 3. What to watch for (max 4) */}
+      {/* 3. Medicine cabinet (visual) */}
+      <MedicineCabinet
+        effects={cabinet}
+        title={es ? "Sus medicinas y el calor" : "Your medicines in the heat"}
+        hint={es ? "Toque sus medicinas." : "Tap your medicines."}
+        addsUp={es ? "Se suman" : "Adds up"}
+      />
+
+      {/* What to watch for (max 4): in a dropdown */}
       {symptoms.length > 0 && (
-        <section className="space-y-2 rounded-lg border border-border bg-card p-4">
-          <h2 className="text-patient-lg font-semibold tracking-tight">{t.watch}</h2>
-          <ul className="list-disc space-y-1 pl-6">
+        <details className="rounded-lg border border-border bg-card p-4">
+          <summary className="cursor-pointer text-patient-lg font-semibold tracking-tight">{t.watch}</summary>
+          <ul className="mt-2 list-disc space-y-1 pl-6">
             {symptoms.map((s) => (
               <li key={s.sign}>{es ? SIGN_ES[s.sign] ?? s.label : s.label}</li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
-
-      {/* 4. Medicine cabinet (visual) */}
-      <MedicineCabinet
-        effects={cabinet}
-        title={es ? "Sus medicinas y el calor" : "Your medicines in the heat"}
-        hint={es ? "Toque sus medicinas para ver qué le pueden hacer con el calor." : "Tap your medicines to see what they can do in the heat."}
-      />
     </div>
   );
 

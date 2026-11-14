@@ -14,13 +14,14 @@ export interface CabinetEffect {
   drugs: string[];
 }
 
-// Bottle colors from the app palette (Okabe–Ito).
-const BOTTLE = ["#0072b2", "#e69f00", "#cc79a7", "#009e73", "#d55e00", "#56b4e9"];
+// Bottle colors from the app palette (app teal + Okabe–Ito).
+const BOTTLE = ["#0e7c86", "#e69f00", "#cc79a7", "#009e73", "#d55e00", "#56b4e9"];
 
-export function MedicineCabinet({ effects, title = "Your medicines in the heat", hint = "Tap your medicines to see what they can do in the heat." }: {
+export function MedicineCabinet({ effects, title = "Your medicines in the heat", hint = "Tap your medicines.", addsUp = "Adds up" }: {
   effects: CabinetEffect[];
   title?: string;
   hint?: string;
+  addsUp?: string;
 }) {
   const drugs = useMemo(() => Array.from(new Set(effects.flatMap((e) => e.drugs))), [effects]);
   const color = useMemo(() => new Map(drugs.map((d, i) => [d, BOTTLE[i % BOTTLE.length]])), [drugs]);
@@ -55,6 +56,8 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
       setSize({ w: root.width, h: root.height });
     };
     measure();
+    // Re-measure once fonts settle (labels can rewrap), and on any resize.
+    document.fonts?.ready.then(measure).catch(() => {});
     const ro = new ResizeObserver(measure);
     if (box.current) ro.observe(box.current);
     return () => ro.disconnect();
@@ -104,10 +107,10 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
                 onMouseEnter={() => setHover(d)}
                 onMouseLeave={() => setHover(null)}
                 aria-pressed={picked.includes(d)}
-                className={`flex w-[84px] flex-col items-center transition ${on ? "-translate-y-1" : ""}`}
+                className="flex w-[84px] flex-col items-center rounded-lg p-1 focus-visible:outline-2"
               >
                 {/* cap */}
-                <span className="block h-3 w-9 rounded-t-md" style={{ background: "#141414" }} />
+                <span className="block h-3 w-9 rounded-t-md" style={{ background: "#6b6b66" }} />
                 {/* bottle */}
                 <span
                   className="flex h-20 w-14 items-center justify-center rounded-b-xl rounded-t-md border-2 shadow-sm"
@@ -122,7 +125,7 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
         </div>
 
         {/* what it can do */}
-        <div className="relative mt-16 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="relative mt-16 grid grid-cols-2 gap-2">
           {effects.map((e) => {
             const h = hits(e);
             const stacked = h.length >= 2;
@@ -140,7 +143,7 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
                 {e.signs && <p className="text-sm leading-tight text-ink-muted">{e.signs}</p>}
                 {stacked && (
                   <p className="mt-1 inline-block rounded-full bg-hold-solid px-2 py-0.5 text-xs font-bold text-ink">
-                    Adds up ×{h.length}
+                    {addsUp} ×{h.length}
                   </p>
                 )}
               </div>

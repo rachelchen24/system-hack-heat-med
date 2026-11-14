@@ -141,10 +141,10 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
           <p className="text-[1.125rem]">{t.noPlace}</p>
         )}
         {data.delivery.show && (
-          <div className="rounded-lg border border-border bg-risk-high-tint p-4">
-            <p className="text-[1.375rem] font-bold">{t.cantGo}</p>
-            <p className="text-[1.125rem]">{t.cantGoText}</p>
-          </div>
+          <details className="rounded-lg border border-border bg-risk-high-tint p-4">
+            <summary className="cursor-pointer text-[1.375rem] font-bold">{t.cantGo}</summary>
+            <p className="mt-1 text-[1.125rem]">{t.cantGoText}</p>
+          </details>
         )}
       </section>
     );

@@ -1,25 +1,24 @@
-UI feedback from Rachel (Sat 14 Nov, ~1:45 PM). Full notes are in `spec.md` under "Rachel's UI feedback". We're at code freeze, so keep each change small, and check every page loads after each step.
+UI feedback from Rachel (Sat 14 Nov, ~1:45 PM). Full notes are in `spec.md` under "Rachel's UI feedback". Pull first. Some of this is already in the code, so finish what's left and make it look good, and don't rebuild what works. Check each page in the browser at desktop and phone width (375 px) after each step.
 
-FIRST: FINISH THE MERGE
-- This folder may be mid-merge (`git status` shows `UU` files). Resolve every conflict, keeping BOTH Myra's redesign (calm header, map as the home page, shadcn components) AND the changes below. Run `npm install` in `web/` (Myra added `tw-animate-css`), confirm every page returns 200 (`/`, `/board`, `/map`, `/medicines`, `/phone`, `/phone/S01`, `/messages`, `/replay`), then commit the merge. Don't push.
-- Some of the changes below are already written in the conflicted files or in new files. Use them; don't rebuild:
-  - `web/src/components/cabinet/MedicineCabinet.tsx` (new, finished): the patient medicine cabinet
-  - `web/src/components/medicines/MedicineList.tsx`: "ours" side has the dropdowns and colored chips
-  - `web/src/components/medicines/HeatMedicinePicture.tsx`: "ours" side has a color per body effect and pill-shaped medicine labels
+ALREADY DONE (keep, polish if needed)
+- Name is "Cool-Aid" in the header, in our blue. Check that no "The Missing Label" text is left anywhere a user sees it (page titles, home page, CDS Hooks card labels, Disclaimer).
+- Medicines page: the diagram is on top; the list is below; Sources are in a dropdown at the bottom. "Label warns?" and "Guidance says what to do?" show as colored chips.
+- The diagram (`HeatMedicinePicture.tsx`) has a color per body effect and medicine names in pill chips.
+- The patient medicine cabinet (`web/src/components/cabinet/MedicineCabinet.tsx`) exists and is on `/phone/[id]`.
 
-1. RENAME: "The Missing Label" → "Cool-Aid" (with a C). Use it in the header, page titles (`· Cool-Aid`), home page and CDS Hooks card labels. Write the header name in our palette blue: `style={{ color: "var(--bucket-store-solid, #0072b2)" }}`, bold.
+1. MEDICINES TAB (clinician): simpler, fewer words, more color
+   - Make the "how heat and medicine add up" diagram the hero: full width, clean, pretty, and easy to hover. Keep it clinician-only. At most one short line of help text; move the rest into the "Why?" panel or a dropdown.
+   - Turn each medicine group in the list into a **dropdown** (`<details>`, first one open) with a colored group header. `MedicineList.tsx` lost its dropdowns in the merge, so add them back.
+   - Give the evidence indicator color: show Strong / Some / Early signs as 3 dots filled in orange (`hold` colors), not a gray chip.
+   - Cut wording everywhere on the page: short titles, short column headers, no paragraphs.
 
-2. MEDICINES TAB (clinician): simpler, fewer words, more color.
-   - The "how heat and medicine add up" diagram (medicines → body effect ← heat, hover to highlight) is the main thing: put it at the top, full width, prettier. Give each body effect its own palette color (dehydration #56b4e9, low salt #009e73, kidney strain #cc79a7, can't sweat #e69f00, body overheats #d55e00, low blood pressure #0072b2), color each medicine's line by its effect, and put medicine names in pill chips. One short line of help text at most.
-   - Below it, the medicine list grouped by what to do, with each group as a **dropdown** (`<details>`, first one open).
-   - Colored indicators instead of plain text: evidence = 3 dots filled in orange (`hold` colors), "Label warns?" and "Guidance says what to do?" as chips: ✓ Yes = blue chip (`store` tint/ink), ✗ No = orange chip (`hold` tint/ink). Short column headers.
-   - Sources go in a collapsed "Sources" dropdown at the bottom.
-   - This diagram is for the clinician only. Don't show it on the patient side.
+2. PATIENT APP (`/phone/[id]` and the patient side): visual, not words
+   - The medicine cabinet is the main visual for "what can my medicines do in the heat."
+     - Bottles sit on a shelf, with colored stems from each bottle to the body effects.
+     - Hovering or tapping a bottle shows the bad things it can cause.
+     - Several bottles can be selected at once, to see the combined effects ("Adds up ×N" where they overlap).
+     - Make sure it looks good and works on a phone: bottles, stems and effect boxes are readable and the stems line up.
+   - Cut words on the patient page hard: one-line headings, a short risk line, and everything else in **dropdowns** (`<details>`). Keep visible: risk today, the safest-hours strip, where to go (map), the cabinet, and "Talk to your doctor or pharmacist."
+   - Make sure no network/graph diagram appears anywhere on the patient side.
 
-3. PATIENT VIEW / PATIENT APP (`/phone/[id]`): visual, not words.
-   - Add the medicine cabinet (`MedicineCabinet`) to the patient plan. Build its data from `panel_scores_replay.json` → `patients[].stacking.mechanisms`. Each item has a `defense` (id), a `label` like "Blood pressure (dizziness, fainting)" (split it into title "Blood pressure" + signs "dizziness, fainting"), and `drugs`. Pass `effects=[{ id, title, signs, drugs }]`. Spanish title/hint if the patient's language is "es".
-   - The cabinet shows the patient's own bottles on a shelf, with colored stems from each bottle to what it can do in the heat. Hovering or tapping a bottle lights up its effects, and several can be selected at once; effects hit by 2+ chosen medicines show "Adds up ×N".
-   - Cut words everywhere on the patient page: one-line headings, a short risk line, and everything else in **dropdowns** (`<details>`). Keep: risk today, safest hours strip, where to go (map), the cabinet, and "Talk to your doctor or pharmacist."
-   - Remove any network/graph diagram from the patient side.
-
-RULES: no invented data (every label comes from the data files); no dose advice; keep the palette (Okabe–Ito: High = orange #d55e00, Medium = yellow #f0c419, Low = blue #0072b2); light mode. Commit after each step; don't push. When done, report what changed and anything left undone.
+RULES: no invented data (every label comes from the data files); no dose advice; keep the palette (Okabe–Ito: High = orange #d55e00, Medium = yellow #f0c419, Low = blue #0072b2; the chip style in `web/src/styles/tokens.css`); light mode. Commit after each step; don't push. When done, report what changed and anything left undone.
