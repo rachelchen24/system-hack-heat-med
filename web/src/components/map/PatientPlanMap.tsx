@@ -20,8 +20,8 @@ import { getPatientPlanMapData } from "./patientPlanData";
 import { planMapLang, type PlanMapLang } from "./planMapStrings";
 import { PatientPlanMapView } from "./PatientPlanMapView";
 
-export default function PatientPlanMap({ patientId, height = 320, lang }: { patientId: string; height?: number; lang?: PlanMapLang }) {
+export default function PatientPlanMap({ patientId, height = 320, lang, variant }: { patientId: string; height?: number; lang?: PlanMapLang; variant?: "full" | "patient" }) {
   const data = getPatientPlanMapData(patientId);
   const l = lang ?? planMapLang(getPanelPatient(patientId, "replay")?.language);
-  return <PatientPlanMapView data={data} height={height} lang={l} />;
+  return <PatientPlanMapView data={data} height={height} lang={l} variant={variant} />;
 }

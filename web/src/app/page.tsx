@@ -1,23 +1,43 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { Clock, Map as MapIcon, Smartphone } from "lucide-react";
+import { Hero195 } from "@/components/ui/hero-195";
+import { ClinicianMap } from "@/components/map/ClinicianMap";
+import { FILES, loadMapPatients } from "@/components/map/data";
+import PatientPlanMap from "@/components/map/PatientPlanMap";
+import { Timelapse } from "@/components/replay/Timelapse";
+import { loadReplay } from "@/lib/replay";
 
-// Home: the product in one sentence, then pick a side.
+export const metadata: Metadata = { title: "Cool-Aid" };
+
+// Home: hero with the live clinic map as the default tab, the heat-day time-lapse second, and one patient's plan third.
 export default function Home() {
+  const patients = loadMapPatients();
+  const clinicMap = patients.length ? (
+    <div className="bg-white p-2 sm:p-3">
+      <ClinicianMap patients={patients} files={{ panel: FILES.panel, patients: FILES.patients }} mapHeight="min(64vh, 620px)" />
+    </div>
+  ) : (
+    <p className="p-4 text-sm">Patients go here: {FILES.panel} and {FILES.patients} (not found).</p>
+  );
+  const replay = loadReplay();
+  const hours = replay ? (
+    <div className="bg-white p-2 sm:p-3">
+      <Timelapse data={replay} embedded />
+    </div>
+  ) : (
+    <p className="p-4 text-sm">Time-lapse data not found (data/processed/replay_heatwave_hourly.csv, replay_hrrr_grid.json).</p>
+  );
   return (
-    <section className="mx-auto max-w-3xl space-y-6 py-16 text-center">
-      <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: "var(--bucket-store-solid, #0072b2)" }}>Cool-Aid</p>
-      <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
-        On the morning a heat wave is forecast, a clinic nurse sees which patients are at risk because of their
-        medicines and their home, texts each group a simple plan, and each patient sees where it&apos;s cooler,
-        where help is, how to get there and the safest time to go.
-      </h1>
-      <div className="flex flex-col justify-center gap-3 pt-4 sm:flex-row">
-        <Link href="/board" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-page">
-          I&apos;m a clinician
-        </Link>
-        <Link href="/phone" className="rounded-full border-2 border-ink px-6 py-3 text-lg font-semibold">
-          I&apos;m a patient
-        </Link>
-      </div>
-    </section>
+    <Hero195
+      title="Who is at risk in the heat, and where to cool off"
+      description="Each dot is a patient's home. Click a dot or a neighborhood."
+      className="[&_h1]:text-2xl sm:[&_h1]:text-4xl [&_h1+p]:mt-2 [&_h1+p]:text-base"
+      defaultTab="map"
+      tabs={[
+        { value: "map", label: "Clinic map", icon: <MapIcon className="size-4" aria-hidden />, content: clinicMap },
+        { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: hours },
+        { value: "patient", label: "A patient's plan", icon: <Smartphone className="size-4" aria-hidden />, content: <div className="bg-white p-2 sm:p-3"><PatientPlanMap patientId="S01" variant="patient" height={420} /></div> },
+      ]}
+    />
   );
 }

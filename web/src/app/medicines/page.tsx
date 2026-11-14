@@ -23,22 +23,25 @@ export default function MedicinesPage() {
       : "How heat and medicine add up";
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl space-y-12">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">How medicines add to the heat</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">How medicines add to the heat</h1>
         <p className="text-ink-muted">Hover a medicine to see what it does to the body in heat.</p>
       </header>
       <HeatMedicinePicture data={pathways} title={title} source={PATHWAYS_FILE} />
       <section className="space-y-3">
-        <h2 className="text-xl font-bold">{rows.length} medicines, by what to do</h2>
+        <h2 className="text-xl font-semibold">{rows.length} medicines, by what to do</h2>
         <MedicineList rows={rows} />
       </section>
       <KbSourceBanner source={source} file={file} />
-      <p className="text-xs text-ink-muted">
-        Sources: {file ?? "inline fallback"} · &ldquo;Label warns about heat&rdquo; from
-        data/processed/fda_label_heat_audit_summary_v2.csv · &ldquo;Guidance says what to do&rdquo; from
-        data/processed/guidance_matrix.csv (at least one guidance document gives a drug-specific action).
-      </p>
+      <details className="text-xs text-ink-muted">
+        <summary className="cursor-pointer">Sources</summary>
+        <p className="mt-1">
+          Medicines: {file ?? "inline fallback"}. &ldquo;Label warns about heat&rdquo;: data/processed/fda_label_heat_audit_summary_v2.csv.
+          &ldquo;Guidance says what to do&rdquo;: data/processed/guidance_matrix.csv (at least one guidance document gives a
+          drug-specific action). Picture: {PATHWAYS_FILE} and data/processed/system_drug_mediator_findings.csv.
+        </p>
+      </details>
     </div>
   );
 }

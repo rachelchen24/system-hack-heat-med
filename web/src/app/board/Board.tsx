@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { RISK, RISK_ORDER, type RiskGroup } from "@/lib/risk";
 
 export interface BoardRow {
@@ -37,12 +39,12 @@ type State = { demo_time: string; alerts: Alert[]; messages: Message[] };
 const POLL_MS = 2500;
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  sent: { label: "Waiting for reply", cls: "bg-adjust-tint text-adjust-ink" },
-  sent_done: { label: "Text sent", cls: "bg-surface text-ink-muted" },
-  acknowledged: { label: "Replied OK", cls: "bg-verify-double-bg text-verify-double-fg" },
-  escalated_contact: { label: "Contact asked to check", cls: "bg-monitor-tint text-monitor-ink" },
-  escalated_clinic: { label: "Call this patient", cls: "bg-hold-tint text-hold-ink" },
-  resolved: { label: "Resolved", cls: "bg-surface text-ink-muted" },
+  sent: { label: "Waiting for reply", cls: "text-adjust-ink" },
+  sent_done: { label: "Text sent", cls: "text-ink-muted" },
+  acknowledged: { label: "Replied OK", cls: "text-verify-double-fg" },
+  escalated_contact: { label: "Contact asked to check", cls: "text-monitor-ink" },
+  escalated_clinic: { label: "Call this patient", cls: "text-hold-ink" },
+  resolved: { label: "Resolved", cls: "text-ink-muted" },
 };
 
 const t = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -101,136 +103,118 @@ export function Board({ rows, source, questionnaireFile, asOf }: { rows: BoardRo
   };
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Who needs help today</h1>
-          <p className="text-sm text-ink-muted">
-            Heat wave day {asOf} · {rows.length} synthetic patients, grouped by their medicines and their home · texts are simulated
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Who needs help today</h1>
+          <p className="text-ink-muted">
+            Heat wave day {asOf}. {rows.length} synthetic patients, grouped by their medicines and their home.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="rounded-full border border-line-strong px-3 py-1 font-mono">Clock {state ? t(state.demo_time) : "—"}</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-muted" aria-label="Demo clock">
+          <span>
+            Demo clock <span className="font-semibold tabular-nums text-ink">{state ? t(state.demo_time) : "—"}</span>
+          </span>
           {[5, 15, 45].map((m) => (
-            <button key={m} onClick={() => ff(m)} className="rounded-full border border-line-strong px-3 py-1 hover:bg-surface">
-              +{m} min
-            </button>
+            <button key={m} onClick={() => ff(m)} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">+{m} min</button>
           ))}
-          <button onClick={reset} className="rounded-full border border-line-strong px-3 py-1 hover:bg-surface">Reset</button>
+          <button onClick={reset} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">Reset</button>
         </div>
       </header>
-      {error && <p className="rounded bg-hold-tint px-3 py-2 text-hold-ink">{error}</p>}
+      {error && <p className="text-hold-ink">{error}</p>}
 
-      <div role="tablist" aria-label="Risk group" className="grid grid-cols-3 gap-2 sm:max-w-xl">
+      <div role="tablist" aria-label="Risk group" className="grid grid-cols-3 gap-2 sm:max-w-lg">
         {RISK_ORDER.map((g) => (
           <button
             key={g}
             role="tab"
             aria-selected={group === g}
             onClick={() => setGroup(g)}
-            className={`rounded-2xl border-2 px-3 py-2 text-left transition ${
-              group === g ? `${RISK[g].chip}` : "border-line bg-page text-ink hover:bg-surface"
+            className={`rounded-lg border px-4 py-2.5 text-left shadow-sm transition ${
+              group === g ? RISK[g].chip : "border-line bg-page text-ink-muted hover:border-line-strong hover:text-ink"
             }`}
           >
             <span className="flex items-center gap-2 text-sm font-semibold">
-              <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${RISK[g].dot}`} />
+              <span aria-hidden className={`inline-block h-2.5 w-2.5 rounded-full ${RISK[g].dot}`} />
               {RISK[g].label}
             </span>
-            <span className="block text-2xl font-bold">{counts[g]}</span>
+            <span className="block text-2xl font-semibold tabular-nums">{counts[g]}</span>
           </button>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        <section aria-label={`${RISK[group].label} risk patients`} className="space-y-3">
-          <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${RISK[group].tint}`}>
-            <div>
-              <h2 className={`text-lg font-bold ${RISK[group].ink}`}>{RISK[group].label} risk: {RISK[group].action.toLowerCase()}</h2>
-              <p className="text-sm text-ink">
-                {group === "high" && "Text: heat warning, where to go and how to get there, then check-ins. No reply → their contact, then the clinic."}
-                {group === "medium" && "Text: the nearest cool place and the safest hours to go."}
-                {group === "low" && "Text: a short heat heads-up about their medicines."}
-                {calls.length > 0 && ` ${calls.length} asked not to get texts: call them instead.`}
+      <div className="grid gap-10 lg:grid-cols-[3fr_2fr]">
+        <section aria-label={`${RISK[group].label} risk patients`} className="min-w-0 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+            <div className="min-w-0 max-w-prose space-y-1">
+              <h2 className="text-xl font-semibold">{RISK[group].label} risk: {RISK[group].action.toLowerCase()}</h2>
+              <p className="text-sm text-ink-muted">
+                {group === "high" && "Heat warning, where to go and how to get there, then check-ins. No reply: their contact, then the clinic."}
+                {group === "medium" && "The nearest cool place and the safest hours to go."}
+                {group === "low" && "A short heat heads-up about their medicines."}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => send(texts.map((r) => r.id))}
-                disabled={busy || !texts.length}
-                className="rounded-full bg-ink px-4 py-2 font-semibold text-page disabled:opacity-40"
-              >
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button size="lg" className="px-6 text-base" onClick={() => send(texts.map((r) => r.id))} disabled={busy || !texts.length}>
                 Text this group ({texts.length})
-              </button>
+              </Button>
               {calls.length > 0 && (
-                <button
-                  onClick={() => send(calls.map((r) => r.id), "call")}
-                  disabled={busy}
-                  className="rounded-full border-2 border-ink bg-page px-4 py-2 font-semibold disabled:opacity-40"
-                >
-                  Add {calls.length} to call list
+                <button onClick={() => send(calls.map((r) => r.id), "call")} disabled={busy} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink disabled:opacity-40">
+                  Add {calls.length} who asked for calls to the call list
                 </button>
               )}
             </div>
           </div>
 
-          <ul className="max-h-[70vh] divide-y divide-line overflow-auto rounded-2xl border border-line">
+          <Card className="overflow-hidden border-line"><ul className="max-h-[70vh] divide-y divide-line overflow-auto">
             {shown.map((r) => {
               const st = statusOf(r.id);
               return (
-                <li key={r.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
+                <li key={r.id} className="flex flex-col gap-1 px-4 py-2.5 sm:flex-row sm:items-center sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">{r.name}</span>
-                      <span className="text-sm text-ink-muted">{r.age} · {r.zip}</span>
-                      {r.callInstead && (
-                        <span className="rounded-full border border-line-strong px-2 py-0.5 text-xs font-semibold">Call instead</span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-sm">{r.why}</p>
+                    <p>
+                      <span className="font-semibold">{r.name}</span>{" "}
+                      <span className="text-sm text-ink-muted">· {r.age} · {r.zip}{r.callInstead ? " · call, don’t text" : ""}</span>
+                    </p>
+                    <p className="text-sm text-ink-muted">{r.why}</p>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {st ? (
-                      <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
-                    ) : null}
-                    <button onClick={() => setOpen(r)} className="rounded-full border border-line-strong px-3 py-1 text-sm hover:bg-surface">
-                      Why?
-                    </button>
-                    <button
-                      onClick={() => send([r.id], r.callInstead ? "call" : "text")}
-                      className="rounded-full border border-line-strong px-3 py-1 text-sm hover:bg-surface"
-                    >
+                  <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1">
+                    {st && <span className={`whitespace-nowrap text-sm font-semibold ${st.cls}`}>{st.label}</span>}
+                    <button onClick={() => setOpen(r)} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">Why?</button>
+                    <button onClick={() => send([r.id], r.callInstead ? "call" : "text")} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">
                       {r.callInstead ? "Call" : "Text"}
                     </button>
-                    <Link href={`/phone/${r.id}`} className="rounded-full px-2 py-1 text-sm underline">
-                      Plan
-                    </Link>
+                    <Link href={`/phone/${r.id}`} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">Plan</Link>
                   </div>
                 </li>
               );
             })}
-          </ul>
-          <p className="text-xs text-ink-muted">
-            Groups from <code>{source}</code>. &ldquo;Call instead&rdquo; = alert_opt_in false in <code>{questionnaireFile}</code>.
-          </p>
+          </ul></Card>
+          <details className="text-xs text-ink-muted">
+            <summary className="cursor-pointer">Sources</summary>
+            <p className="mt-1">
+              Groups from <code>{source}</code>. &ldquo;Call, don&rsquo;t text&rdquo; = alert_opt_in false in <code>{questionnaireFile}</code>. Texts are simulated.
+            </p>
+          </details>
         </section>
 
-        <section aria-label="Messages" className="space-y-2">
-          <h2 className="text-lg font-semibold">Messages <span className="text-xs font-normal text-ink-muted">(simulated)</span></h2>
-          <ol className="max-h-[70vh] space-y-2 overflow-auto">
-            {!state?.messages.length && <li className="text-sm text-ink-muted">Nothing sent yet. Pick a group and press &ldquo;Text this group.&rdquo;</li>}
+        <section aria-label="Messages" className="min-w-0 space-y-3">
+          <h2 className="text-xl font-semibold">Messages <span className="text-sm font-normal text-ink-muted">simulated</span></h2>
+          <Card className="overflow-hidden border-line"><ol className="max-h-[70vh] divide-y divide-line overflow-auto">
+            {!state?.messages.length && <li className="px-4 py-3 text-sm text-ink-muted">Nothing sent yet. Pick a group and press &ldquo;Text this group.&rdquo;</li>}
             {state?.messages.map((m) => (
-              <li key={m.id} className="rounded-2xl border border-line p-3 text-sm">
+              <li key={m.id} className="px-4 py-2.5 text-sm">
                 <div className="flex justify-between gap-2 text-xs text-ink-muted">
                   <span>
                     <b className="text-ink">{(m.patient_id && names.get(m.patient_id)) ?? m.patient_id}</b> →{" "}
                     {m.recipient.startsWith("contact") ? "their contact" : m.recipient === "clinic" ? "clinic call list" : "patient"}
                   </span>
-                  <span className="font-mono">{t(m.created_at)}</span>
+                  <span className="tabular-nums">{t(m.created_at)}</span>
                 </div>
                 <p className="mt-1 line-clamp-3">{m.body}</p>
               </li>
             ))}
-          </ol>
+          </ol></Card>
         </section>
       </div>
 
@@ -256,11 +240,11 @@ function WhyPanel({ row, onClose }: { row: BoardRow; onClose: () => void }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${RISK[row.group].chip}`}>{RISK[row.group].label} risk</span>
-            <h2 className="mt-2 text-2xl font-bold">{row.name}</h2>
+            <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold ${RISK[row.group].chip}`}>{RISK[row.group].label} risk</span>
+            <h2 className="text-xl font-semibold mt-2">{row.name}</h2>
             <p className="text-sm text-ink-muted">{row.age} · {row.zip} · synthetic patient</p>
           </div>
-          <button onClick={onClose} className="rounded-full border border-line-strong px-3 py-1 text-sm">Close</button>
+          <button onClick={onClose} className="text-sm text-ink-muted underline underline-offset-[3px] hover:text-ink">Close</button>
         </div>
 
         <h3 className="mt-5 font-semibold">In plain words</h3>
@@ -272,7 +256,7 @@ function WhyPanel({ row, onClose }: { row: BoardRow; onClose: () => void }) {
         <ul className="mt-1 space-y-2 text-sm">
           {d.meds.length === 0 && <li className="text-ink-muted">No heat-relevant medicines on file.</li>}
           {d.meds.map((m) => (
-            <li key={m.name} className="rounded-xl bg-surface p-3">
+            <li key={m.name} className="border-l-2 border-line-strong pl-3">
               <div className="font-semibold capitalize">{m.name}</div>
               {m.line ? <p>{m.line}</p> : <p className="text-ink-muted">Not in data/kb/knowledge_base.json yet.</p>}
               {m.kbId && (
@@ -293,10 +277,10 @@ function WhyPanel({ row, onClose }: { row: BoardRow; onClose: () => void }) {
 
         {d.pathways.length > 0 && (
           <>
-            <h3 className="mt-5 font-semibold">How it adds up (System graph)</h3>
+            <h3 className="mt-5 font-semibold">How it adds up</h3>
             <ul className="mt-1 space-y-2 text-sm">
               {d.pathways.map((p) => (
-                <li key={p.label} className="rounded-xl border border-line p-3">
+                <li key={p.label} className="border-l-2 border-line-strong pl-3">
                   <div className="font-semibold">{p.label}</div>
                   {p.system.map((s) => (
                     <p key={s.mediator} className="text-xs">

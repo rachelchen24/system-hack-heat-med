@@ -22,11 +22,15 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-4">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold">Who is at risk, and where help is</h1>
-        <p className="text-[var(--ui-ink-muted,#4b5563)]">
-          Heat wave of June 24, 2025 (replay). Each dot is a synthetic patient&apos;s home, colored by heat risk.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold sm:text-3xl">Who is at risk in the heat, and where to cool off</h1>
+          <p className="text-[var(--ui-ink-muted,#4b5563)]">Each dot is a patient&apos;s home. Click a dot or a neighborhood.</p>
+        </div>
+        <nav aria-label="Other views" className="flex gap-4 text-sm text-[var(--ui-ink-muted,#4b5563)]">
+          <Link href="/board" className="underline-offset-2 hover:underline">Clinician list</Link>
+          <Link href="/phone" className="underline-offset-2 hover:underline">Patient app</Link>
+        </nav>
       </header>
 
       <nav aria-label="Map view" className="inline-flex rounded-full border border-line bg-surface p-1 text-sm font-semibold">
