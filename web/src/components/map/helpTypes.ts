@@ -4,8 +4,9 @@
 export type HelpFamily = "cool" | "community" | "services";
 
 export const HELP_FAMILIES: Record<HelpFamily, { label: string; hex: string; rgb: [number, number, number] }> = {
-  // Okabe–Ito bluish green: places to cool off.
-  cool: { label: "Places to cool off", hex: "#009e73", rgb: [0, 158, 115] },
+  // Blue: places to cool off. Not green: green read as the teal "Low risk" people. Blue is in
+  // neither the risk colors nor the heat ramp (validated: ΔE 18 vs Low teal, normal vision).
+  cool: { label: "Places to cool off", hex: "#2563eb", rgb: [37, 99, 235] },
   // Okabe–Ito sky blue: community places (kept small and light so patient dots stay dominant).
   community: { label: "Community places", hex: "#56b4e9", rgb: [86, 180, 233] },
   // Neutral gray: other services.

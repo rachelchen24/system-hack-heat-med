@@ -75,6 +75,10 @@
   .job .d { font-size: 14px; color: var(--muted); }
 
   .chart { overflow-x: auto; }
+  h3.sub { font-size: 15px; font-weight: 700; margin-top: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .chip { font-style: normal; min-width: 30px; height: 22px; font-size: 12px; }
   svg { display: block; width: 100%; height: auto; }
   svg text { font-family: var(--font); }
 
@@ -145,7 +149,7 @@
       <h2 id="h-jobs">Four jobs for System</h2>
       <div class="jobs">
         <div class="job"><span class="h">FIND</span><span class="k">38 pathways</span><span class="d">medicine and heat, same weak spot</span></div>
-        <div class="job"><span class="h">CHECK</span><span class="k">14 numbers ✓✓</span><span class="d">same paper, same value</span></div>
+        <div class="job"><span class="h">CHECK</span><span class="k">7 papers match</span><span class="d">same paper, same number</span></div>
         <div class="job"><span class="h">SPOT GAPS</span><span class="k">0 to 2 studies</span><span class="d">for sweat-blocking medicines</span></div>
         <div class="job"><span class="h">POWER THE APP</span><span class="k">Live</span><span class="d">study counts in the app</span></div>
       </div>
@@ -157,16 +161,15 @@
       <h2 id="h-find">From 5.9 million findings to 38 pathways</h2>
       <p>Join two well-studied halves: <b>medicine → body effect ← heat</b>.</p>
       <div class="chart" id="find" role="img" aria-label="Funnel: 5.9 million findings, 15,001 match our terms, 912 link a medicine or heat to a body effect, 806 after dropping blood-pressure trials, 38 pathways"></div>
-      <p class="take">22 of 38 were never studied directly.</p>
+      <p class="take">For 22 of these 38, no study has tested the medicine in the heat; System connects the two halves.</p>
     </section>
 
     <section class="card" aria-labelledby="h-check">
       <span class="tag sys">Check</span>
-      <h2 id="h-check">System as a second, independent reader</h2>
-      <p>We read every number ourselves. System reads them too. We compared.</p>
-      <div class="chart" id="check" role="img" aria-label="83 papers we cite, 80 in System, 15 with findings; 7 papers with the same number as ours, 3 papers where System mislabeled the drug, 5 with other results"></div>
-      <div class="chart" id="badges" role="img" aria-label="Badges for the 105 numbers we quote before and after the System API check: double-verified went from 5 to 14"></div>
-      <p class="take">Same paper, same number, every time.</p>
+      <h2 id="h-check">Did System read the papers the same way we did?</h2>
+      <p>We pulled every number from each paper ourselves. System pulls numbers from papers too. Where both read the same paper, we compared.</p>
+      <div class="chart" id="check" role="img" aria-label="83 papers we cite; System has 80; System pulled numbers from 15; of those 15, 7 match our number, 3 System labeled with the wrong drug, 5 are about a different result"></div>
+      <p class="take">Every time System read the same paper, it found the same number as us.</p>
     </section>
 
     <section class="card" aria-labelledby="h-gaps">
@@ -188,17 +191,6 @@
       <p class="muted">A person checks each one before it reaches the app.</p>
     </section>
 
-    <section class="card" aria-labelledby="h-rules">
-      <span class="tag plain">Trust</span>
-      <h2 id="h-rules">Ground rules</h2>
-      <ul class="rules">
-        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓</span><span>Every number appears word for word in its abstract.</span></li>
-        <li><span class="chip" style="color:var(--ok);background:var(--ok-bg);border-color:var(--ok)">✓✓</span><span>Double-verified only when System agrees (14; 5 under System's strictest rule).</span></li>
-        <li><span class="chip" style="color:var(--warn);background:var(--warn-bg);border-color:var(--warn)">⚠</span><span>System's mistakes go on a fix list. They never downgrade our claim.</span></li>
-        <li><span class="chip" style="color:var(--graph);background:var(--graph-bg);border-color:var(--graph)">↗</span><span>Supporting links are labeled as support, not proof.</span></li>
-        <li><span class="chip" style="color:var(--heat-ink);background:var(--heat-tint);border-color:var(--heat-ink)">!</span><span>No dose advice. No invented data.</span></li>
-      </ul>
-    </section>
   </div>
 </main>
 
@@ -240,53 +232,38 @@ const F = 'font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
   document.getElementById('find').innerHTML = s + '</svg>';
 })();
 
-// Check: 83 → 80 → 15 papers, then what System's findings showed.
+// Check 1: papers System could check, then what the 15 showed.
 (function () {
-  const W = 900, x0 = 210, scale = 560 / 83, rh = 50;
-  const rows = [{ n: 83, label: 'Papers we cite' }, { n: 80, label: 'In System' }, { n: 15, label: 'With System findings' }];
-  const H = 4 * rh + 26;
-  let s = `<svg viewBox="0 0 ${W} ${H}" ${F}>`;
-  rows.forEach((r, i) => {
-    const y = i * rh, w = r.n * scale;
-    s += `<text x="${x0 - 12}" y="${y + 26}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">${r.label}</text>`;
-    s += `<rect x="${x0}" y="${y + 6}" width="${w}" height="30" rx="6" fill="${C('--teal-tint')}" stroke="${C('--teal')}" stroke-width="1.5"/>`;
-    s += `<text x="${x0 + w + 8}" y="${y + 27}" font-size="15" font-weight="700" fill="${C('--teal-ink')}">${r.n}</text>`;
-  });
-  const y = 3 * rh, a = 7 * scale, b = 3 * scale, c = 5 * scale;
-  s += `<text x="${x0 - 12}" y="${y + 26}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">What System showed</text>`;
-  s += `<rect x="${x0}" y="${y + 6}" width="${a - 2}" height="30" rx="6" fill="${C('--ok')}"/>`;
-  s += `<rect x="${x0 + a}" y="${y + 6}" width="${b - 2}" height="30" rx="6" fill="${C('--warn-bg')}" stroke="${C('--warn')}" stroke-width="1.5"/>`;
-  s += `<rect x="${x0 + a + b}" y="${y + 6}" width="${c - 2}" height="30" rx="6" fill="${C('--unv-bg')}" stroke="${C('--line-strong')}"/>`;
-  const lx = x0 + a + b + c + 14;
-  s += `<text x="${lx}" y="${y + 14}" font-size="13.5" font-weight="700" fill="${C('--ok')}">✓✓ 7 papers: same number</text>`;
-  s += `<text x="${lx}" y="${y + 33}" font-size="13.5" font-weight="700" fill="${C('--warn')}">⚠ 3 papers: System mislabel</text>`;
-  s += `<text x="${lx}" y="${y + 52}" font-size="13.5" fill="${C('--muted')}">5 papers: other results</text>`;
-  document.getElementById('check').innerHTML = s + '</svg>';
-})();
-
-// Badges for the 105 numbers we quote, before (bulk download only) and after (live System API).
-(function () {
-  const rows = [{ label: 'Before', sub: 'bulk download only', v: [5, 74, 0, 26] }, { label: 'After', sub: 'live System API', v: [14, 58, 7, 26] }];
-  const cats = [
-    { k: '✓✓', fill: C('--ok'), ink: '#ffffff', stroke: C('--ok') },
-    { k: '✓', fill: C('--ok-bg'), ink: C('--ok'), stroke: C('--ok') },
-    { k: '⚠', fill: C('--warn-bg'), ink: C('--warn'), stroke: C('--warn') },
-    { k: '?', fill: C('--unv-bg'), ink: C('--unv'), stroke: C('--line-strong') },
+  const W = 900, x0 = 230, pw = 600, rh = 46;
+  const rows = [
+    { n: 83, label: 'Papers we cite' },
+    { n: 80, label: 'System has the paper' },
+    { n: 15, label: 'System pulled numbers' },
   ];
-  const W = 900, x0 = 210, pw = 650, bh = 40, top = 26, H = top + 2 * (bh + 16);
+  const H = 3 * rh + 22 + 90;
   let s = `<svg viewBox="0 0 ${W} ${H}" ${F}>`;
-  s += `<text x="${x0}" y="14" font-size="13" font-weight="600" fill="${C('--muted')}">105 numbers we quote</text>`;
   rows.forEach((r, i) => {
-    const y = top + i * (bh + 16);
-    s += `<text x="${x0 - 12}" y="${y + 18}" text-anchor="end" font-size="14" font-weight="700" fill="${C('--ink')}">${r.label}</text>`;
-    s += `<text x="${x0 - 12}" y="${y + 34}" text-anchor="end" font-size="12" fill="${C('--muted')}">${r.sub}</text>`;
-    let x = x0;
-    r.v.forEach((v, j) => { if (!v) return; const w = pw * v / 105, c = cats[j];
-      s += `<rect x="${x + 1}" y="${y}" width="${w - 2}" height="${bh}" rx="6" fill="${c.fill}" stroke="${c.stroke}"/>`;
-      s += `<text x="${x + w / 2}" y="${y + bh / 2 + 5}" text-anchor="middle" font-size="13" font-weight="800" fill="${c.ink}">${w > 56 ? c.k + ' ' + v : v}</text>`;
-      x += w; });
+    const y = i * rh, w = pw * r.n / 83;
+    s += `<text x="${x0 - 12}" y="${y + 25}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">${r.label}</text>`;
+    s += `<rect x="${x0}" y="${y + 6}" width="${w}" height="28" rx="6" fill="${C('--teal-tint')}" stroke="${C('--teal')}" stroke-width="1.5"/>`;
+    s += `<text x="${x0 + w + 8}" y="${y + 26}" font-size="15" font-weight="700" fill="${C('--teal-ink')}">${r.n}</text>`;
   });
-  document.getElementById('badges').innerHTML = s + '</svg>';
+  // zoom-in: the 15 papers, full width
+  const y15 = 2 * rh + 6, w15 = pw * 15 / 83, zy = 3 * rh + 22;
+  s += `<polygon points="${x0},${y15 + 28} ${x0 + w15},${y15 + 28} ${x0 + pw},${zy} ${x0},${zy}" fill="${C('--teal')}" opacity=".10"/>`;
+  s += `<text x="${x0 - 12}" y="${zy + 22}" text-anchor="end" font-size="14" font-weight="600" fill="${C('--ink')}">Those 15 papers</text>`;
+  const segs = [
+    { n: 7, label: 'same number as ours', fill: C('--ok'), ink: '#ffffff', stroke: C('--ok') },
+    { n: 3, label: 'wrong drug', fill: C('--warn-bg'), ink: C('--warn'), stroke: C('--warn') },
+    { n: 5, label: 'a different result', fill: C('--unv-bg'), ink: C('--unv'), stroke: C('--line-strong') },
+  ];
+  let x = x0;
+  segs.forEach(g => { const w = pw * g.n / 15;
+    s += `<rect x="${x + 1}" y="${zy}" width="${w - 2}" height="36" rx="6" fill="${g.fill}" stroke="${g.stroke}" stroke-width="1.5"/>`;
+    s += `<text x="${x + w / 2}" y="${zy + 23}" text-anchor="middle" font-size="15" font-weight="800" fill="${g.ink}">${g.n}</text>`;
+    s += `<text x="${x + w / 2}" y="${zy + 56}" text-anchor="middle" font-size="13" font-weight="600" fill="${g.stroke === C('--line-strong') ? C('--muted') : g.stroke}">${g.label}</text>`;
+    x += w; });
+  document.getElementById('check').innerHTML = s + '</svg>';
 })();
 
 // Spot gaps: System studies per medicine group (kidney, sodium and fluid effects).

@@ -43,9 +43,10 @@ export const HEAT_RGB: RGB[] = HEAT_SAMPLES_F.map((f) => {
 });
 export const HEAT_HEX = HEAT_RGB.map(([r, g, b]) => `rgb(${r},${g},${b})`);
 
-/** Help places: Okabe–Ito bluish green. */
-export const HELP_HEX = "#009e73";
-export const HELP_INK_HEX = "#00694c";
+/** Help places (cool places): blue, same as "Places to cool off" in helpTypes.ts.
+ *  Was bluish green, which looked like the teal "Low risk" people. */
+export const HELP_HEX = "#2563eb";
+export const HELP_INK_HEX = "#1d4ed8";
 export const HELP_RGB = hex(HELP_HEX);
 export const SUBWAY_HEX = "#141414";
 export const ROUTE_HEX = "#141414";
