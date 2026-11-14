@@ -24,6 +24,8 @@ Many common prescriptions make heat more dangerous. They block sweating, deepen 
 | **Pharmacists** | A counseling line per drug, plus storage advice |
 | **Health department / emergency planners** | Where in NYC to focus outreach, and which prescribers to alert first |
 | **Patients** (secondary) | A plain-language warning that should have been on the label |
+
+**Audience decision:** the product is **clinician- and health-system-facing** (prescribers, pharmacists, SBH-style clinics). It isn't a patient app. Patients only see the plain-language label line, delivered by their clinician or pharmacist. At judging, it's presented as a working tool plus a visual story, not as a consumer product.
 | **System's team** (judges) | Evidence that their graph can power this, plus a precise account of where it falls short |
 
 ## 3. Product
@@ -59,15 +61,29 @@ drug → (dehydration / low sodium / kidney injury / blood pressure) ← heat
 
 It's built from graph findings on both sides. Pathway scores are validated against drugs already known to be heat risks. Drugs with strong pathways that appear on no guidance list are flagged as **hidden heat drugs**, then checked against FDA adverse-event reports.
 
-### 3.4 Label audit
-A scan of official FDA label text (openFDA drug labels / DailyMed) for every heat-risk drug: does the label mention heat, hyperthermia, sweating or dehydration? This puts a number on the project's title: "X of Y heat-risk drugs carry no heat warning on their official label."
+### 3.4 Heat Dose Compass (from the judge's input)
+For each drug, which way heat pushes the dose's effect:
+- **↑ stronger:** insulin absorption, patches, lithium/digoxin buildup, added blood-pressure drop
+- **↓ weaker:** degraded epinephrine/insulin, patches peeling off, unreliable inhalers
+- **↕ depends**
 
-### 3.5 NYC heat-wave playbook
+Each entry also shows the mechanism, the trigger (forecast heat, fever, exertion, heat on a patch), what to monitor, and evidence strength. An optional body-temperature slider shows how risk grows; it's illustrative only, and **never gives a dose number**. A numeric "safe dose at this temperature" algorithm isn't feasible: there's no validated calibration data, and wearable core-temperature estimates aren't validated in medicated patients. See `docs/schizophrenia-sbh-focus.md` §3.
+
+### 3.5 NYC heat-wave playbook (demo focus: SBH Health System catchment, Bronx)
 Input: a heat wave, either a replay of a real past NYC heat wave or a live National Weather Service forecast. Output: a 72-hour plan.
 - **Where:** neighborhoods ranked by the NYC Heat Vulnerability Index × CDC PLACES prevalence of the conditions these drugs treat, with cooling centers and pharmacies overlaid
 - **Who:** prescriber specialties and areas with the most heat-risk prescriptions (CMS Part D), shown in aggregate only
 - **What:** the label messages, split into "contact these patients" (FLAG) and "consider changing" (CHANGE)
 - **Power outages:** reminders for people who rely on powered home medical equipment
+- **Demo scope:** the zip codes around St. Barnabas Hospital and SBH Behavioral Health (10453, 10457, 10458, 10460 and nearby; confirm against SBH's 2025–27 Community Service Plan). Our judge works with SBH.
+
+### 3.5a Featured case: schizophrenia
+The deep-dive label and playbook path. Shows how illness and medication each contribute to risk:
+- BC 2021 heat dome: any antipsychotic OR 2.43; 2+ antipsychotics OR 4.05
+- Japan within-person study: no added drug effect
+- Bark 1998, Bronx Psychiatric Center: excess deaths, and prevention worked
+
+Label: **FLAG high, CHANGE moderate.** Review combination therapy before summer; set up check-in calls and cooling access during heat waves; never stop abruptly. See `docs/schizophrenia-sbh-focus.md` §1.
 
 ### 3.6 Methods & receipts page
 - Data sources with versions and access dates
@@ -161,7 +177,11 @@ Input: a heat wave, either a replay of a real past NYC heat wave or a live Natio
 | Live demo breaks | Recorded backup; replay mode by default |
 | Scope creep | Cut stretch outputs first; never cut the Methods page |
 
-## 10. Open questions
+## 10. Maybe (only if time allows)
+
+- **FDA label audit:** scan official FDA label text (openFDA drug labels / DailyMed) for every heat-risk drug and check whether it mentions heat, hyperthermia, sweating or dehydration. Headline: "X of Y heat-risk drugs carry no heat warning on their official label."
+
+## 11. Open questions
 
 - Which ~8 drugs get polished labels? (Suggested: lithium, loop diuretics, topiramate, oxybutynin, fentanyl patch, insulin/pump, SGLT2 inhibitors, an antipsychotic)
 - Tech stack for the site and maps
