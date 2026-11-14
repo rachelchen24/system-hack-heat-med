@@ -207,7 +207,7 @@ function AreaCard({ area, patients, onPick, onClose }: { area: HeatArea; patient
   );
 }
 
-export function ClinicianMap({ patients, files }: { patients: MapPatient[]; files: { panel: string; patients: string } }) {
+export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }: { patients: MapPatient[]; files: { panel: string; patients: string }; mapHeight?: string }) {
   const [layers, setLayers] = useState<Layers | null>(null);
   const [loadErr, setLoadErr] = useState(false);
   const [groups, setGroups] = useState<Set<RiskGroup>>(new Set(RISK_GROUPS));
@@ -386,7 +386,7 @@ export function ClinicianMap({ patients, files }: { patients: MapPatient[]; file
           threeD={threeD}
           getTooltip={getTooltip}
           onZoom={setZoom}
-          height="min(72vh, 760px)"
+          height={mapHeight}
           ariaLabel="Map of synthetic patients, neighborhood heat and places to cool off"
         />
         <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
