@@ -11,6 +11,7 @@
 // The card links to the EHR side panel /ehr/<patientId> as an "absolute" link.
 // (A real deployment would use a "smart" link to a SMART on FHIR launch URL
 // so the panel opens inside the EHR with the patient in context.)
+import { placeNote, tidyAddress, tidyPlaceName } from "@/lib/placeName";
 import { randomUUID } from "node:crypto";
 import { heatDrugsInRequest, KB_FILE, PANEL_FILE, patientFor } from "@/components/ehr/ehrPlan";
 import { clinicianWhy, RISK, riskGroup } from "@/lib/risk";
@@ -49,7 +50,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/cds-hooks/[serv
     ...drugs.map((d) => `- **${d.drug.names?.display ?? d.drug.id}**${d.ordered ? ` (ordered: ${d.ordered})` : ""}: ${d.drug.label_line ?? ""}`),
     p ? `\n**Why this patient (synthetic):** ${clinicianWhy(p)}` : "",
     p?.cooling?.best
-      ? `\n**Nearest cool place:** ${p.cooling.best.name}${p.cooling.best.travelMin != null ? `, about ${p.cooling.best.travelMin} min walk` : ""}.`
+      ? `\n**Nearest cool place:** ${tidyPlaceName(p.cooling.best.name)}${p.cooling.best.address ? ` (${tidyAddress(p.cooling.best.address)})` : ""}${placeNote(p.cooling.best.name) ? ` (${placeNote(p.cooling.best.name)})` : ""}${p.cooling.best.travelMin != null ? `, about ${p.cooling.best.travelMin} min walk` : ""}.`
       : "",
     "\nMedicine changes are the prescriber's decision. No dose advice is given.",
   ]

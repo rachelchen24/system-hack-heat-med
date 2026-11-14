@@ -3,6 +3,7 @@
 //   group, why, meds, cool place  data/processed/panel_scores_replay.json
 //   safe hours                    data/processed/replay_heatwave_hourly.csv
 //   medicine heat lines           data/kb/knowledge_base.json (label_line, claims)
+import { placeNote, tidyAddress, tidyPlaceName } from "@/lib/placeName";
 import { HOT_FEELS_LIKE_F } from "@/components/map/patientPlanData";
 import type { DrugRecord } from "@lib/types/knowledge-base.ts";
 import { getDrugs } from "@/lib/kb";
@@ -33,7 +34,7 @@ export interface EhrPlan {
   group: RiskGroup;
   why: string;
   todo: string[];
-  cool: { name: string; address: string; walkMin: number | null; leaveBy: string | null; hours: string | null; notes: string[] } | null;
+  cool: { name: string; address: string; note: string | null; walkMin: number | null; leaveBy: string | null; hours: string | null; notes: string[] } | null;
   meds: EhrMed[];
   evidence: {
     bullets: string[];
@@ -106,8 +107,9 @@ export function buildEhrPlan(id: string): EhrPlan | null {
     todo,
     cool: best
       ? {
-          name: best.name,
-          address: best.address,
+          name: tidyPlaceName(best.name),
+          address: tidyAddress(best.address),
+          note: caveats.some((c) => /older adults/i.test(c)) ? null : placeNote(best.name),
           walkMin: best.travelMin ?? null,
           leaveBy: best.leaveBy ? clock(best.leaveBy) : null,
           hours: best.hoursToday ?? null,

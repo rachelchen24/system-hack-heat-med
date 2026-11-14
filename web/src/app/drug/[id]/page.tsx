@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { isPublicClaim } from "@lib/types/knowledge-base.ts";
 import {
@@ -50,7 +51,15 @@ function List({ items }: { items: string[] | undefined }) {
   return <span>{items.join(", ")}</span>;
 }
 
-export default async function DrugPage({ params }: PageProps<"/drug/[id]">) {
+export default function DrugPage({ params }: PageProps<"/drug/[id]">) {
+  return (
+    <Suspense fallback={<p className="mx-auto max-w-3xl text-ink-muted">Loading medicine…</p>}>
+      <DrugBody params={params} />
+    </Suspense>
+  );
+}
+
+async function DrugBody({ params }: { params: PageProps<"/drug/[id]">["params"] }) {
   const { id } = await params;
   const d = getDrug(decodeURIComponent(id));
   if (!d) notFound();

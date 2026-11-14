@@ -74,6 +74,12 @@ async function EhrPanel({ params }: { params: Promise<{ id: string }> }) {
                     <b>{plan.cool.name}</b>
                     <br />
                     {plan.cool.address}
+                    {plan.cool.note && (
+                      <>
+                        <br />
+                        <span className="text-sm text-ink-muted">{plan.cool.note}</span>
+                      </>
+                    )}
                   </p>
                   <p className="text-ink">
                     {plan.cool.walkMin != null && <>About {plan.cool.walkMin} min walk</>}
