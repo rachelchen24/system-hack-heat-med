@@ -1,4 +1,6 @@
-# The Missing Label
+# Cool-Aid
+
+_Formerly "The Missing Label"; name may change._
 
 **Heat-wave outreach for patients whose medicines make heat more dangerous.**
 Built for **Visualize Challenge 3** of the System Public Challenge (NYC, 13–14 Nov 2026): *Which common medications make heat more dangerous, and what should prescribers and health systems do about it?*
