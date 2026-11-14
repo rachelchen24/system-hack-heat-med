@@ -94,7 +94,7 @@
   --compass-depends: #4b5563; /* ↕ depends;               7.56:1 */
 
   /* ---- Type ------------------------------------------------------- */
-  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-body: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 
   /* Clinician scale (dense but readable) */
