@@ -16,7 +16,7 @@ const ctx = (names: string[], over: Partial<MessageContext> = {}): MessageContex
 
 test("safety alert names the headline drugs (lithium first) and ends with the closing line", () => {
   const m = safetyAlert(ctx(["hydrochlorothiazide", "lithium"]));
-  assert.match(m.text, /^Heat danger today \(HeatRisk 3\)\. Your lithium and water pill \(hydrochlorothiazide\) make heat riskier\./);
+  assert.match(m.text, /^Heat danger today\. Your lithium and water pill \(hydrochlorothiazide\) make heat riskier\./);
   assert.ok(m.text.endsWith(CLOSING.en));
   assert.deepEqual(checkMessageSafety(m), []);
 });

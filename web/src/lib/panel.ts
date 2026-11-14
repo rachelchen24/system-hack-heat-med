@@ -117,6 +117,9 @@ export function loadPanel(s: Scenario = "replay") {
   const hit = cache.__panel.get(s);
   if (hit && hit.mtime === mtime) return { ...hit, file: path.relative(REPO_ROOT, f) };
   const data = JSON.parse(fs.readFileSync(f, "utf8")) as PanelFile;
+  // Plain words on screen (design rule 2): drop the forecast code "(HeatRisk N)" from message text.
+  for (const p of data.patients)
+    for (const m of p.messages ?? []) if (typeof m.text === "string") m.text = m.text.replace(/\s*\(HeatRisk \d\)/g, "");
   const byId = new Map(data.patients.map((p) => [p.patientId, p]));
   const entry = { mtime, data, byId };
   cache.__panel.set(s, entry);
