@@ -225,7 +225,7 @@ export function Conversation() {
           <button
             type="submit"
             disabled={busy || !draft.trim()}
-            className="self-end rounded-full bg-ink px-5 py-2 text-sm font-semibold text-page disabled:opacity-40"
+            className="self-end rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
           >
             Send
           </button>

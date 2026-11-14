@@ -138,7 +138,7 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
               if (step >= total) setStep(0);
               setPlaying((p) => !p);
             }}
-            className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-page hover:opacity-90"
+            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
           >
             {playing ? "Pause" : step >= total ? "Replay" : "Play"}
           </button>
@@ -367,7 +367,7 @@ function PatientCard({
           <p className="text-ink-muted">No cool place matched for this patient.</p>
         )}
 
-        <Link href={`/messages/${p.id}`} className="block rounded-full bg-ink px-4 py-2 text-center font-semibold text-page hover:opacity-90">
+        <Link href={`/messages/${p.id}`} className="block rounded-full bg-primary px-4 py-2 text-center font-semibold text-primary-foreground hover:opacity-90">
           Message {p.name.split(" ")[0]}
         </Link>
       </div>

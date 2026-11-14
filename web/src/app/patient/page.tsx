@@ -59,7 +59,7 @@ export default function PatientPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
-        <button type="button" className="min-h-tap rounded-tile bg-ink px-5 font-bold text-page" disabled>
+        <button type="button" className="min-h-tap rounded-tile bg-primary px-5 font-bold text-primary-foreground" disabled>
           I&apos;m OK
         </button>
         <button type="button" className="min-h-tap rounded-tile border-4 border-ink px-5 font-bold" disabled>

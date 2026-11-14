@@ -30,28 +30,30 @@
 }
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 3.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 3.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(0 0% 96%);
-  --secondary-foreground: hsl(0 0% 9%);
-  --muted: hsl(0 0% 96%);
-  --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96%);
-  --accent-foreground: hsl(0 0% 9%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0, 0%, 90%);
-  --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
+  /* Mapped to Rachel's tokens (tokens.css) so shadcn components use the app palette. No black buttons:
+     primary = the app blue (--bucket-store-solid #0072b2, white text 5.19:1). */
+  --background: var(--ui-page);
+  --foreground: var(--ui-ink);
+  --card: var(--ui-page);
+  --card-foreground: var(--ui-ink);
+  --popover: var(--ui-page);
+  --popover-foreground: var(--ui-ink);
+  --primary: var(--bucket-store-solid);
+  --primary-foreground: var(--bucket-store-on);
+  --secondary: var(--ui-surface);
+  --secondary-foreground: var(--ui-ink);
+  --muted: var(--ui-surface);
+  --muted-foreground: var(--ui-ink-muted);
+  --accent: var(--bucket-store-tint);
+  --accent-foreground: var(--bucket-store-ink);
+  --destructive: var(--bucket-hold-solid);
+  --destructive-foreground: var(--bucket-hold-on);
+  --border: var(--ui-line);
+  --input: var(--ui-line-strong);
+  --ring: var(--bucket-store-solid);
   --radius: 8px;
-  --muted-2: hsl(0 0% 90%);
-  --muted-2-foreground: hsl(240 3.8% 46.1%);
+  --muted-2: var(--ui-line);
+  --muted-2-foreground: var(--ui-ink-muted);
 }
 
 @keyframes border-beam {

@@ -94,7 +94,7 @@ export function Phone({ patientId, firstName, language, children, checkInNote, f
         <section className="space-y-3 bg-page pb-2">
           {checkInNote && <p>{checkInNote}</p>}
           {tapped && <p className="text-center font-semibold">{l.sent}</p>}
-          <button onClick={() => tap("ok")} className="min-h-tap w-full rounded-tile bg-ink text-patient-lg font-bold text-page">
+          <button onClick={() => tap("ok")} className="min-h-tap w-full rounded-tile bg-primary text-patient-lg font-bold text-primary-foreground">
             {l.ok}
           </button>
           <div className="grid grid-cols-2 gap-3">

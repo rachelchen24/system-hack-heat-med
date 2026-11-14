@@ -390,7 +390,7 @@ export function Intake({
                         m.taking ? "border-ink bg-surface" : "border-line text-ink-muted"
                       }`}
                     >
-                      <span aria-hidden className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${m.taking ? "border-ink bg-ink text-page" : "border-line-strong"}`}>
+                      <span aria-hidden className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${m.taking ? "border-primary bg-primary text-primary-foreground" : "border-line-strong"}`}>
                         {m.taking ? "✓" : ""}
                       </span>
                       <span>
@@ -476,7 +476,7 @@ function Progress({ t, lang, current, n, total }: { t: Txt; lang: Lang; current:
           <span
             key={ar.key}
             className={`flex-1 rounded-full py-0.5 text-center text-xs font-bold ${
-              current === ar.key ? "bg-ink text-page" : "bg-surface text-ink-muted"
+              current === ar.key ? "bg-primary text-primary-foreground" : "bg-surface text-ink-muted"
             }`}
           >
             {ar.key === "L2" ? "L" : ar.key}
@@ -515,7 +515,7 @@ function BigButton({
       aria-pressed={primary ? undefined : !!selected}
       className={`min-h-tap w-full rounded-2xl border-2 px-4 py-3 font-semibold transition-colors disabled:opacity-60 ${
         primary
-          ? "border-ink bg-ink text-center text-page"
+          ? "border-primary bg-primary text-center text-primary-foreground"
           : selected
             ? "border-ink bg-surface text-left"
             : "border-line text-left hover:border-line-strong"
@@ -573,7 +573,7 @@ function Result({
         {result.group === "high" ? t.high : result.group === "medium" ? t.medium : t.low}
       </p>
       <p className="font-bold">{t.talk}</p>
-      <Link href={`/phone/${patientId}`} className="min-h-tap flex items-center justify-center rounded-2xl border-2 border-ink bg-ink px-4 py-3 font-semibold text-page">
+      <Link href={`/phone/${patientId}`} className="min-h-tap flex items-center justify-center rounded-2xl border-2 border-primary bg-primary px-4 py-3 font-semibold text-primary-foreground">
         {t.seePlan}
       </Link>
       <button type="button" onClick={restart} className="min-h-tap text-base underline">
