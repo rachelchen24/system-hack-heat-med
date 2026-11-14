@@ -2,13 +2,15 @@
 // Client view for the patient "where to go" map. Pass `data` (from getPatientPlanMapData, server side)
 // or just `patientId` (it then fetches /api/map/plan?id=...).
 import { useEffect, useMemo, useState } from "react";
-import { LineLayer, ScatterplotLayer, TextLayer } from "@deck.gl/layers";
+import { LineLayer, PathLayer, ScatterplotLayer, TextLayer } from "@deck.gl/layers";
 import { HELP_HEX, HELP_RGB } from "./colors";
 import { boundsOf, clock, directionsUrl } from "./format";
 import MapCanvas from "./MapCanvas";
 import type { PatientPlanMapData } from "./patientPlanData";
 import { PLAN_MAP_STRINGS, type PlanMapLang } from "./planMapStrings";
 import { ThreeDToggle } from "./ThreeDToggle";
+
+type CoolRoute = { ok: boolean; chosen: { geometry: { coordinates: number[][] }; distanceM: number; walkMin: number; exposureScore: number }; alternatives: number; steps: { instruction: string; distanceM: number }[] };
 
 const INK: [number, number, number] = [20, 20, 20];
 
@@ -33,6 +35,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
   const [data, setData] = useState<PatientPlanMapData | null>(initial ?? null);
   const [err, setErr] = useState(false);
   const [threeD, setThreeD] = useState(false);
+  const [cool, setCool] = useState<CoolRoute | null>(null);
 
   useEffect(() => {
     if (initial || !patientId) return;
@@ -44,6 +47,18 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
     return () => { live = false; };
   }, [initial, patientId]);
 
+  const from = data?.home ? `${data.home.lon},${data.home.lat}` : null;
+  const to = data?.place ? `${data.place.lon},${data.place.lat}` : null;
+  useEffect(() => {
+    if (!simple || !from || !to) return;
+    let live = true;
+    fetch(`/api/route/cool?from=${from}&to=${to}`)
+      .then((r) => r.json())
+      .then((d: CoolRoute) => { if (live && d?.ok && d.chosen?.geometry?.coordinates?.length) setCool(d); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [simple, from, to]);
+
   const layers = useMemo(() => {
     if (!data?.home) return [];
     const home = data.home, place = data.place, sub = simple ? null : data.subway;
@@ -54,7 +69,11 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
     if (place) labels.push({ pos: [place.lon, place.lat], text: shortName(titleCase(place.name), simple ? 20 : 28), color: [0, 105, 76], dy: simple ? -28 : -24 });
     if (sub) labels.push({ pos: [sub.lon, sub.lat], text: t.subwayLabel(sub.name), color: INK, dy: -24 });
     return [
-      place && new LineLayer({
+      place && cool && new PathLayer({
+        id: "cool-route", data: [cool.chosen.geometry.coordinates], parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
+        getPath: (d: number[][]) => d as [number, number][], getColor: [20, 20, 20, 210], getWidth: 6, widthUnits: "pixels", capRounded: true, jointRounded: true,
+      }),
+      place && !cool && new LineLayer({
         id: "route", data: [{ from: [home.lon, home.lat], to: [place.lon, place.lat] }], parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
         getSourcePosition: (d: { from: [number, number] }) => d.from, getTargetPosition: (d: { to: [number, number] }) => d.to,
         getColor: [20, 20, 20, 200], getWidth: simple ? 5 : 4, widthUnits: "pixels",
@@ -78,7 +97,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
         characterSet: "auto",
       }),
     ].filter(Boolean);
-  }, [data, t, simple]);
+  }, [data, t, simple, cool]);
 
   const fit = useMemo(() => {
     if (!data?.home) return null;
@@ -119,7 +138,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
             <p className="text-[1.125rem] font-medium text-muted-foreground">{t.goTo}</p>
             <p className="text-[1.75rem] font-semibold leading-tight tracking-tight">{titleCase(cleanName(place.name))}</p>
             <ul className="space-y-1 text-[1.25rem] leading-snug">
-              {walk !== null && <li>{t.walkShort(walk)}</li>}
+              {cool ? <li>{t.walkSidewalks(cool.chosen.walkMin)}</li> : walk !== null && <li>{t.walkShort(walk)}</li>}
               {leave && <li>{t.leaveBy(leave)}</li>}
               {opens && closes && <li>{t.open(opens, closes)}</li>}
             </ul>
@@ -131,6 +150,15 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
             >
               {t.directions}
             </a>
+            {cool && <p className="text-[1rem] text-muted-foreground">{t.coolRouteNote(cool.alternatives)}</p>}
+            {cool && cool.steps.length > 0 && (
+              <details className="rounded-lg border border-border p-3">
+                <summary className="cursor-pointer text-[1.25rem] font-semibold">{t.stepsTitle}</summary>
+                <ol className="mt-2 list-decimal space-y-2 pl-6 text-[1.25rem] leading-snug">
+                  {cool.steps.map((s, i) => <li key={i}>{s.instruction}</li>)}
+                </ol>
+              </details>
+            )}
             {place.phone && (
               <p className="text-[1.125rem]">
                 {t.callFirst} <a className="whitespace-nowrap font-semibold underline" href={`tel:${place.phone}`}>{place.phone}</a>

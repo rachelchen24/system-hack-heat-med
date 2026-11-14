@@ -59,6 +59,9 @@ export interface PlanMapStrings {
   cantGo: string;
   cantGoText: string;
   more: string;
+  walkSidewalks: (min: number) => string;
+  coolRouteNote: (n: number) => string;
+  stepsTitle: string;
 }
 
 export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
@@ -98,6 +101,9 @@ export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
     cantGo: "Can't go? Ask for a delivery.",
     cantGoText: "Ask your pharmacy, family or a neighbor to bring what you need. Stay in your coolest room.",
     more: "More",
+    walkSidewalks: (m) => `About ${m} min walk on sidewalks`,
+    coolRouteNote: (n) => `We picked the walking route through cooler blocks (of ${n} route${n === 1 ? "" : "s"}). Heat score is the neighborhood Heat Vulnerability Index, not shade measurements.`,
+    stepsTitle: "Step-by-step directions",
   },
   es: {
     note: "Traducción automática — por revisar",
@@ -143,5 +149,8 @@ export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
     cantGo: "¿No puede ir? Pida una entrega a domicilio.",
     cantGoText: "Pida a su farmacia, a un familiar o a un vecino que le lleve lo que necesita. Quédese en el cuarto más fresco.",
     more: "Más",
+    walkSidewalks: (m) => `Unos ${m} min a pie por las aceras`,
+    coolRouteNote: (n) => `Elegimos la ruta a pie por cuadras más frescas (de ${n} ruta${n === 1 ? "" : "s"}). El calor se mide con el Índice de Vulnerabilidad al Calor del vecindario, no con medidas de sombra.`,
+    stepsTitle: "Indicaciones paso a paso (en inglés)",
   },
 };

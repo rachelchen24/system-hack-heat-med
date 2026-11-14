@@ -14,7 +14,7 @@ const C_SEL = "#141414"; // --ui-ink, the selected line
 // One Okabe–Ito color per body effect; a medicine's line takes the color of the effect it points to.
 const EFFECT_COLOR: Record<string, string> = {
   dehydration: "#56b4e9",
-  hyponatremia: "#009e73",
+  hyponatremia: "#b08800",
   aki: "#cc79a7",
   sweating: "#e69f00",
   body_temp: "#d55e00",
@@ -104,7 +104,7 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
       {/* One legend. */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: "linear-gradient(90deg,#56b4e9,#009e73,#cc79a7,#e69f00,#0e7c86)" }} /> Medicine → body effect
+          <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: "linear-gradient(90deg,#56b4e9,#b08800,#cc79a7,#e69f00,#0e7c86)" }} /> Medicine → body effect
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="inline-block h-1 w-6 rounded" style={{ background: C_HEAT }} /> Heat → body effect
