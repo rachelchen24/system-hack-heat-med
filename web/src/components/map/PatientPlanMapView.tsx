@@ -13,17 +13,22 @@ import { ThreeDToggle } from "./ThreeDToggle";
 const INK: [number, number, number] = [20, 20, 20];
 
 function cleanName(n: string) {
-  return n.replace(/\s*-\s*OLDER ADULTS ONLY/i, "").replace(/\s*\(OAC\)/i, "").trim();
+  return n.replace(/\s*-\s*OLDER ADULTS ONLY/i, "").replace(/\s*\(OAC\)/i, "").replace(/\s+OAC$/i, "").trim();
 }
-function shortName(n: string) {
+function shortName(n: string, max = 28) {
   const s = cleanName(n);
-  return s.length > 28 ? `${s.slice(0, 26)}…` : s;
+  if (s.length <= max) return s;
+  // Cut on a word boundary so big map labels stay readable on a small phone.
+  const cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(" ");
+  return `${sp > 8 ? cut.slice(0, sp) : cut}…`;
 }
 function titleCase(s: string) {
   return s.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase());
 }
 
-export function PatientPlanMapView({ data: initial, patientId, height = 320, lang = "en" }: { data?: PatientPlanMapData; patientId?: string; height?: number; lang?: PlanMapLang }) {
+export function PatientPlanMapView({ data: initial, patientId, height = 320, lang = "en", variant = "full" }: { data?: PatientPlanMapData; patientId?: string; height?: number; lang?: PlanMapLang; variant?: "full" | "patient" }) {
+  const simple = variant === "patient";
   const t = PLAN_MAP_STRINGS[lang];
   const [data, setData] = useState<PatientPlanMapData | null>(initial ?? null);
   const [err, setErr] = useState(false);
@@ -41,17 +46,18 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
 
   const layers = useMemo(() => {
     if (!data?.home) return [];
-    const home = data.home, place = data.place, sub = data.subway;
-    const labels: { pos: [number, number]; text: string; color: [number, number, number] }[] = [
-      { pos: [home.lon, home.lat], text: t.home, color: INK },
+    const home = data.home, place = data.place, sub = simple ? null : data.subway;
+    // Patient view: the home label sits below its dot and the place label above, so they don't collide.
+    const labels: { pos: [number, number]; text: string; color: [number, number, number]; dy: number }[] = [
+      { pos: [home.lon, home.lat], text: simple ? t.you : t.home, color: INK, dy: -26 },
     ];
-    if (place) labels.push({ pos: [place.lon, place.lat], text: shortName(titleCase(place.name)), color: [0, 105, 76] });
-    if (sub) labels.push({ pos: [sub.lon, sub.lat], text: t.subwayLabel(sub.name), color: INK });
+    if (place) labels.push({ pos: [place.lon, place.lat], text: shortName(titleCase(place.name), simple ? 20 : 28), color: [0, 105, 76], dy: simple ? -28 : -24 });
+    if (sub) labels.push({ pos: [sub.lon, sub.lat], text: t.subwayLabel(sub.name), color: INK, dy: -24 });
     return [
       place && new LineLayer({
         id: "route", data: [{ from: [home.lon, home.lat], to: [place.lon, place.lat] }], parameters: { depthCompare: "always" as const, depthWriteEnabled: false },
         getSourcePosition: (d: { from: [number, number] }) => d.from, getTargetPosition: (d: { to: [number, number] }) => d.to,
-        getColor: [20, 20, 20, 200], getWidth: 4, widthUnits: "pixels",
+        getColor: [20, 20, 20, 200], getWidth: simple ? 5 : 4, widthUnits: "pixels",
       }),
       sub && new ScatterplotLayer({
         id: "subway", data: [sub], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
@@ -59,7 +65,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
       }),
       place && new ScatterplotLayer({
         id: "place", data: [place], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
-        getRadius: 11, radiusUnits: "pixels", getFillColor: HELP_RGB, stroked: true, getLineColor: [255, 255, 255], lineWidthUnits: "pixels", getLineWidth: 3,
+        getRadius: simple ? 14 : 11, radiusUnits: "pixels", getFillColor: HELP_RGB, stroked: true, getLineColor: [255, 255, 255], lineWidthUnits: "pixels", getLineWidth: 3,
       }),
       new ScatterplotLayer({
         id: "home", data: [home], billboard: true, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d: { lon: number; lat: number }) => [d.lon, d.lat],
@@ -67,17 +73,17 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
       }),
       new TextLayer({
         id: "labels", data: labels, parameters: { depthCompare: "always" as const, depthWriteEnabled: false }, getPosition: (d) => d.pos, getText: (d) => d.text, getColor: (d) => d.color,
-        getSize: 15, sizeUnits: "pixels", getPixelOffset: [0, -24], fontWeight: 700, fontFamily: "system-ui, sans-serif",
-        background: true, getBackgroundColor: [255, 255, 255, 230], backgroundPadding: [4, 2],
+        getSize: simple ? 19 : 15, sizeUnits: "pixels", getPixelOffset: (d) => [0, d.dy], fontWeight: 700, fontFamily: "system-ui, sans-serif",
+        background: true, getBackgroundColor: [255, 255, 255, 235], backgroundPadding: simple ? [6, 3] : [4, 2],
         characterSet: "auto",
       }),
     ].filter(Boolean);
-  }, [data, t]);
+  }, [data, t, simple]);
 
   const fit = useMemo(() => {
     if (!data?.home) return null;
-    return boundsOf([data.home, ...(data.place ? [data.place] : []), ...(data.subway ? [data.subway] : [])]);
-  }, [data]);
+    return boundsOf([data.home, ...(data.place ? [data.place] : []), ...(data.subway && !simple ? [data.subway] : [])]);
+  }, [data, simple]);
 
   if (err) return <p className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">{t.loadError}</p>;
   if (!data) return <div style={{ height }} className="rounded-xl bg-[var(--ui-surface,#f7f7f5)] p-4 text-base">{t.loading}</div>;
@@ -92,6 +98,58 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
   const place = data.place;
   const leave = clock(place?.leaveBy);
   const walk = place?.walkMin != null ? Math.round(place.walkMin) : null;
+
+  if (simple) {
+    const opens = clock(place?.opens), closes = clock(place?.closes);
+    return (
+      <section className="space-y-4 text-[var(--ui-ink,#141414)]" aria-label={t.sectionLabel}>
+        <div className="relative overflow-hidden rounded-2xl">
+          <MapCanvas
+            layers={layers}
+            initialView={{ longitude: data.home.lon, latitude: data.home.lat, zoom: 15 }}
+            fitBounds={fit}
+            threeD={threeD}
+            height={height}
+            ariaLabel={t.mapAria}
+          />
+          <div className="absolute left-2 top-2 z-10"><ThreeDToggle on={threeD} onChange={setThreeD} /></div>
+        </div>
+        {place ? (
+          <div className="space-y-2">
+            <p className="text-[1.125rem] font-semibold text-[var(--ui-ink-muted,#4b5563)]">{t.goTo}</p>
+            <p className="text-[1.75rem] font-bold leading-tight">{titleCase(cleanName(place.name))}</p>
+            <ul className="space-y-1 text-[1.375rem] font-semibold leading-snug">
+              {walk !== null && <li>{t.walkShort(walk)}</li>}
+              {leave && <li>{t.leaveBy(leave)}</li>}
+              {opens && closes && <li>{t.open(opens, closes)}</li>}
+            </ul>
+            <a
+              href={directionsUrl(data.home, place)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 flex min-h-[56px] items-center justify-center rounded-full px-5 text-[1.375rem] font-bold text-white"
+              style={{ background: "#00694c" }}
+            >
+              {t.directions}
+            </a>
+            {place.phone && (
+              <p className="text-[1.125rem]">
+                {t.callFirst} <a className="whitespace-nowrap font-semibold underline" href={`tel:${place.phone}`}>{place.phone}</a>
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-[1.125rem]">{t.noPlace}</p>
+        )}
+        {data.delivery.show && (
+          <div className="border-l-4 pl-4" style={{ borderColor: "var(--risk-high, #d55e00)" }}>
+            <p className="text-[1.375rem] font-bold">{t.cantGo}</p>
+            <p className="text-[1.125rem]">{t.cantGoText}</p>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4 text-[var(--ui-ink,#141414)]" aria-label={t.sectionLabel}>
@@ -175,5 +233,26 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
         {t.footnote} {t.sources} {data.sources.join(", ")}.
       </p>
     </section>
+  );
+}
+
+/** Secondary details for the patient view's "More" disclosure (subway, place notes, delivery reasons, sources). */
+export function PatientPlanMore({ data, lang = "en" }: { data: PatientPlanMapData; lang?: PlanMapLang }) {
+  const t = PLAN_MAP_STRINGS[lang];
+  const place = data.place;
+  return (
+    <ul className="space-y-2">
+      {place && <li>{titleCase(place.address)}</li>}
+      {place?.notes.some((n) => /older adults only/i.test(n)) && <li>{t.olderAdults}</li>}
+      {place?.notes.some((n) => /activated heat days/i.test(n)) && <li>{t.coolingCenter}</li>}
+      {data.subway && (
+        <li>
+          {t.subwayTitle} {data.subway.name} ({data.subway.routes.split(/[\s,]+/).join(", ")}), {t.subwayAbout(data.subway.meters >= 1000 ? `${(data.subway.meters / 1000).toFixed(1)} km` : `${Math.round(data.subway.meters / 10) * 10} m`)}
+        </li>
+      )}
+      {data.delivery.reasons.map((r) => <li key={r}>{t.reason(r)}</li>)}
+      <li>{t.footnote}</li>
+      <li>{t.sources} {data.sources.join(", ")}.</li>
+    </ul>
   );
 }

@@ -32,6 +32,8 @@ export interface PlanPlace {
   name: string; type: string; address: string; phone: string | null; hours: string | null;
   lat: number; lon: number; walkMin: number | null; walkKm: number | null;
   leaveBy: string | null; arriveBefore: string | null; officialCoolingCenter: boolean; notes: string[];
+  /** Opening time on the demo day, "HH:MM" (cooling_match.csv opens_ref_day / closes_ref_day). */
+  opens: string | null; closes: string | null;
 }
 
 export interface PatientPlanMapData {
@@ -126,6 +128,7 @@ export function getPatientPlanMapData(patientId: string): PatientPlanMapData {
       leaveBy: (best?.leaveBy as string | undefined) || crow.leave_by || null,
       arriveBefore: (best?.arriveBy ? clock(best.arriveBy as string) : null) ?? (arrive ? arrive[1] : null),
       officialCoolingCenter: crow.official_cooling_center === "true",
+      opens: crow.opens_ref_day || null, closes: crow.closes_ref_day || null,
       notes: (crow.notes ?? "").split(";").map((s) => s.trim()).filter(Boolean),
     };
   }

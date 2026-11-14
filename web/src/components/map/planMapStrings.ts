@@ -50,6 +50,15 @@ export interface PlanMapStrings {
   ifCantLeave: (leave: string | null, from: number, to: number) => string;
   footnote: string;
   sources: string;
+  // Patient (phone) variant: short, big-type card under the map.
+  you: string;
+  goTo: string;
+  walkShort: (min: number) => string;
+  open: (from: string, to: string) => string;
+  callFirst: string;
+  cantGo: string;
+  cantGoText: string;
+  more: string;
 }
 
 export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
@@ -81,6 +90,14 @@ export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
     ifCantLeave: (l, a, b) => `If you can't leave by ${l ?? "then"}, stay in from ${hourLabel(a)} to ${hourLabel(b)} and ask for a delivery instead.`,
     footnote: "Synthetic patient. Line shows the trip, not the exact street route; walk time is from a routed walk at the patient's pace.",
     sources: "Sources:",
+    you: "You",
+    goTo: "Go to:",
+    walkShort: (m) => `${m} min walk`,
+    open: (a, b) => `Open ${a} to ${b}`,
+    callFirst: "Hours can change. Call first:",
+    cantGo: "Can't go? Ask for a delivery.",
+    cantGoText: "Ask your pharmacy, family or a neighbor to bring what you need. Stay in your coolest room.",
+    more: "More",
   },
   es: {
     note: "Traducción automática — por revisar",
@@ -118,5 +135,13 @@ export const PLAN_MAP_STRINGS: Record<PlanMapLang, PlanMapStrings> = {
       `Si no puede salir ${l ? `antes de las ${clockEs(l)}` : "a tiempo"}, quédese en casa de ${hourLabelEs(a)} a ${hourLabelEs(b)} y pida una entrega a domicilio.`,
     footnote: "Paciente de prueba. La línea muestra el trayecto, no la ruta exacta por las calles; el tiempo a pie se calcula al paso de la persona.",
     sources: "Fuentes:",
+    you: "Usted",
+    goTo: "Vaya a:",
+    walkShort: (m) => `${m} min a pie`,
+    open: (a, b) => `Abierto de ${clockEs(a)} a ${clockEs(b)}`,
+    callFirst: "El horario puede cambiar. Llame antes:",
+    cantGo: "¿No puede ir? Pida una entrega a domicilio.",
+    cantGoText: "Pida a su farmacia, a un familiar o a un vecino que le lleve lo que necesita. Quédese en el cuarto más fresco.",
+    more: "Más",
   },
 };
