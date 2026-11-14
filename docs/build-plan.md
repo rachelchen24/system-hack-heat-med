@@ -10,21 +10,38 @@ The steps are in dependency order: each one needs the steps above it. Rachel and
 ---
 
 ## Step 1. Foundations: decisions, keys, data format (first, ~45 min)
-Everything else depends on this.
-- **Pick the tech stack:**
-  - site framework
-  - charting library
-  - node-graph library (e.g. force-directed)
-  - 3D map library
-  - backend for SMS and push
+Everything else depends on this. **The manual steps (accounts, keys, installs) are in `docs/manual-setup.md`.**
+- **Tech stack (decided, spec §4.8):**
+  - Python data pipeline
+  - Claude Code (in-session) for extraction and coding; no API key
+  - JSON knowledge base
+  - Next.js + TypeScript + Tailwind (light mode)
+  - Apache ECharts
+  - react-force-graph (node graph)
+  - deck.gl + MapLibre (3D NYC map)
+  - Supabase (Postgres + Realtime)
+  - Twilio (SMS); Web Push
+  - CDS Hooks API route
+  - Synthea
+  - OpenRouteService
+  - NWS / NOAA / openFDA
+  - Vercel hosting
+- **Scaffold:**
+  - `npx create-next-app` with TypeScript and Tailwind
+  - install echarts, echarts-for-react, react-force-graph, deck.gl, maplibre-gl and supabase-js
+  - create the Supabase project and tables (patients, medications, questionnaire, contacts, alerts, check-ins)
+  - deploy an empty app to Vercel
 - **Get keys and accounts:**
   - System API (have)
-  - openFDA (free key)
-  - OpenRouteService (routing)
-  - an SMS provider (e.g. Twilio)
-  - push notifications
-  - map tiles if needed
-  - Store them all in `.env`.
+  - ~~Anthropic (Claude API)~~: not needed. Claude Code does the reading and extraction in-session.
+  - openFDA (free)
+  - OpenRouteService (free)
+  - Twilio trial (verify the demo phone numbers)
+  - Supabase
+  - Vercel
+  - VAPID keys for Web Push
+  - Store them all in `.env` (gitignored).
+- **Install Java** for Synthea.
 - **Define the knowledge-base format:** one row per drug. Fields: buckets, 3-step meter + 8-step tier, FLAG/CHANGE, Compass arrow, mechanisms, prescribers, guidance coverage (8 sources), evidence claims with badges, FAERS signal, substitutes, combination partners, patient message blocks.
 - **Define the patient record format:** synthetic FHIR patient + medications + questionnaire answers + trusted contacts.
 - **Define the health-system config format** (for scalability): catchment ZIPs, clinics, languages, cooling-place source, alert rules.
@@ -35,10 +52,10 @@ Everything else depends on this.
 ## Step 2. Data collection: scrapers, all in parallel (~1–2 hrs of scripting; can run overnight)
 Needs: Step 1 formats and keys.
 - **Literature:** PubMed + Europe PMC searches (15 drugs × heat terms); citation chasing from the key reviews (OpenAlex); abstracts saved.
-- **System graph:**
-  - drug → mediator and heat → mediator relationships and findings
-  - lookups for every paper we cite
-  - full scan of the Dataverse CSV (drug + heat/temperature variable names)
+- **System graph** (roles 1, 3 and 4 in spec §8.5a), cached in `data/raw/system/`:
+  - drug → mediator and heat → mediator relationships with all their findings, for the 15 drugs
+  - **ID normalization** (PMID / PMCID / DOI via the NCBI ID Converter), then System study lookups for every paper we cite
+  - full scan of the **Dataverse associations CSV** (drug + heat/temperature variable names) and the list used for the API-vs-Dataverse cross-check
   - neighborhoods around the heat concepts
   - implied-but-untested links
 - **FDA reports (openFDA FAERS):** report counts for each drug × heat reactions (heat stroke, hyperthermia, heat exhaustion, dehydration, hyponatremia, anhidrosis/hypohidrosis) and background counts for the signal math.
@@ -65,7 +82,14 @@ Needs: Step 1 formats and keys.
 ## Step 3. Verification and the knowledge base (~1.5–2 hrs)
 Needs: Step 2 data.
 - **LLM screening and extraction** of the literature (no human review), with counts recorded for the funnel.
-- **Automated verification** (spec §8.2a): citation exists, number appears in the abstract, System agreement, Dataverse cross-check, relationship corroboration, direction check → badges.
+- **Automated verification with System as the second extractor** (spec §8.2a, `docs/system-verification.md`):
+  1. same paper, same number
+  2. same meaning (mislabels, direction)
+  3. corroboration across papers (N studies, % same direction)
+  4. API vs Dataverse
+  5. reverse check for evidence we're missing
+  - plus citation-exists and abstract-grounding checks
+  - → badges ✓✓ / ✓ / ↗ / ⚠ / ?
 - **Scoring:**
   - 8-step tiers → 3-step meter
   - FLAG / CHANGE
@@ -95,7 +119,8 @@ Needs: Step 1 (start on mock data), then Step 3's knowledge base.
 - **Periodic table** evidence map (3-step meter, bucket colors, prescriber icons, gap rings, lenses incl. pediatrics).
 - **Drug Card:** label, FLAG/CHANGE, Compass (arrows only), forest plot, badges, guidance, combinations, substitutes, patient-wording preview, EHR alert preview.
 - **Evidence-vs-guidance quadrant.**
-- **Nerd stats:** 8-step tiers, evidence funnel, verification badge counts, graph audit and fix list, formulas, sources, limitations, escalation assumptions.
+- **Nerd stats:** 8-step tiers, evidence funnel, verification badge counts, graph audit and fix list, formulas, sources, limitations, escalation assumptions, and the DND-breakthrough caveat.
+- **Live System layer** (role 6): the Drug Card fetches live relationship counts and newest-evidence year from the System API through a cached Next.js API route; API status in nerd stats.
 
 ## Step 6. Clinician app, heat and place side + all other visuals (~2 hrs)
 Needs: Step 4 logic, Step 2 data (start on mock data).
@@ -110,7 +135,7 @@ Needs: Step 4 logic, Step 2 data (start on mock data).
 ## Step 7. Patient app, alerts and scalability (~1.5–2 hrs)
 Needs: Step 4 logic, Step 5/6 shell.
 - **Medicine Cabinet app:** cabinet, glowing bottles, personal flow, questionnaire, large-type light UI, English + Spanish.
-- **Mandatory safety alert:** push (DND-breaking where possible) **and SMS**, really delivered.
+- **Mandatory safety alert:** push + SMS. **The SMS is simulated for the demo** (on-screen phone mock-up + message log, labeled "simulated"); production would use an SMS provider.
 - **Trusted-contact escalation** with the computed wait; contact page with the "what to look for / what to do" checklist.
 - **Morning cooling-place text; "I'm OK" check-ins; "I feel unwell / no AC" buttons** → clinic call list.
 - **Clinic board:** who hasn't checked in; outcome funnel.
@@ -119,8 +144,8 @@ Needs: Step 4 logic, Step 5/6 shell.
 
 ## Step 8. Integrate, test, pitch, submit (last ~1 hr; finish by 2:45 PM)
 Needs: everything above.
-- **End-to-end run** on the replayed heat day: forecast → scatter → send alert → push + SMS arrive → escalation → board updates → post-heat-wave follow-up list.
-- **Test on real phones:** DND breakthrough, SMS delivery, the second-city switch.
+- **End-to-end run** on the replayed heat day: forecast → scatter → send alert → push + simulated SMS appear → escalation → board updates → post-heat-wave follow-up list.
+- **Test:** push on a real phone, the simulated-SMS view, and the second-city switch.
 - **Check every headline number** traces to a file; unverified claims are hidden from labels.
 - **Pitch:** 3-minute walkthrough of the real software (no staged scenario), organized by the journey. Graph audit + "10 questions" slides. Headline line.
 - **Record a backup video.**
