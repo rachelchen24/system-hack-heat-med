@@ -100,7 +100,7 @@ class Client:
         if not self._key:
             raise RuntimeError("SYSTEM_API_KEY not set (looked in env, .env.local, .env)")
         url = BASE + path
-        for attempt in range(6):
+        for attempt in range(getattr(self, "max_attempts", 6)):
             if self.used_today + self.live >= self.budget:
                 raise BudgetExceeded(f"live request budget {self.budget} reached")
             wait = self.sleep - (time.time() - self._last)

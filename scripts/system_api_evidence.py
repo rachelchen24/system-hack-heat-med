@@ -224,6 +224,7 @@ def main():
 
     def batch_assoc(side, chunk):
         """OR-batched lookup; on a server error, split the batch in half (down to one-variable calls)."""
+        c.max_attempts = 2  # a 500 here is the query being too heavy, not a blip: split instead of waiting
         try:
             return c.paged("/associations", page=100, cap=3000, filter=f"{side}:" + "||".join(chunk))
         except RuntimeError as e:

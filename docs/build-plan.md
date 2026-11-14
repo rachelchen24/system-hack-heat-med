@@ -1,165 +1,111 @@
-# Build plan: The Missing Label
+# Build plan v2: The Missing Label (rewritten Sat 14 Nov, 11:50)
 
-**Written 14 Nov 2026.** Covers everything in `spec.md` (the source of truth).
-**Deadline:** Devpost submission **3:00 PM Saturday**. Pitches 3–4 PM.
-
-The steps are in dependency order: each one needs the steps above it. Rachel and Myra divide the work.
-
-**Parallel work:** once Step 1 fixes the knowledge-base format, Steps 5–7 can start on **mock data** while Steps 2–4 fill in the real data. Swap the real data in when it's ready.
+**Deadline:** Devpost **3:00 PM**, so we submit by **2:45 PM**. Pitches 3–4 PM.
+**Time left:** about 3 hours. **Code freeze at 2:15 PM.**
+The old 8-step plan is archived in `docs/build-plan-v1-archive.md`. `spec.md` is still the source of truth (§4.0a focus, §5.0 simplify).
 
 ---
 
-## Step 1. Foundations: decisions, keys, data format (first, ~45 min)
-Everything else depends on this. **The manual steps (accounts, keys, installs) are in `docs/manual-setup.md`.**
-- **Tech stack (decided, spec §4.8):**
-  - Python data pipeline
-  - Claude Code (in-session) for extraction and coding; no API key
-  - JSON knowledge base
-  - Next.js + TypeScript + Tailwind (light mode)
-  - Apache ECharts
-  - react-force-graph (node graph)
-  - deck.gl + MapLibre (3D NYC map)
-  - Local SQLite database; clinic board and patient app poll every 2–3 s (Supabase dropped Sat 14 Nov)
-  - **Simulated push + simulated SMS** on the demo phone (no Twilio, no Web Push)
-  - CDS Hooks API route
-  - Synthea
-  - OpenRouteService
-  - NWS / NOAA / openFDA
-  - Runs locally on a laptop; the demo phone opens it over the same Wi-Fi (no Vercel)
-- **Scaffold:**
-  - `npx create-next-app` with TypeScript and Tailwind
-  - install echarts, echarts-for-react, react-force-graph, deck.gl, maplibre-gl and better-sqlite3
-  - create the SQLite tables (patients, medications, questionnaire, contacts, alerts, check-ins) in `db/`
-  - start the dev server on the local network (`next dev -H 0.0.0.0`) and open it on the demo phone
-- **Keys (all done):**
-  - System API (required, have)
-  - openFDA and OpenRouteService (optional, have)
-  - Nothing else: no Anthropic, Twilio, Supabase, Vercel or VAPID keys.
-  - All in `.env` (gitignored).
-- **Install Java** for Synthea.
-- **Define the knowledge-base format:** one row per drug. Fields: buckets, 3-step meter + 8-step tier, FLAG/CHANGE, Compass arrow, mechanisms, prescribers, guidance coverage (8 sources), evidence claims with badges, FAERS signal, substitutes, combination partners, patient message blocks.
-- **Define the patient record format:** synthetic FHIR patient + medications + questionnaire answers + trusted contacts.
-- **Define the health-system config format** (for scalability): catchment ZIPs, clinics, languages, cooling-place source, alert rules.
-- **Design tokens:** light mode, 4 bucket colors (colorblind-safe), badge styles, type scale (large for the patient app).
-- **Confirm the 15 drugs** (spec §8.7).
-- **Output:** schemas in the repo, keys working, a mock knowledge base with 2–3 drugs so UI work can start.
+## The product in one sentence
+**On the morning a heat wave is forecast, a clinic nurse sees which patients are Low, Medium or High risk because of their medicines and their home, texts each group a simple plan, and each patient sees on a map where it's cooler, where help is, how to get there, and the safest time to go.**
 
-## Step 2. Data collection: scrapers, all in parallel (~1–2 hrs of scripting; can run overnight)
-Needs: Step 1 formats and keys.
-- **Literature:** PubMed + Europe PMC searches (15 drugs × heat terms); citation chasing from the key reviews (OpenAlex); abstracts saved.
-- **System graph** (roles 1, 3 and 4 in spec §8.5a), cached in `data/raw/system/`:
-  - drug → mediator and heat → mediator relationships with all their findings, for the 15 drugs
-  - **ID normalization** (PMID / PMCID / DOI via the NCBI ID Converter), then System study lookups for every paper we cite
-  - full scan of the **Dataverse associations CSV** (drug + heat/temperature variable names) and the list used for the API-vs-Dataverse cross-check
-  - neighborhoods around the heat concepts
-  - implied-but-untested links
-  - **Pulls for the 9 product questions (spec §8.5c).** Query all heat concepts: thermodynamic temperature, hyperthermia, heat illness, air temperature and heat wave. "Heat wave" alone has only 1 relationship.
-    - Q5, heat → harm: mortality, EMS, cardiac arrest, hospital mortality
-    - Q6, place factors: urban area, air conditioning, income, vegetation, housing
-    - Q7, patient factors: cardiovascular disease, kidney disease, age, pregnancy
-    - Q8, time-to-help: EMS, cardiac arrest
-    - Q9, storage: Dataverse variable-name scan for storage/stability terms, plus a study lookup for every storage paper we cite
-    - Q2: drug → same-harm findings to triangulate with FAERS
-    - Output: `data/processed/system_question_evidence.csv` with columns question, factor, concept, num_studies, num_findings, newest year, and "not in System" rows.
-- **FDA reports (openFDA FAERS):** report counts for each drug × heat reactions (heat stroke, hyperthermia, heat exhaustion, dehydration, hyponatremia, anhidrosis/hypohidrosis) and background counts for the signal math.
-- **Guidance:** text of the 8 guidance documents, for automated coding.
-- **Climate:**
-  - NWS/HeatRisk access
-  - NOAA CPC outlooks
-  - NOAA GHCN-Daily history (Central Park, LaGuardia; about 30 years)
-  - one past NYC heat wave chosen for the replay
-- **Place data:**
-  - NYC Heat Vulnerability Index
-  - NYC Hyperlocal Temperature Monitoring
-  - CDC PLACES
-  - CDC/ATSDR Social Vulnerability Index (national)
-  - CMS Part D (NY and the second demo city)
-  - cooling centers
-  - NYPL/BPL/Queens libraries and hours
-  - NYC Parks rec centers
-  - OpenStreetMap cooling places (national)
-  - MTA GTFS
-- **Synthetic patients:** Synthea panel tuned to the SBH catchment, plus a second city for the switcher.
-- **Output:** raw data files in `data/raw/` with sources and access dates in `data/SOURCES.md`.
+## Design rules (decided)
+1. **Outcome first, evidence on click.** Screens show who's at risk, what to do and where to go. The evidence sits behind a **"Why?"** button: the plain reason first, then sources, System graph, FDA reports and badges.
+2. **Readable by anyone:** no codes or scores on main screens (no FLAG/CHANGE, ROR, T1–T8, "jurisdictions," "HeatRisk 4 Magenta"). Every chart title states the takeaway. Numbers in words.
+3. **Few visuals:** 6 (below). Everything else is cut or moved into "Why?" / nerd stats.
+4. **Pretty and clean:** light mode, calm colors, lots of white space, one main action per screen. At most 3 colors per chart.
+5. **Patient map: 2D by default** (older patients), with a 3D switch.
+6. **No invented data.** Missing pieces show a labeled placeholder naming the file they'll come from. Synthetic patients only.
 
-## Step 3. Verification and the knowledge base (~1.5–2 hrs)
-Needs: Step 2 data.
-- **LLM screening and extraction** of the literature (no human review), with counts recorded for the funnel.
-- **Automated verification with System as the second extractor** (spec §8.2a, `docs/system-verification.md`):
-  1. same paper, same number
-  2. same meaning (mislabels, direction)
-  3. corroboration across papers (N studies, % same direction)
-  4. API vs Dataverse
-  5. reverse check for evidence we're missing
-  - plus citation-exists and abstract-grounding checks
-  - → badges ✓✓ / ✓ / ↗ / ⚠ / ?
-- **Scoring:**
-  - 8-step tiers → 3-step meter
-  - FLAG / CHANGE
-  - Compass arrows
-  - mechanisms
-  - combination rules (stacking, danger pairs, the anticholinergic burden scale)
-- **Guidance coding** (LLM, 8 sources × 15 drugs) → guidance coverage and gap badges.
-- **Pathways and hidden heat drugs:** chain System links, **validate on known heat drugs first**, flag candidates, check against FAERS signals.
-- **FAERS signal:** reporting ratios per drug × reaction, labeled "warning signal, not proof."
-- **System answers for the 9 questions (spec §8.5c):**
-  - Q2 triangulation: literature + System + FAERS agreement per drug
-  - Q3 label gap: System study count × "label mentions heat"
-  - Q4 guidance gap: System evidence strength × guidance coverage
-  - Q5–Q8: a System-support citation for every threshold, map layer, readiness-score factor and escalation number, or "not in System"
-  - Q9 storage coverage: "System has findings from N of our M storage papers"
-  - Thin and zero rows go into the gap constellation.
-- **Graph audit:** papers in System / extracted / correct / mislabeled; fix list; "10 questions research must answer next."
-- **Substitutes:** 2–3 per drug where prescribing sources support them.
-- **Output:** the real knowledge base, the audit outputs, and the numbers for nerd stats.
+## The 6 visuals we keep
+| # | Visual | Where | Built from (already in the repo) |
+|---|---|---|---|
+| 1 | **Heat + help map** (2D/3D) | Clinician and patient | `hvi_nta2020.geojson` / `hyperlocal_temp_sensors.geojson` (heat), `cooling_places_nyc.geojson` (1,868 places), `synthetic/cooling_match.csv` (each patient's nearest place + walk minutes), `subway_stations_nyc.geojson` |
+| 2 | **Risk groups: Low / Medium / High** + "Text this group" | Clinician | `panel_scores_replay.json` → `readiness.level` (low 65 / medium 104 / high 90 / very_high 41 → **very_high merges into High**), `readiness.drivers` for the plain "why" |
+| 3 | **Medicine chart** (the simple evidence map the challenge requires) | Clinician | `data/kb/knowledge_base.json`: one row per medicine, grouped by what to do, evidence as Strong / Some / Early signs, who prescribes it, ✓/✗ "label warns," ✓/✗ "guidance says what to do" |
+| 4 | **"How heat and medicine add up"** picture | Both (simple), "Why?" (detail) | `system_pathways.csv`, `system_drug_mediator_findings.csv`: medicine → body effect (dehydration, low salt, kidney strain, can't sweat, drowsy) ← heat. This is our visible System-graph use, and it explains stacking |
+| 5 | **Safest time to go outside** (hourly strip) | Both | `replay_heatwave_hourly.csv` (heat index by hour) |
+| 6 | **"My heat plan"** | Patient | the patient's group + why, nearest help, route + walk time, safe hours, what to do, delivery option, simulated text thread |
 
-## Step 4. Patient-side logic (~1–1.5 hrs; can run alongside Step 3)
-Needs: Step 1 formats, Step 2 place, climate and Synthea data.
-- **Questionnaire:** core 5 + action-item fields; synthetic answers for the panel.
-- **Personal heat readiness level:** documented points from answers + medication stack + neighborhood heat.
-- **Escalation algorithm** (spec §4.4a): time budget by risk/HeatRisk; travel time by routing; response-time defaults; contact eligibility; check-in schedule.
-- **Cooling-place matching:** nearest open, step-free if needed, "arrive before 11 AM."
-- **Message customization rules:** knowledge-base blocks + patient needs (fluid limits, child/caregiver, language).
-- **Heat-wave probability:** HeatRisk → CPC outlook → historical odds blend.
-- **Output:** functions or APIs the apps call; scores computed for the synthetic panel.
+**Cut from the main screens:** call-first scatter, Compass, FLAG/CHANGE meters, forest plot, Sankeys, node graph, treemap, heatmaps, swimlanes, timelines, Medicine Cabinet, the 6-step journey bar, the Readiness placeholder page. (Evidence pieces can live behind "Why?" or in nerd stats if they already work.)
 
-## Step 5. Clinician app, evidence side: journey structure, evidence map, Drug Card, nerd stats (~1.5–2 hrs)
-Needs: Step 1 (start on mock data), then Step 3's knowledge base.
-- Site shell organized by the **6-stage journey**, with **map / graph / patient view** switches.
-- **Periodic table** evidence map (3-step meter, bucket colors, prescriber icons, gap rings, lenses incl. pediatrics).
-- **Drug Card:** label, FLAG/CHANGE, Compass (arrows only), forest plot, badges, guidance, combinations, substitutes, patient-wording preview, EHR alert preview.
-- **Evidence-vs-guidance quadrant** and **evidence-vs-label quadrant** (System study count on one axis).
-- **"3 sources agree" marker** on the Drug Card (literature + System + FAERS).
-- **"System evidence" chips** on every screen that answers one of the 9 questions (forecast threshold, map layers, scatter tooltip, escalation assumptions, storage card), each showing the study count or "not in System."
-- **Nerd stats:** 8-step tiers, evidence funnel, verification badge counts, graph audit and fix list, formulas, sources, limitations, escalation assumptions, and the DND-breakthrough caveat.
-- **Live System layer** (role 6): the Drug Card fetches live relationship counts and newest-evidence year from the System API through a cached Next.js API route; API status in nerd stats.
+---
 
-## Step 6. Clinician app, heat and place side + all other visuals (~2 hrs)
-Needs: Step 4 logic, Step 2 data (start on mock data).
-- **Heat-wave probability bar + context strip.**
-- **Call-first scatter** + ranked list + tiers + lasso-to-send.
-- **Simulator** and **playbook** (replayed NYC heat wave).
-- **3D NYC map:** heat, prescriptions (hexagons), cooling places, deliveries layer.
-- **Node graph** (evidence X-ray / risk constellation / combination web / gap constellation).
-- Remaining catalogue visuals (spec §5): Sankeys, neighborhood × drug heatmap, treemap, body diagram, heat ladder, prescriber swimlanes, calendar heatmap, evidence timeline, "who was studied," audit funnel, combination matrix, heat-day timeline.
-- **Team review:** cut visuals that aren't working.
+## What we should do, in order
+Work in this order. If time runs out, everything above the line still makes a complete demo.
 
-## Step 7. Patient app, alerts and scalability (~1.5–2 hrs)
-Needs: Step 4 logic, Step 5/6 shell.
-- **Medicine Cabinet app:** cabinet, glowing bottles, personal flow, questionnaire, large-type light UI, English + Spanish.
-- **Mandatory safety alert:** push + SMS. **Both are simulated for the demo:** when the clinician sends the alert, the patient app on the demo phone shows a mock lock-screen push banner and a mock text thread, both labeled "simulated," and the message log records them. Production would use native push (iOS Critical Alerts / Android DND channel) and an SMS provider.
-- **Fast-forward control** for the escalation timers, so a 45-minute wait plays in seconds.
-- **Trusted-contact escalation** with the computed wait; contact page with the "what to look for / what to do" checklist.
-- **Morning cooling-place text; "I'm OK" check-ins; "I feel unwell / no AC" buttons** → clinic call list.
-- **Clinic board:** who hasn't checked in; outcome funnel.
-- **EHR alert:** CDS Hooks card in the public sandbox (drug and combination triggers).
-- **Scalability:** health-system switcher (SBH → second city), "add your health system" setup screen, national view, architecture slide.
+### P0. Simplify the shell (≈20 min), first
+- Navigation down to **4 tabs:** **Patients** (risk groups), **Map**, **Medicines**, **Patient app**. Small "Methods" link in the footer for nerd stats.
+- Remove the 6-step journey bar and the Readiness page from navigation.
+- Rename the evidence map route `/map` → **`/medicines`**, so `/map` is the real map.
+- Home page = the one-sentence product + two buttons ("I'm a clinician," "I'm a patient").
+- Sweep the main screens for jargon (list in Design rules #2).
 
-## Step 8. Integrate, test, pitch, submit (last ~1 hr; finish by 2:45 PM)
-Needs: everything above.
-- **End-to-end run** on the replayed heat day: forecast → scatter → send alert → simulated push banner + text appear on the demo phone → escalation → board updates → post-heat-wave follow-up list.
-- **Test:** the demo phone reaching the laptop on the venue Wi-Fi (phone hotspot as backup), the simulated push and SMS views, and the second-city switch.
-- **Check every headline number** traces to a file; unverified claims are hidden from labels.
-- **Pitch:** 3-minute walkthrough of the real software (no staged scenario), organized by the journey. Graph audit + "10 questions" slides. Headline line.
-- **Record a backup video.**
-- **Devpost:** description, screenshots, repo link, data sources, limitations. **Submit before 3:00 PM.**
+### P1. Heat + help map (≈60 min), the centerpiece
+- deck.gl + MapLibre, light basemap (OpenFreeMap). **2D default, 3D toggle** (pitch + building extrusions).
+- **Heat layer first:** hottest → coolest neighborhoods, with one simple legend ("hotter / cooler").
+- **Help layer:** cooling centers, libraries, senior centers, rec centers (`cooling_places_nyc.geojson`). Icons by type; tap → name, hours, address, phone.
+- **Clinician mode:** patients shown as **group counts per neighborhood** (hexagons or circles in Low/Medium/High colors, no individuals); click an area → its patients by group → "Text this group."
+- **Patient mode:** their home, nearest help, and the **route line** with walk minutes (from `cooling_match.csv`), plus the nearest subway station.
+- "Best way there given the heat" (honest version for today): walk minutes × heat at that hour → **"leave by X"**; offer **delivery instead** when the walk is long, the patient can't reach a cool place alone (`q5_can_reach_cool_place`), or it's the hottest hours. Shade-aware routing goes in "Next steps."
+
+### P2. Risk groups for the clinician (≈40 min)
+- Rework `/board` into **three columns or tabs: High / Medium / Low** with counts.
+- Each patient row: name (synthetic), age, ZIP, **one plain sentence of why** (from `readiness.drivers`, e.g. "No AC, lives alone, two medicines that both affect heat"), status.
+- **"Text this group"** sends each patient their group's message (simulated SMS). High also notifies the caregiver/emergency contact when there's no reply (the existing escalation + fast-forward).
+- **"Why?"** on a row opens the evidence: which medicines, what each does in heat, the System pathway, source links.
+- Respect `alert_opt_in`: not opted in → "call instead" (open item in spec §12.3).
+
+### P3. Patient "my heat plan" (≈40 min)
+- Upgrade `/phone/[id]` (demo phone) into the patient app, with **large type** and **2D map by default**:
+  1. "Your heat risk today: **High**" + why in one sentence
+  2. **Safest time to go out** (hourly strip, green/red)
+  3. **Where to go:** nearest cool place + map + route + walk time, "leave by X"
+  4. **Or stay in:** delivery option
+  5. **What to watch for** and "call your doctor or pharmacist" (no dose advice)
+  6. The simulated text thread + "I'm OK" / "I feel unwell" / "No AC" buttons (already built)
+- Message per group (Low: heads-up; Medium: + nearest help + safe hours; High: + route + check-ins + contact).
+
+### P4. Medicine chart + medicine page, outcome first (≈30 min)
+- `/medicines`: replace the tile wall with a **clean grouped list**: group header ("Check on these patients," "Dose may need a look," "Store cool," …), then a row per medicine with plain one-line risk, evidence in words, prescribers, ✓/✗ label, ✓/✗ guidance.
+- `/drug/[id]`: top = the plain message + what to do. **Everything else behind "See the evidence."**
+
+### P5. "How heat and medicine add up" (≈25 min)
+- One simple 3-column picture: **medicines → body effect ← heat**. Thick line = more studies in System. Click a line → "Why?" with System study counts.
+- A small version on the patient's plan: "Your two medicines both make it harder to stay cool."
+
+### ─── line: above here = a complete demo ───
+
+### P6. If time (each ≈20–30 min, in this order)
+- **NYC Care community organizations** on the map: scrape https://www.nyccare.nyc/community-based-organization/ (name, address, services, languages, phone), geocode, add as a layer.
+- **Intake questionnaire screen** (patient sign-up), adapted from the LA County baseline (https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality): the core 5 + heat habits + caregiver/emergency contact; shows the resulting group.
+- **"Embedded in the EHR" view:** the patient's plan rendered in a narrow side-panel layout + the existing CDS Hooks route (`/api/cds-hooks`) returning a card that links to it. Label: "Prototype, designed to embed via SMART on FHIR / CDS Hooks." Use the NACHC EHR page as the model.
+- Spanish toggle for the patient plan.
+
+### 2:15 PM: code freeze → test → submit
+- Run the demo end to end on the replay heat day: Patients → Text High group → demo phone shows the text and plan → no reply → fast-forward → contact notified → board updates → map.
+- Test the phone on the venue Wi-Fi (hotspot backup).
+- Check that every number on screen traces to a file.
+- Record the backup video. Devpost: description, screenshots, repo, data sources, limitations. **Submit by 2:45.**
+
+---
+
+## Who does what (suggested; you two decide)
+- **Track A (map person):** P1, then the map parts of P3, then the NYC Care layer.
+- **Track B (app person):** P0, P2, the rest of P3, P4, P5.
+- Whoever finishes first: questionnaire screen, EHR view, pitch slides.
+- Coding agents can run each track in parallel. Two agents must never edit the same file. Map files live in `web/src/components/map/`; everything else stays where it is.
+
+## Challenge checklist (check before submitting)
+- [ ] Visual evidence map grouped by action, with evidence strength, prescribers and guidance gaps → **Medicines** tab (P4)
+- [ ] Meaningful System graph use → "How heat and medicine add up" (P5) + "Why?" panels + nerd stats (verification, audit)
+- [ ] Usable for counseling and outreach → Patients tab + texting + map (P1–P3)
+- [ ] Readable by a non-specialist → design rules
+- [ ] Every number traces to a file; synthetic patients labeled
+- [ ] Devpost submitted by 2:45
+
+## Already built (don't rebuild)
+- Next.js app in `web/` (runs with `npm run dev` on port 3000, LAN-visible)
+- `/board` clinic board with send, multi-send, fast-forward and message log; `/phone/[id]` demo phone with simulated push + SMS and check-in buttons; SQLite loop in `web/src/lib/loop.ts`
+- Evidence map, drug pages, nerd stats (`/evidence`), knowledge base API, System live layer API, CDS Hooks route
+- All data in `data/processed/` and `data/kb/` (see `data/SOURCES.md`)

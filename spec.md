@@ -189,6 +189,35 @@ The plain version is what's on screen. The technical term sits one click or one 
 3. **Someone shows up:** if the patient doesn't acknowledge in time, the **trusted contact** is sent to check on them, timed by the escalation algorithm. Morning texts route people to an air-conditioned public place where others are around.
 4. **Close the loop:** the clinic board shows who acknowledged, who is at a cooling place, and who still needs a call. Post-heat-wave lab checks follow.
 
+### 4.0a Priority focus (Rachel, Sat 14 Nov midday)
+The structure stays; these goals get more weight. Full task list: `docs/build-plan.md` → "Priority focus."
+- **Actionable items for clinicians and patients:** a recommendation the clinician gives the patient, easy for both to see.
+- **Risk buckets Low / Medium / High** from:
+  - the intake questionnaire (adapted from an LA County baseline)
+  - heat habits and lifestyle
+  - each medication's risk
+  - **medication stacking:** different heat harms add up (e.g. one drug stops sweating, another causes fatigue)
+  - whether the patient is warned, and what guidance says (secondary)
+- **Send information by bucket**, easily, **by text** through an SMS-provider API (replaces the app notification as the main channel).
+- **Outreach to the patient and their caregiver or emergency contact** when High risk during a heat wave.
+- **Resources: where, what and how to get there:**
+  - cooling centers, libraries, senior centers, community-based organizations and nonprofits (scraped), and grocery/medicine delivery
+  - **best route given the heat:** travel time + heat exposure (shade, AC transit), or delivery instead
+- **The 3D NYC map is the main visual for both clinician and patient:** heat first (hottest vs coolest), then resources, then routes.
+- **Safest time of day to be outside** during a heat wave (hourly strip).
+- **Clinician contacts the patient through the app.**
+- **EHR-embeddable by design** (SMART on FHIR launch, CDS Hooks card, side-panel layout). The prototype is stand-alone.
+- **One very specific use case** to build and pitch around (§12.3).
+- **Pretty, clean, aesthetic.**
+- **Medicine Cabinet scrapped as the main patient view;** optional side visual at most (§4.5).
+- **Still required:** the challenge's visual evidence map (§4.1) and meaningful System use (§8.5a, §8.5c). The new focus is the "counseling and outreach" half of the challenge sentence.
+
+**Sources Rachel sent (Sat 14 Nov), to read in Step 2:**
+- NYC Care community-based organizations: https://www.nyccare.nyc/community-based-organization/ (map data to scrape)
+- LA County Public Health, Heat Illness & Mortality: https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality (screening baseline)
+- NACHC, heat-related messaging at La Clínica: https://www.nachc.org/about-nachc/our-work/air-water-and-chemical-exposures/heat-and-health-basics/heat-related-messaging-highlight-la-clinica/ (patient messaging model)
+- NACHC, Heat-Related Illness Management in EHR Systems: https://www.nachc.org/resource/heat-related-illness-management-in-ehr-systems/ (EHR embedding model)
+
 ### 4.1 Screen 1: Evidence Map (the deliverable)
 - **Main view: the "periodic table" of heat-sensitive medications.**
   - Each tile is one drug or class.
@@ -319,7 +348,9 @@ Both "how long to wait" and "how close the contact must be" come from a **time b
    - medical-alert (PERS) escalation standards
 
 ### 4.5 Patient app: "My Medicine Cabinet"
-**Why this design:** a cabinet of familiar bottles is easy to understand, especially for **older adults, who are most likely to die in heat.**
+> **Sat 14 Nov: scrapped as the main patient view** (Rachel). The patient app's main view is now the **map + "my heat plan."** The map **switches between 2D and 3D; 2D is the default** for older or less tech-comfortable patients (flat street map, big labels, big tap targets), and 3D is one tap away. The plan shows the bucket and why, nearby resources, the best route, the safest time outside, and what to do. The cabinet below may survive as a small side visual if time allows.
+
+**Why this design (original):** a cabinet of familiar bottles is easy to understand, especially for **older adults, who are most likely to die in heat.**
 
 - **The cabinet:** a shelf of the patient's own medicines, colored by bucket.
 - **Medicines added two ways:** the patient adds them, or they're **added automatically** from the pharmacy or clinic record (FHIR MedicationRequest / dispense data; the synthetic panel in the demo).
@@ -355,6 +386,8 @@ Every message is **tailored to the patient's needs**, never generic (e.g. no bla
 - BC 2021: most who died were alone at home.
 - Cincinnati 1999: working AC OR 0.03.
 - Chicago 1995 (Semenza et al., NEJM 1996, *verify*): living alone, not leaving home and being bedbound raised risk; AC protected.
+
+**Sat 14 Nov update:** we write the questionnaire by **adapting a baseline from LA County** (https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality), add **heat habits** (time outside, outdoor work or exercise, fluids, fan-only cooling) and a **caregiver / emergency contact**, and output a **Low / Medium / High** bucket instead of four levels.
 
 **Known from the pharmacy or clinic record (not asked):** age, medications, diagnoses (heart, kidney, diabetes, mental illness, dementia), pregnancy.
 
@@ -444,6 +477,43 @@ A clearly labeled section that shows our results are legit:
 - **Known limitations and confounding.**
 
 ## 5. Visuals catalogue
+
+### 5.0 Simplify: fewer visuals, plain words (Rachel's review, Sat 14 Nov ~11:45)
+**Rachel's verdict on the first build:** the graphs aren't clear when you look and click; there are too many strange words and too many strange graphs. **It must be readable by everyone, not just clinicians. Cut the number of visuals** (which ones: to discuss).
+
+**What the review found (app at localhost:3000, ~11:45):**
+- **Words:** main screens show FLAG / CHANGE, "Score 0.605: association strength 0.26 × severity 1.0," "ROR 4.373," "negative-control band," "T1–T8 best evidence tier," "8/8 jurisdictions," "narrow therapeutic index," "HeatRisk 4 Magenta," and untranslated French and German guidance quotes.
+- **Charts:** the evidence map tile packs five encodings (color, fill, corner badge, icons, ring) plus letters M/A/H; the "Medicines by action and evidence" bar chart is hard to read; the Readiness page is mostly "not built yet" boxes.
+- **Navigation:** 7 top tabs plus a 6-step journey bar, so it's unclear where to start. "Evidence Map" lives at `/map`, which will clash with the real map.
+
+**Outcome first, evidence on click (Rachel, Sat 14 Nov, decided):** a clear, simple visual matters more right now than showing how accurate it is.
+- Every screen shows **only the outcome**: who's at risk, what to do, where to go.
+- The evidence is **not shown up front**. It sits behind one click ("Why?" / "See the evidence") for the clinician who wants to know more.
+- Behind the click: the plain-language reason first, then the details (sources, System graph, FDA reports, badges, scores). Nerd stats stays for the full methods.
+- The evidence work isn't dropped. It's still there for judges who click, and for the System-use score, but it no longer crowds the main view.
+
+**Plain-language rules (apply everywhere):**
+- No abbreviations or codes on main screens. Say "check on this person" and "consider changing the medicine," not FLAG / CHANGE.
+- Each chart gets a **title that states the takeaway**, one message per chart, at most one legend, and 3 colors or fewer.
+- Numbers in words ("about 4 times as many heat reports as other medicines"), never raw scores.
+- Scores, formulas, tiers and receipts go to nerd stats or behind "Show the evidence."
+- Guidance quotes translated to English.
+- Aim for about an 8th-grade reading level; the patient side simpler still.
+
+**Proposed keep list (to discuss; about 6 visuals instead of 21):**
+
+| Keep | For | Why |
+|---|---|---|
+| **1. Heat + resources map** (2D/3D switch) | Both | The main visual: where it's hot, what help is near, how to get there |
+| **2. Risk buckets (Low / Medium / High)** with "text this group" | Clinician | Replaces the call-first scatter: easier to read, and it's the action |
+| **3. Medicine chart** (simplified evidence map) | Clinician | Required by the challenge: one row per medicine, grouped by what to do, evidence as Strong / Some / Early in words, who prescribes it, ✓/✗ for "label warns" and "guidance says what to do" |
+| **4. "How heat and medicine add up" picture** | Both | One simple System-graph picture: medicine → body effect (dehydration, low salt, no sweating) ← heat. Keeps the graph use visible and also explains stacking |
+| **5. Safest time to go outside** (hourly strip) | Both | One glance: green hours, red hours |
+| **6. Patient "my heat plan"** | Patient | Bucket and why, nearest help, route, safe time, what to do |
+
+**Proposed cut or move to nerd stats:** call-first scatter, Heat Dose Compass, FLAG/CHANGE meters, forest plot, Sankeys, node graph (nerd stats only), treemap, neighborhood × drug heatmap, body diagram, heat ladder, prescriber swimlanes, calendar heatmap, evidence timeline, "who was studied," audit funnel (nerd stats), combination matrix, heat-day timeline, Medicine Cabinet, the 6-step journey bar.
+
+### 5.1 Full catalogue (14 Nov; being cut down per §5.0)
 **Decision (14 Nov): prototype all of these.** The team will look at each and cut the ones that aren't effective. The **node graph is required**, the **call-first scatter is chosen**, and the **medicine cabinet is the patient-side centerpiece**.
 
 | # | Visual | Side | What it shows |
@@ -924,10 +994,15 @@ Suggested 15 (to confirm):
 - **Sat 14 Nov (hack day):**
   - **Supabase dropped:** local SQLite + polling instead; no accounts beyond System.
   - **Push notifications simulated** on the demo phone (mock banner, labeled), like the SMS. No Web Push, Twilio or Vercel.
+  - **Priority focus (midday, §4.0a):** actions and resources first; Low / Medium / High buckets; medication stacking; text by bucket; caregiver outreach; resources + best heat-aware route + safest time outside; 3D map as the main visual for both sides; EHR-embeddable by design; one specific use case.
+  - **Medicine Cabinet scrapped** as the main patient view (side visual at most). This changes C1.
+  - **Patient map: 2D/3D switch, 2D by default** (for older patients).
+  - **Simplify (review ~11:45):** too complicated; plain words for everyone; cut the number of visuals. Proposal in §5.0, to discuss.
+  - **Outcome first, evidence on click:** clear and simple beats showing accuracy up front; evidence sits behind a "Why?" / "See the evidence" click (§5.0).
 
 ### 12.2 Choices: Rachel's spec vs Myra's notes (merged 14 Nov)
 **Rachel's decisions (14 Nov):**
-- **C1:** keep the **Medicine Cabinet app**.
+- **C1:** ~~keep the **Medicine Cabinet app**~~. **Changed Sat 14 Nov midday:** the patient app's main view is the map + "my heat plan"; the cabinet is a side visual at most.
 - **C2:** the safety alert is **mandatory**, sent as **both an app push notification (breaking through DND) and an SMS**. In the demo both are simulated on the demo phone (Sat 14 Nov).
 - **C3:** we **are** building the **3D map**.
 - **C4:** **build the node graph** to see it, and decide later whether to use it.
@@ -969,4 +1044,6 @@ Suggested 15 (to confirm):
 - **System API key returned 403** on Myra's overnight run (Sat 14 Nov); System results so far are the Dataverse fallback. Get a working key and rerun the System scripts: roles 1–6 (§8.5a) and 25% of judging depend on it.
 - **Work split from 10:45 Sat:** Rachel = SQLite + core loop (send alert → simulated push/SMS on the phone → escalation with fast-forward → clinic board). Myra = System key rerun, then the evidence-side visuals in `web/` (forest plot, pathway Sankey, node graph, live System layer, CDS Hooks cards). The 3D map and call-first scatter go to whoever finishes first.
 - **Core loop built (Sat 14 Nov, 11:00):** `/board` (clinic board: replay-day call list, send / multi-send, live status, message log, +5/+15/+45 min fast-forward, reset) and `/phone/<id>` (demo phone: simulated push banner, simulated SMS thread, "I'm OK" / "I feel unwell" / "No AC"). All wording and timings come from `panel_scores_replay.json` (`safety_alert`, `contact_check`, `escalation.steps`); escalation steps fire when the board or phone polls, so fast-forward just shifts the demo clock. **Rule: no invented data; missing pieces show a labeled placeholder naming the file they'll come from.**
+- **The one specific use case (Rachel, Sat 14 Nov): to pick.** One suggestion: *a clinic nurse at a Bronx health center, the morning a heat wave is forecast, screens the panel into buckets, texts each bucket its plan, and the High-risk patients and their caregivers get a resource, a route and a safe time to go.* To discuss.
+- **Texting:** real SMS-provider API in the demo, or keep it simulated (decided simulated earlier on 14 Nov)? The SMS module is built so either works.
 - **Open:** the board can send to patients whose `why` says "not opted in to safety alerts: phone call is the only route" (e.g. P0149). Send should respect the questionnaire's `alert_opt_in` and route those patients straight to the call list.
