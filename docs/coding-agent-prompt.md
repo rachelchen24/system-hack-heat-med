@@ -49,7 +49,7 @@ P4. Medicines, outcome first (~30 min)
 - `/drug/[id]`: the top shows only the plain message and what to do. Move everything else (FLAG/CHANGE, Compass, claims, guidance quotes, combinations) behind a "See the evidence" toggle. Translate any French or German guidance quotes to English.
 
 P5. "How heat and medicine add up" (~25 min)
-- A simple 3-column picture: medicines → body effect (dehydration, low salt, kidney strain, can't sweat, drowsy) ← heat, from `data/processed/system_pathways.csv` and `system_drug_mediator_findings.csv`. Line thickness = number of studies in the System graph. Clicking a line opens "Why?" with System study counts. Put it on `/medicines` and a one-line version on the patient plan ("Your two medicines both make it harder to stay cool").
+- A simple 3-column picture: medicines → body effect (dehydration, low salt, kidney strain, can't sweat, drowsy) ← heat, from `data/processed/system_api_pathways.csv` (the live-API rerun; columns drug_label, mediator, drug_leg_studies, heat_leg_studies; fall back to `system_pathways.csv`) and `system_api_findings.csv`. Line thickness = number of studies in the System graph. Clicking a line opens "Why?" with System study counts. Put it on `/medicines` and a one-line version on the patient plan ("Your two medicines both make it harder to stay cool").
 
 ──── Everything above this line = complete demo ────
 
