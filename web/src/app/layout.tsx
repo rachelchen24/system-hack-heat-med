@@ -1,0 +1,26 @@
+import type { Metadata } from "next";
+import { Disclaimer } from "@/components/Disclaimer";
+import { SiteHeader } from "@/components/SiteHeader";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "The Missing Label",
+  description: "Medications and heat: a clinician tool, a public story and a patient app. Prototype.",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="en">
+      <body className="min-h-screen antialiased">
+        <SiteHeader />
+        <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+        <footer className="mx-auto max-w-7xl border-t border-line px-4 py-6">
+          <Disclaimer />
+          <p className="mt-1 text-xs text-ink-muted">
+            Built on the System public graph, peer-reviewed literature and FDA reports. Every claim links to its source.
+          </p>
+        </footer>
+      </body>
+    </html>
+  );
+}
