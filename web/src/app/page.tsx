@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Cool-Aid" };
 // Home: hero with the live clinic map as the default tab, the heat-day time-lapse second, and one patient's plan third.
 export default function Home() {
   const patients = loadMapPatients();
+  const replay = loadReplay();
   const clinicMap = patients.length ? (
     <div className="bg-white p-2 sm:p-3">
       <ClinicianMap patients={patients} files={{ panel: FILES.panel, patients: FILES.patients }} mapHeight="min(64vh, 620px)" />
@@ -37,6 +38,7 @@ export default function Home() {
         { value: "map", label: "Clinic map", icon: <MapIcon className="size-4" aria-hidden />, content: clinicMap },
         { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: hours },
         { value: "patient", label: "A patient's plan", icon: <Smartphone className="size-4" aria-hidden />, content: <div className="bg-white p-2 sm:p-3"><PatientPlanMap patientId="S01" variant="patient" height={420} /></div> },
+        { value: "hours", label: "Hour by hour", icon: <Clock className="size-4" aria-hidden />, content: replay ? <div className="bg-white p-2 sm:p-3"><Timelapse data={replay} /></div> : <p className="p-6 text-sm text-muted-foreground">Hour-by-hour replay needs data/processed/replay_heatwave_hourly.csv.</p> },
       ]}
     />
   );
