@@ -50,6 +50,22 @@
   --bucket-store-tint: #dcebf5;
   --bucket-store-ink: #005a8c;    /* 7.39:1 on white, 6.07:1 on tint */
 
+  /* ---- Risk groups (High / Medium / Low), same chip style --------- */
+  /* High = Hold vermillion; Medium = yellow; Low = Store-cool blue.
+     Yellow dots on a light map need a thin dark outline (--risk-medium-ink). */
+  --risk-high: #d55e00;
+  --risk-high-on: #141414;        /* 4.76:1 on solid */
+  --risk-high-tint: #fbe3d6;
+  --risk-high-ink: #a0410a;       /* 6.45:1 on white, 5.24:1 on tint */
+  --risk-medium: #f0c419;
+  --risk-medium-on: #141414;      /* ~11.9:1 on solid */
+  --risk-medium-tint: #fdf4d3;
+  --risk-medium-ink: #7a5c00;     /* ~6.3:1 on white, ~5.8:1 on tint */
+  --risk-low: #0072b2;
+  --risk-low-on: #ffffff;         /* 5.19:1 on solid */
+  --risk-low-tint: #dcebf5;
+  --risk-low-ink: #005a8c;        /* 7.39:1 on white, 6.07:1 on tint */
+
   /* ---- Guidance gap ring / "!" badge ------------------------------- */
   --gap-ring: #141414;            /* dashed ring, 18.4:1 on white */
   --gap-badge-bg: #141414;

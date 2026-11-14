@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
 
+/* Risk-group utilities are built from strings in src/lib/risk.ts; always generate them. */
+@source inline("{bg,text,border,ring,fill,stroke,outline}-risk-{high,medium,low}{,-on,-tint,-ink}");
+
 /*
  * Tailwind v4 theme extension: exposes the design tokens in tokens.css as
  * utilities, e.g. bg-adjust-solid, text-hold-ink, border-store-ink,
@@ -31,6 +34,19 @@
   --color-store-on: var(--bucket-store-on);
   --color-store-tint: var(--bucket-store-tint);
   --color-store-ink: var(--bucket-store-ink);
+
+  --color-risk-high: var(--risk-high);
+  --color-risk-high-on: var(--risk-high-on);
+  --color-risk-high-tint: var(--risk-high-tint);
+  --color-risk-high-ink: var(--risk-high-ink);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-medium-on: var(--risk-medium-on);
+  --color-risk-medium-tint: var(--risk-medium-tint);
+  --color-risk-medium-ink: var(--risk-medium-ink);
+  --color-risk-low: var(--risk-low);
+  --color-risk-low-on: var(--risk-low-on);
+  --color-risk-low-tint: var(--risk-low-tint);
+  --color-risk-low-ink: var(--risk-low-ink);
 
   --color-gap-ring: var(--gap-ring);
 

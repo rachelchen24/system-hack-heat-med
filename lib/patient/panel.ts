@@ -15,6 +15,9 @@ import { ageOn } from "./fhir.ts";
 import type { ForecastInputs } from "./forecast.ts";
 import { daysBetween, heatRiskOn } from "./forecast.ts";
 import { medRiskStack } from "./med-risk.ts";
+import { lifestyleSusceptibility } from "./lifestyle.ts";
+import { stackingView } from "./stacking.ts";
+import type { SystemPathwayIndex } from "./stacking.ts";
 import type { MessageContext } from "./messages.ts";
 import { checkMessageSafety, checkinText, contactCheckText, coolingPlaceText, heatCard, safetyAlert } from "./messages.ts";
 import { TIER_ORDER, compareForCallList, priorityTier } from "./tiers.ts";
@@ -32,6 +35,8 @@ export interface PanelContext {
   /** Date ages are computed on (default asOf). A replayed past heat wave hits today's patients, so pass today. */
   ageAsOf?: string;
   placeById?: Map<string, CoolingPlace>;
+  /** System graph drug → mediator ← heat study counts (system_pathways.csv), when loaded. */
+  systemPathways?: SystemPathwayIndex | null;
 }
 
 /** HeatRisk for a ZIP; ZIPs without a forecast use the max over forecast ZIPs that day (labeled). */
@@ -66,6 +71,8 @@ export function scorePatient(p: PatientRecord, ctx: PanelContext): Omit<PatientS
   const exposure = personalExposure(q, p.zip, ctx.neighborhood);
   const condKeys = p.conditions.map((c) => c.key);
   const readiness = readinessLevel(meds, exposure, age, condKeys);
+  const lifestyle = lifestyleSusceptibility(q);
+  const stacking = stackingView(meds, ctx.systemPathways ?? null);
 
   const escalation = escalationPlan({
     age,
@@ -144,6 +151,8 @@ export function scorePatient(p: PatientRecord, ctx: PanelContext): Omit<PatientS
     meds,
     exposure,
     readiness,
+    lifestyle,
+    stacking,
     tier,
     drillTier,
     escalation,
@@ -187,6 +196,18 @@ export function panelSummary(scores: PatientScore[]) {
     readiness: countBy(scores, (s) => s.readiness.level),
     med_level: countBy(scores, (s) => `${s.meds.level} ${s.meds.levelLabel}`),
     exposure_band: countBy(scores, (s) => s.exposure.band),
+    lifestyle: {
+      category: countBy(scores, (s) => s.lifestyle.category),
+      profile: countBy(scores, (s) => s.lifestyle.profile),
+      incomplete: scores.filter((s) => s.lifestyle.incomplete).length,
+    },
+    stacking: {
+      patients_with_stacked_mechanism: scores.filter((s) => s.stacking.stackedMechanismCount > 0).length,
+      patients_with_stacked_symptoms: scores.filter((s) => s.stacking.stackedSymptomCount > 0).length,
+      patients_with_masked_signs: scores.filter((s) => s.stacking.maskedSigns.length > 0).length,
+      stacked_mechanisms: countBy(scores.flatMap((s) => s.stacking.mechanisms.filter((m) => m.stacked)), (m) => m.defense),
+      masked_signs: countBy(scores.flatMap((s) => s.stacking.maskedSigns), (m) => m.sign),
+    },
     escalation: {
       enrolled: scores.filter((s) => s.escalation.enrolled).length,
       t_max_min: countBy(scores.filter((s) => s.escalation.enrolled), (s) => String(s.escalation.tMaxMin)),

@@ -34,6 +34,7 @@ import {
   loadPatients,
   loadPlaces,
   loadRoutedCooling,
+  loadSystemPathways,
   loadTravel,
 } from "../lib/patient/load-node.ts";
 import type { PatientScore } from "../lib/types/patient.ts";
@@ -55,7 +56,8 @@ const routedCooling = loadRoutedCooling(ROOT, cfg);
 const places = loadPlaces(ROOT, cfg);
 const placeById = new Map(places.map((p) => [p.id, p]));
 const neighborhood = loadNeighborhood(ROOT, cfg);
-const dataNotes = [...drugs.notes, ...travel.notes, ...routedCooling.notes];
+const systemPathways = loadSystemPathways(ROOT);
+const dataNotes = [...drugs.notes, ...travel.notes, ...routedCooling.notes, ...systemPathways.notes];
 
 const RULES = {
   med_level_rules: MED_LEVEL_RULES,
@@ -114,7 +116,7 @@ function compact(s: PatientScore) {
 
 function run(scenario: "today" | "replay", asOf: string) {
   const forecast = loadForecast(ROOT, cfg, scenario === "today" ? "current" : "replay");
-  const ctx: PanelContext = { config: cfg, asOf, forecast, neighborhood, drugIndex: drugs.value, travel: travel.value, places, routedCooling: routedCooling.value, placeById, ageAsOf: TODAY };
+  const ctx: PanelContext = { config: cfg, asOf, forecast, neighborhood, drugIndex: drugs.value, travel: travel.value, places, routedCooling: routedCooling.value, placeById, ageAsOf: TODAY, systemPathways: systemPathways.value };
   const scores = scorePanel(patients, ctx);
   const summary = panelSummary(scores);
   const defaultZip = cfg.demo_zips.includes("10457") ? "10457" : cfg.demo_zips[0];

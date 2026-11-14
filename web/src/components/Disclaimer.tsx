@@ -1,4 +1,4 @@
-export const DISCLAIMER = "Prototype. Considerations for clinicians, not instructions.";
+export const DISCLAIMER = "Prototype with synthetic patients. Not medical advice.";
 
 export function Disclaimer({ className = "" }: { className?: string }) {
   return (

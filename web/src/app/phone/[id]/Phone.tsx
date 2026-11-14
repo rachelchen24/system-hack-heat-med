@@ -15,7 +15,7 @@ const L = {
 
 const t = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-export function Phone({ patientId, firstName, language }: { patientId: string; firstName: string; language: "en" | "es" }) {
+export function Phone({ patientId, firstName, language, children }: { patientId: string; firstName: string; language: "en" | "es"; children?: React.ReactNode }) {
   const l = L[language];
   const [inbox, setInbox] = useState<Inbox | null>(null);
   const [dismissed, setDismissed] = useState<number | null>(null);
@@ -67,6 +67,8 @@ export function Phone({ patientId, firstName, language }: { patientId: string; f
           </button>
         )}
 
+        {children}
+
         <section aria-label={l.sms} className="flex-1 space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{l.sms} · {l.from}</h2>
           {!sms.length && <p className="text-ink-muted">{l.none}</p>}
@@ -78,7 +80,7 @@ export function Phone({ patientId, firstName, language }: { patientId: string; f
           ))}
         </section>
 
-        <section className="sticky bottom-0 space-y-3 bg-page pb-2 pt-3">
+        <section className="space-y-3 bg-page pb-2 pt-3">
           {tapped && <p className="text-center font-semibold">{l.sent}</p>}
           <button onClick={() => tap("ok")} className="min-h-tap w-full rounded-tile bg-ink text-patient-lg font-bold text-page">
             {l.ok}

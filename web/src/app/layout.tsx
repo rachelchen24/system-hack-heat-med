@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
 import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
@@ -18,6 +19,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Disclaimer />
           <p className="mt-1 text-xs text-ink-muted">
             Built on the System public graph, peer-reviewed literature and FDA reports. Every claim links to its source.
+            Patients shown are synthetic.{" "}
+            <Link href="/evidence" className="underline">
+              Methods
+            </Link>
           </p>
         </footer>
       </body>

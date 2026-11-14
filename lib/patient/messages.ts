@@ -186,14 +186,14 @@ export function safetyAlert(ctx: MessageContext): PatientMessage {
   let text: string;
   if (lang === "es") {
     text =
-      `Peligro por calor hoy (HeatRisk ${ctx.heatriskToday}). ` +
+      `Peligro por calor hoy. ` +
       (drugs.length
         ? `${drugs.length === 1 ? W.drugs1.es[who] : W.drugsN.es[who]} el calor más peligroso: ${joinList(drugs, "es")}. `
         : "") +
       `${W.go.es[who]} a un lugar fresco antes de las 11 AM${place}. ${fr.es} Responda OK.`;
   } else {
     text =
-      `Heat danger today (HeatRisk ${ctx.heatriskToday}). ` +
+      `Heat danger today. ` +
       (drugs.length
         ? who === "adult_cg"
           ? `The person you care for takes ${joinList(drugs, "en")}, which make${drugs.length === 1 ? "s" : ""} heat riskier. `

@@ -66,9 +66,11 @@ export default function EvidencePage() {
             <dd>{claims.length}</dd>
           </dl>
         </div>
-        <div className="rounded-tile border border-line p-4">
+        <div className="min-w-0 rounded-tile border border-line p-4">
           <h2 className="text-lg font-bold">Medicines by action and evidence</h2>
-          <BucketEvidenceChart rows={rows} />
+          <div className="max-w-full overflow-x-auto">
+            <BucketEvidenceChart rows={rows} />
+          </div>
         </div>
       </section>
 

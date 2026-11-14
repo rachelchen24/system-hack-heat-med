@@ -62,5 +62,8 @@ export {
   FORECAST_METHOD,
 } from "./forecast.ts";
 export type { ForecastInputs, HeatRiskByZip, CpcOutlook, HistoricalOdds } from "./forecast.ts";
+export { lifestyleSusceptibility, LIFESTYLE_POINTS, LIFESTYLE_BANDS, LIFESTYLE_CATEGORY_LABELS, LIFESTYLE_PROFILE_LABELS } from "./lifestyle.ts";
+export { stackingView, systemGroupFor, DEFENSE_TO_MEDIATORS, DEFENSE_SYMPTOMS, DEFENSE_MASKS, HEAT_ILLNESS_SIGNS, SYSTEM_SOURCE } from "./stacking.ts";
+export type { SystemPathwayIndex, SystemPathwayRow } from "./stacking.ts";
 export { scorePatient, scorePanel, panelSummary, zipHeatRisk, countBy } from "./panel.ts";
 export type { PanelContext } from "./panel.ts";
