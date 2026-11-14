@@ -114,7 +114,7 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
         </span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="overflow-x-auto">
           <p className="px-3 pt-2 text-xs text-ink-muted md:hidden">Swipe sideways to see the whole picture →</p>
           <svg
@@ -202,8 +202,8 @@ export function HeatMedicinePicture({ data, title, source }: { data: PathwayData
                   width={pillW}
                   height={24}
                   rx={12}
-                  fill={hoverDrug === d.id ? "#141414" : "#f7f7f5"}
-                  stroke={hoverDrug === d.id ? "#141414" : "#d4d4d0"}
+                  fill={hoverDrug === d.id ? "#0e7c86" : "#f7f7f5"}
+                  stroke={hoverDrug === d.id ? "#0e7c86" : "#d4d4d0"}
                 />
                 <text
                   y={yDrug.get(d.id)! + 4}

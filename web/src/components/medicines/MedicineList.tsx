@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import type { Bucket, DrugRecord } from "@lib/types/knowledge-base.ts";
-import { Card } from "@/components/ui/card";
 import { BUCKETS, BUCKET_ORDER, METER } from "@/lib/ui";
 import { GROUP_HEADER, guidanceSaysWhatToDo, labelWarnsAboutHeat, prescriberText } from "./plain";
 
@@ -35,7 +34,20 @@ function YesNo({ value, yes, no }: { value: boolean | null; yes: string; no: str
 
 function Strength({ meter }: { meter: DrugRecord["evidence"]["meter"] | undefined }) {
   if (!meter || !METER[meter]) return <span className="text-sm text-missing">—</span>;
-  return <span className="inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold border-line-strong bg-surface text-ink">{METER[meter].label}</span>;
+  const m = METER[meter];
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold text-hold-ink">
+      <span aria-hidden className="inline-flex gap-1">
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={`h-3 w-3 rounded-full border-2 ${i <= m.filled ? "border-hold-ink bg-hold-solid" : "border-line bg-page"}`}
+          />
+        ))}
+      </span>
+      {m.label}
+    </span>
+  );
 }
 
 const COLS = "md:grid md:grid-cols-[minmax(0,2.4fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] md:gap-4";
@@ -50,32 +62,39 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
 
   return (
     <div className="space-y-3">
-      {groups.map((g) => {
+      {groups.map((g, gi) => {
         const b = g.bucket ? BUCKETS[g.bucket] : null;
         return (
-          <section key={g.bucket ?? "none"} aria-labelledby={`grp-${g.bucket ?? "none"}`}>
-            <div className="mb-3 flex items-center gap-3">
-              <span aria-hidden className={`h-3 w-3 shrink-0 rounded-full border ${b ? b.solid : "border-line-strong"}`} />
-              <h2 id={`grp-${g.bucket ?? "none"}`} className="text-xl font-semibold">
+          <details
+            key={g.bucket ?? "none"}
+            open={gi === 0}
+            className="group/d overflow-hidden rounded-tile border-2 bg-page"
+            style={{ borderColor: g.bucket ? `var(--bucket-${BAR[g.bucket] ?? "hold"}-ink)` : "var(--ui-line-strong)" }}
+          >
+            <summary className={`flex cursor-pointer list-none items-center gap-3 px-4 py-3 ${b ? b.tint : "bg-surface"} [&::-webkit-details-marker]:hidden`}>
+              <span
+                aria-hidden
+                className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${b ? b.solid : "border-line-strong"}`}
+              >
+                {b?.letter ?? "?"}
+              </span>
+              <h2 id={`grp-${g.bucket ?? "none"}`} className="text-lg font-semibold">
                 {g.bucket ? GROUP_HEADER[g.bucket] : "Not grouped yet"}
-                <span className="ml-2 text-sm font-normal text-ink-muted">
-                  {g.rows.length} {g.rows.length === 1 ? "medicine" : "medicines"}
+                <span className="ml-2 text-sm font-normal">
+                  {g.rows.length}
                 </span>
               </h2>
-            </div>
-            {b && !b.plain.startsWith(GROUP_HEADER[g.bucket!]) && <p className="-mt-2 mb-3 pl-6 text-sm text-ink-muted">{b.plain}</p>}
+              <span aria-hidden className="ml-auto text-xl transition group-open/d:rotate-180">⌄</span>
+            </summary>
 
-            <div className={`hidden px-4 pb-1 text-xs text-ink-muted ${COLS}`}>
-              <span>Medicine and the risk in heat</span>
+            <div className={`hidden border-b border-line px-4 py-1.5 text-xs font-semibold text-ink-muted ${COLS}`}>
+              <span>Medicine</span>
               <span>Evidence</span>
-              <span>Who prescribes it</span>
+              <span>Prescriber</span>
               <span>Label warns?</span>
-              <span>Guidance says what to do?</span>
+              <span>Guidance?</span>
             </div>
-            <Card
-              className="overflow-hidden border-line border-l-4"
-              style={{ borderLeftColor: g.bucket ? `var(--bucket-${BAR[g.bucket] ?? "hold"}-ink)` : "var(--ui-line-strong)" }}
-            ><ul className="divide-y divide-line text-ink">
+            <ul className="divide-y divide-line text-ink">
               {g.rows.map(({ drug: d }) => (
                 <li key={d.id}>
                   <Link
@@ -89,7 +108,7 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                           ›
                         </span>
                       </p>
-                      <p className="text-sm text-ink-muted">{d.label_line || "No plain summary yet"}</p>
+                      <p className="truncate text-sm text-ink-muted" title={d.label_line || undefined}>{d.label_line || "—"}</p>
                     </div>
                     <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 md:contents">
                       <div className="md:block">
@@ -99,17 +118,17 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-xs text-ink-muted md:sr-only">Who prescribes it</dt>
+                        <dt className="text-xs text-ink-muted md:sr-only">Prescriber</dt>
                         <dd className="text-sm">{prescriberText(d) || "—"}</dd>
                       </div>
                       <div>
-                        <dt className="text-xs text-ink-muted md:sr-only">Label warns about heat</dt>
+                        <dt className="text-xs text-ink-muted md:sr-only">Label warns?</dt>
                         <dd>
                           <YesNo value={labelWarnsAboutHeat(d)} yes="Yes" no="No" />
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-xs text-ink-muted md:sr-only">Guidance says what to do</dt>
+                        <dt className="text-xs text-ink-muted md:sr-only">Guidance?</dt>
                         <dd>
                           <YesNo value={guidanceSaysWhatToDo(d)} yes="Yes" no="No" />
                         </dd>
@@ -118,8 +137,8 @@ export function MedicineList({ rows }: { rows: MedicineRow[] }) {
                   </Link>
                 </li>
               ))}
-            </ul></Card>
-          </section>
+            </ul>
+          </details>
         );
       })}
     </div>

@@ -12,25 +12,15 @@ export default function MedicinesPage() {
   const rows: MedicineRow[] = kb.drugs.map((d) => ({ drug: d, bucket: primaryBucket(d) }));
   const pathways = loadPathways(kb.drugs.map((d) => ({ id: d.id, label: d.names?.display ?? d.id })));
 
-  // Title states the takeaway: the body effects that the most medicines share with heat.
-  const byEffect = pathways.effects
-    .map((e) => ({ label: e.label.toLowerCase(), n: new Set(pathways.links.filter((l) => l.effect === e.id).map((l) => l.drug)).size }))
-    .sort((a, b) => b.n - a.n);
-  const top = byEffect.filter((e) => e.n > 0).slice(0, 2);
-  const title =
-    top.length === 2
-      ? `Heat and these medicines hit the same weak spots: ${top[0].n} of ${rows.length} push toward ${top[0].label}, ${top[1].n} toward ${top[1].label}`
-      : "How heat and medicine add up";
+  // Short title; the takeaway (which body effects most medicines share with heat) is in the picture itself.
+  const title = "Heat and these medicines hit the same weak spots";
 
   return (
-    <div className="max-w-5xl space-y-12">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">How medicines add to the heat</h1>
-        <p className="text-ink-muted">Hover a medicine to see what it does to the body in heat.</p>
-      </header>
+    <div className="space-y-10">
+      <h1 className="text-3xl font-semibold tracking-tight">Medicines in the heat</h1>
       <HeatMedicinePicture data={pathways} title={title} source={PATHWAYS_FILE} />
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold">{rows.length} medicines, by what to do</h2>
+        <h2 className="text-xl font-semibold">What to do, by medicine</h2>
         <MedicineList rows={rows} />
       </section>
       <KbSourceBanner source={source} file={file} />
