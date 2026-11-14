@@ -32,6 +32,19 @@
   --color-store-tint: var(--bucket-store-tint);
   --color-store-ink: var(--bucket-store-ink);
 
+  --color-risk-high: var(--risk-high);
+  --color-risk-high-on: var(--risk-high-on);
+  --color-risk-high-tint: var(--risk-high-tint);
+  --color-risk-high-ink: var(--risk-high-ink);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-medium-on: var(--risk-medium-on);
+  --color-risk-medium-tint: var(--risk-medium-tint);
+  --color-risk-medium-ink: var(--risk-medium-ink);
+  --color-risk-low: var(--risk-low);
+  --color-risk-low-on: var(--risk-low-on);
+  --color-risk-low-tint: var(--risk-low-tint);
+  --color-risk-low-ink: var(--risk-low-ink);
+
   --color-gap-ring: var(--gap-ring);
 
   --color-verify-double-bg: var(--verify-double-bg);
