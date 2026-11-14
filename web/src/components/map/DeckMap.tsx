@@ -13,7 +13,7 @@ if (typeof window !== "undefined") maplibregl.setWorkerUrl(`${window.location.or
 export const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const BUILDINGS_ID = "tml-3d-buildings";
 // Room for the 2D/3D toggle (top-left), zoom buttons (right) and attribution (bottom).
-const FIT_PADDING = { top: 72, bottom: 56, left: 48, right: 64 };
+const FIT_PADDING = { top: 72, bottom: 84, left: 56, right: 64 };
 
 function DeckOverlay(props: MapboxOverlayProps) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
