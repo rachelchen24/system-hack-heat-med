@@ -171,7 +171,7 @@ export function stackingView(med: MedRiskStack, sys: SystemPathwayIndex | null):
   for (const m of stackedMechanisms)
     summary.push(`${m.drugs.join(" + ")} ${m.drugs.length === 2 ? "both" : "all"} weaken ${DEFENSE_LABELS[m.defense].en}, and heat strains it too`);
   if (stackedSymptoms.length) summary.push(`Heat and ${stackedSymptoms.length > 1 ? "several medicines" : "two medicines"} can each cause ${stackedSymptoms.slice(0, 3).map((s) => s.label.toLowerCase()).join(", ")}`);
-  for (const m of masked) summary.push(`${HEAT_ILLNESS_SIGNS[m.sign]} may not appear: ${m.why}`);
+  for (const m of masked) summary.push(`${m.label} may not appear: ${m.why}`);
 
   return {
     mechanisms,
