@@ -69,7 +69,7 @@ export function Hero195({
             </TabsList>
           </div>
         )}
-        <div className="relative mt-4 rounded-xl border bg-card p-1.5 shadow-sm sm:p-2">
+        <div className="relative mt-4 rounded-xl border border-border bg-card p-1.5 shadow-sm sm:p-2">
           {tabs.map((t) => (
             <TabsContent key={t.value} value={t.value} className="mt-0 overflow-hidden rounded-lg">
               {t.content}
