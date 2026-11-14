@@ -1,13 +1,13 @@
 {
  "schema_version": "0.1.0",
- "build_id": "84d2d38be148",
+ "build_id": "af3f3ced02ed",
  "disclaimer": "Prototype. Considerations for clinicians, not instructions. Not a replacement for clinical guidance. No dose advice. Patients: do not stop or change any medicine on your own; talk to your doctor or pharmacist.",
  "inputs": [
   {
    "path": "data/raw/literature/abstracts.jsonl",
    "present": true,
    "rows": 5995,
-   "sha1": "3ddc5e89fa36748dd2b491d0ee05e28b2a1fc191"
+   "sha1": "e1384a57e1fa49a77d43b582e5ee131b58e6dd72"
   },
   {
    "path": "data/kb/anticholinergic_burden.csv",
@@ -67,25 +67,25 @@
    "path": "data/Drug heat risk master list.csv",
    "present": true,
    "rows": 86,
-   "sha1": "bcbf6f2e937628ebc8136678734109c1d7c9787d"
+   "sha1": "574e210c8fec7e61368392bcf45aded634f9d293"
   },
   {
    "path": "data/processed/synthetic/rxnorm_cache.json",
    "present": true,
    "rows": null,
-   "sha1": "8a59469f1af3fbfdb407e8c7e9058f01d37a6594"
+   "sha1": "ed2dbd2692accdc4107bf1245eb649727b3884ad"
   },
   {
    "path": "data/processed/drug_storage_profiles.json",
    "present": true,
    "rows": null,
-   "sha1": "89936d72c2934a35b1a74d484234298fed1a64b4"
+   "sha1": "df93142dadf263c9666e26b31fc54b5d3d5ec396"
   },
   {
    "path": "data/processed/system_api_verification.csv",
-   "present": false,
-   "rows": null,
-   "sha1": null
+   "present": true,
+   "rows": 228,
+   "sha1": "fff0b1c008796f1dc712dc7ac8ff27d439131eae"
   },
   {
    "path": "data/processed/system_drug_heat_direct_findings.csv",
@@ -118,31 +118,97 @@
    "sha1": "ee6053eff0f85e79fe7e75e6fcddf87e8eb85f58"
   },
   {
-   "path": "data/processed/literature_extraction.csv",
+   "path": "data\\processed\\literature_extraction.csv",
    "present": true,
    "rows": 367,
-   "sha1": "488c4f9682fbcaccd0e46c5c180220c8bac8efbc"
+   "sha1": "45dfaa04b9d26332edf31a81abc209d37220a472"
   },
   {
-   "path": "data/processed/system_api_master_list_findings_dataverse_fallback.csv",
+   "path": "data\\processed\\system_api_findings.csv",
+   "present": true,
+   "rows": 8893,
+   "sha1": "027da1bb5ee1214b65bd2e81ee45bc61c3db211b"
+  },
+  {
+   "path": "data\\processed\\system_api_graph_check_concepts.csv",
+   "present": true,
+   "rows": 18,
+   "sha1": "eb21d515568e04f6939232fcfe3f36842e193014"
+  },
+  {
+   "path": "data\\processed\\system_api_graph_coverage.csv",
+   "present": true,
+   "rows": 126,
+   "sha1": "0699bb820499626bf7ec511cf4e145e0a4987552"
+  },
+  {
+   "path": "data\\processed\\system_api_graph_heat_relationships.csv",
+   "present": true,
+   "rows": 66,
+   "sha1": "80511a474c65fb42eff03cbd25a7686720a8e2b6"
+  },
+  {
+   "path": "data\\processed\\system_api_master_list_findings.csv",
+   "present": true,
+   "rows": 118,
+   "sha1": "be209b4e6321ea2c311e094018747ce1ec191b0d"
+  },
+  {
+   "path": "data\\processed\\system_api_master_list_findings_dataverse_fallback.csv",
    "present": true,
    "rows": 97,
    "sha1": "8302ec2a4af998a79ab23b9dc2de6bd329402339"
   },
   {
-   "path": "data/processed/system_api_reverse_check_dataverse_fallback.csv",
+   "path": "data\\processed\\system_api_master_list_papers.csv",
+   "present": true,
+   "rows": 83,
+   "sha1": "f0e84ff960a450a4808314a15f422d1cad44c2e6"
+  },
+  {
+   "path": "data\\processed\\system_api_pathway_drug_summary.csv",
+   "present": true,
+   "rows": 19,
+   "sha1": "565e05dad4a97e0b4128909bce46fcd886e6515a"
+  },
+  {
+   "path": "data\\processed\\system_api_pathways.csv",
+   "present": true,
+   "rows": 114,
+   "sha1": "1a4d290c12d55637cd62256a65dd8b0517b3716f"
+  },
+  {
+   "path": "data\\processed\\system_api_relationships.csv",
+   "present": true,
+   "rows": 401,
+   "sha1": "361571fff87032ad5eb7e3d693b9fc89e3e6020e"
+  },
+  {
+   "path": "data\\processed\\system_api_reverse_check.csv",
+   "present": true,
+   "rows": 50,
+   "sha1": "31d69eb47854be536a70463d7cd4281d82109ee1"
+  },
+  {
+   "path": "data\\processed\\system_api_reverse_check_dataverse_fallback.csv",
    "present": true,
    "rows": 37,
    "sha1": "b3e1ecc1e6a29d18619c7a3a1aa299e60c4c8f12"
   },
   {
-   "path": "data/processed/system_api_verification_dataverse_fallback.csv",
+   "path": "data\\processed\\system_api_verification_dataverse_fallback.csv",
    "present": true,
    "rows": 228,
    "sha1": "eb537d9aece06f65ec2cbe5a666115f630df9745"
   },
   {
-   "path": "data/processed/system_api_verification_numbers_dataverse_fallback.csv",
+   "path": "data\\processed\\system_api_verification_numbers.csv",
+   "present": true,
+   "rows": 105,
+   "sha1": "40813ebfea350bd344efe3c6797f4494bf32c8c5"
+  },
+  {
+   "path": "data\\processed\\system_api_verification_numbers_dataverse_fallback.csv",
    "present": true,
    "rows": 105,
    "sha1": "f9cfc12a2bbab975cf27e476b44cca47b975a8f5"
@@ -611,7 +677,7 @@
     "input_file": "data/processed/faers_heat_signals_v2.csv"
    },
    "graph": {
-    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release",
+    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release + System API",
     "pathways": [
      {
       "mediator": "dehydration",
@@ -690,12 +756,18 @@
     ],
     "untested_links": [],
     "validation_rank_nonbp": 7,
-    "api": null,
+    "api": {
+     "_file": "data\\processed\\system_api_graph_heat_relationships.csv",
+     "rows": 8,
+     "num_studies": 1.0,
+     "num_findings": 4.0
+    },
     "input_files": [
      "data/processed/system_pathways.csv",
      "data/processed/system_drug_heat_direct_findings.csv",
      "data/processed/system_untested_links.csv",
-     "data/processed/system_pathway_drug_summary.csv"
+     "data/processed/system_pathway_drug_summary.csv",
+     "data\\processed\\system_api_graph_heat_relationships.csv"
     ]
    },
    "claims": [
@@ -1535,7 +1607,7 @@
     "input_file": "data/processed/faers_heat_signals_v2.csv"
    },
    "graph": {
-    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release",
+    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release + System API",
     "pathways": [
      {
       "mediator": "dehydration",
@@ -1600,12 +1672,16 @@
      "hyponatremia"
     ],
     "validation_rank_nonbp": 1,
-    "api": null,
+    "api": {
+     "_file": "data\\processed\\system_api_pathway_drug_summary.csv",
+     "rows": 7
+    },
     "input_files": [
      "data/processed/system_pathways.csv",
      "data/processed/system_drug_heat_direct_findings.csv",
      "data/processed/system_untested_links.csv",
-     "data/processed/system_pathway_drug_summary.csv"
+     "data/processed/system_pathway_drug_summary.csv",
+     "data\\processed\\system_api_pathway_drug_summary.csv"
     ]
    },
    "claims": [
@@ -1729,10 +1805,10 @@
      "population_match": "subgroup_in_heat",
      "badge": "✓✓",
      "badge_code": "double_verified",
-     "verification": "number in abstract AND System extracted the same value (match; data/processed/system_api_verification_numbers_dataverse_fallback.csv)",
+     "verification": "number in abstract AND System extracted the same value (match; data\\processed\\system_api_verification_numbers.csv)",
      "citation_status": "exists_no_numbers_claimed;numbers_all_in_abstract",
      "public": true,
-     "input_file": "data/processed/system_api_verification_numbers_dataverse_fallback.csv"
+     "input_file": "data\\processed\\system_api_verification_numbers.csv"
     },
     {
      "id": "loop_diuretics.c5",
@@ -2728,7 +2804,7 @@
     "input_file": "data/processed/faers_heat_signals_v2.csv"
    },
    "graph": {
-    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release",
+    "source": "System Public Graph, Harvard Dataverse v2.1 bulk release + System API",
     "pathways": [
      {
       "mediator": "dehydration",
@@ -2791,12 +2867,18 @@
      "hyponatremia"
     ],
     "validation_rank_nonbp": 15,
-    "api": null,
+    "api": {
+     "_file": "data\\processed\\system_api_graph_heat_relationships.csv",
+     "rows": 8,
+     "num_studies": 1.0,
+     "num_findings": 1.0
+    },
     "input_files": [
      "data/processed/system_pathways.csv",
      "data/processed/system_drug_heat_direct_findings.csv",
      "data/processed/system_untested_links.csv",
-     "data/processed/system_pathway_drug_summary.csv"
+     "data/processed/system_pathway_drug_summary.csv",
+     "data\\processed\\system_api_graph_heat_relationships.csv"
     ]
    },
    "claims": [
@@ -2828,7 +2910,7 @@
      "population_match": "patients_in_heat",
      "badge": "✓",
      "badge_code": "verified",
-     "verification": "citation exists, number(s) found verbatim in abstract",
+     "verification": "citation exists, number(s) found verbatim in abstract; System audit: System's extraction of this paper mislabels or drops the drug (graph-audit fix list) (data\\processed\\system_api_verification_numbers.csv)",
      "citation_status": "exists_no_numbers_claimed;numbers_all_in_abstract",
      "public": true,
      "input_file": "data/processed/citation_verification.csv"
@@ -2861,7 +2943,7 @@
      "population_match": "patients_in_heat",
      "badge": "✓",
      "badge_code": "verified",
-     "verification": "citation exists, number(s) found verbatim in abstract",
+     "verification": "citation exists, number(s) found verbatim in abstract; System audit: System's extraction of this paper mislabels or drops the drug (graph-audit fix list) (data\\processed\\system_api_verification_numbers.csv)",
      "citation_status": "exists_no_numbers_claimed;numbers_all_in_abstract;numbers_not_in_abstract;numbers_partly_in_abstract",
      "public": true,
      "input_file": "data/processed/citation_verification.csv"

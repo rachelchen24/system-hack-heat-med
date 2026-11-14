@@ -221,10 +221,20 @@ def main():
                                                          "terms": set(), "kind": kind})["terms"].add(t)
     print(f"D. {len(var_hits)} matching variables ({c.stats()})")
     ids = sorted(var_hits)
+    skipped_d = []
+    skipped_batches = []
 
     def batch_assoc(side, chunk):
         """OR-batched lookup; on a server error, split the batch in half (down to one-variable calls)."""
         c.max_attempts = 2  # a 500 here is the query being too heavy, not a blip: split instead of waiting
+        if os.environ.get("EVID_D_CACHED_ONLY"):
+            # Fast finish: use only batches already fetched; skip the rest (the server takes ~10 s per batch).
+            from system_api_client import _cache_name
+            flt = f"{side}:" + "||".join(chunk)
+            if not os.path.exists(_cache_name("/associations", {"filter": flt, "offset": 0, "limit": 100})[1]):
+                skipped_d.append(len(chunk))
+                skipped_batches.append([side, chunk])
+                return []
         try:
             return c.paged("/associations", page=100, cap=3000, filter=f"{side}:" + "||".join(chunk))
         except RuntimeError as e:
@@ -264,6 +274,10 @@ def main():
                 findings.setdefault(a["system_id"], {**a, "routes": set()})["routes"].add("variable_name")
     except BudgetExceeded:
         print("budget reached during variable associations")
+    if skipped_batches and os.environ.get("EVID_DUMP_SKIPPED"):
+        json.dump(skipped_batches, open(os.environ["EVID_DUMP_SKIPPED"], "w"))  # for scripts/system_api_prefetch.py
+    if skipped_d:
+        print(f"D. fast finish: skipped {len(skipped_d)} uncached batches ({sum(skipped_d)} variable-side lookups)")
     print(f"D. total findings now {len(findings)} ({c.stats()})")
 
     # classify findings by variable names (both orders)

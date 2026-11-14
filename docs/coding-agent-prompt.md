@@ -6,6 +6,7 @@ THE PRODUCT IN ONE SENTENCE
 On the morning a heat wave is forecast, a clinic nurse sees which patients are Low, Medium or High risk because of their medicines and their home, texts each group a simple plan, and each patient sees on a map where it's cooler, where help is, how to get there, and the safest time to go.
 
 DESIGN RULES (non-negotiable)
+0. Colors: KEEP the current palette in `web/src/styles/tokens.css` (Okabe–Ito: solid chip + light tint + dark ink, rounded outlined pills like the bucket chips). Rachel likes it. Add risk-group tokens in the same style and use them everywhere (map dots, group tabs, chips, patient plan): **High = orange** (reuse the Hold vermillion: solid #d55e00, tint #fbe3d6, ink #a0410a); **Medium = yellow** (solid #f0c419, tint #fdf4d3, ink #7a5c00; give yellow map dots a thin dark outline so they show on a light map); **Low = blue** (reuse the Store-cool blue: solid #0072b2, tint #dcebf5, ink #005a8c). Other colors are fine if they stay in this palette and style. On the Medicines page, the medicine groups keep their existing colors.
 1. Outcome first, evidence on click. Main screens show only who's at risk, what to do and where to go. All evidence (sources, System graph, FDA reports, badges, scores) goes behind a "Why?" / "See the evidence" button that opens a panel: a plain reason first, then the details.
 2. Readable by anyone, including non-medical people. On main screens, no codes, scores or jargon: no FLAG/CHANGE, ROR, T1–T8, "jurisdictions," "negative-control band," "narrow therapeutic index," "HeatRisk 4 Magenta," and no raw scores like 0.605. Use plain words ("check on this person," "about 4 times as many heat reports"). Every chart title states the takeaway.
 3. Few visuals, clean and pretty: light mode, calm colors, lots of white space, one main action per screen, at most 3 colors and one legend per chart. Large type on the patient side.
@@ -22,8 +23,8 @@ P0. Simplify the shell (~20 min)
 P1. Heat + help map (~60 min), the centerpiece. Put the components in `web/src/components/map/`.
 - deck.gl + MapLibre (already installed) with a light OpenFreeMap basemap. **2D by default, with a "3D" toggle** (pitch plus building extrusions).
 - Heat layer first: neighborhoods shaded hotter → cooler from `data/processed/hvi_nta2020.geojson` (or the hyperlocal temperature sensors), with one legend: "Hotter / Cooler".
-- Help layer: `data/processed/cooling_places_nyc.geojson` (1,868 places). Simple icons by type; tap → name, address, hours, phone.
-- Clinician mode (`/map`): patient counts by neighborhood in Low/Medium/High colors, with no individual dots. Clicking an area lists its patients by group with a "Text this group" button (reuse the existing send API).
+- Help layer: `data/processed/community_resources_nyc.geojson` (READY: 4,484 places). It has every community resource that helps in a heat wave (cooling centers, libraries, senior centers, community centers, soup kitchens/food pantries, NYC Care community organizations, other nonprofits). Properties: id, name, type, address, borough, zip, phone, website, hours, services, languages, operator, source, accessed (missing fields are null). Types: Cooling center, Library, Senior center, Community center, Food pantry / soup kitchen, Community organization, Homeless services, Recreation center, Cool indoor public place, Outdoor spray shower / pool. Default filter: everything except "Outdoor spray shower / pool" (outdoor, not for high-risk patients). Show "Hours and services can change. Call ahead." on the card. Don't edit the file. Simple icons by type, and a type filter (checkboxes). Click a place → a small clean card: name, type, address, hours, phone, website, services, languages, and a "Directions" button; show only the fields that exist.
+- Clinician mode (`/map`): **every patient as a colored dot at their home**, using `home_lat` / `home_lon` from `data/processed/synthetic/patients.csv` (300 synthetic patients). Color by risk group (Low / Medium / High, same mapping as P2), with a legend and a group filter. Click a dot → a card with the synthetic name, age, group, one plain sentence of why, and "Text" and "Why?" buttons. Select an area (lasso or a click on a neighborhood) → its patients by group → "Text this group" (reuse the existing send API). Label the layer "Synthetic patients."
 - Patient mode (a component reused in P3): home location, the nearest help place and a route line with walk minutes, from `data/processed/synthetic/cooling_match.csv`; nearest subway station from `subway_stations_nyc.geojson`. "Leave by X" uses the hourly heat in `replay_heatwave_hourly.csv`. Show "Ask for a delivery instead" when the walk is long, when the patient can't reach a cool place alone (`q5_can_reach_cool_place`), or during the hottest hours.
 
 P2. Risk groups for the clinician (`/board`, ~40 min)
@@ -31,7 +32,7 @@ P2. Risk groups for the clinician (`/board`, ~40 min)
 - Layout: High / Medium / Low tabs or columns with counts. Each row shows the synthetic name, age, ZIP, ONE plain sentence of why (rewrite `readiness.drivers` into plain words), and status.
 - A "Text this group" button sends each patient their group's message through the existing simulated SMS loop. Keep the escalation (contact notified when there's no reply) and the fast-forward buttons.
 - "Why?" on a row opens a side panel: their medicines, what each one does in heat (from `data/kb/knowledge_base.json`), the System pathway, and source links.
-- Patients with `alert_opt_in` false get "Call instead," not a text.
+- Patients with `alert_opt_in` false (in `data/processed/synthetic/questionnaire.csv`) get "Call instead," not a text.
 
 P3. Patient "my heat plan" (`/phone/[id]`, ~40 min). Large type, simple, phone-sized.
 Order on the screen:
@@ -53,14 +54,13 @@ P5. "How heat and medicine add up" (~25 min)
 ──── Everything above this line = complete demo ────
 
 P6. Only if time remains
-- Scrape the NYC Care community-based organizations (https://www.nyccare.nyc/community-based-organization/) into `data/processed/nyc_care_cbos.geojson` (name, address, services, languages, phone; geocode), and add it as a map layer.
-- An intake questionnaire screen (`/phone/signup`): the core 5 questions from spec §4.5a plus heat habits plus a caregiver/emergency contact; it shows the resulting group.
+- An intake questionnaire screen (`/phone/signup`) modeled on CDC's CHILL'D-Out questionnaire (the 7 areas and questions are listed in `research-notes/advisor-models.md`): one question per screen, big buttons, the Drugs section pre-filled from the medication list, and a caregiver/emergency contact. It ends with the resulting group and why. The answers that already exist in `data/processed/synthetic/questionnaire.csv` map onto these areas.
 - An "EHR side panel" view (`/ehr/[id]`): the patient's plan in a narrow layout, plus have `/api/cds-hooks` return a card that links to it. Label it "Prototype, designed to embed via SMART on FHIR / CDS Hooks."
 
 WORKING RULES
 - Don't rebuild what works: the send/escalation loop, SQLite, the APIs and the data files.
 - Keep `npm run dev` working after every task. Fix TypeScript and lint errors as you go.
 - After each P-step, check it in the browser at desktop width and at phone width (375 px), then commit with a short message. Don't push.
-- Don't edit anything in `data/` except adding new files in P6. Don't touch `.env`.
+- Don't edit or add anything in `data/`. Don't touch `.env`.
 - If two agents are running, the map agent owns `web/src/components/map/` and `/map`; the other agent owns everything else. Never edit the same file.
 - When you finish or stop, report: what's done, what's not, and anything shown as a placeholder.

@@ -624,9 +624,15 @@ def verify_claim(spec, ctx, drug_id):
             if hit and hit["badge"].startswith("✓✓"):
                 return "✓✓", "double_verified", f"number in abstract AND System extracted the same value ({hit['system_result']}; {hit['file']})", cstatus, hit["file"]
             if hit and "⚠" in hit["badge"]:
+                if "mislabel" in hit["system_result"]:
+                    # Our number is in the abstract; System's label for it is wrong. That's System's error, not
+                    # ours: keep ✓ and record it for the graph-audit fix list.
+                    return "✓", "verified", f"citation exists, number(s) found verbatim in abstract; {SYS_AUDIT_NOTE} ({hit['file']})", cstatus, infile
                 return "⚠", "conflict", f"System check flags a conflict ({hit['system_result']}; {hit['file']})", cstatus, hit["file"]
     for k in keys:
         for a in ctx.api_verif.get(k, []):
+            if "⚠" in a["badge"] and a.get("mislabel_only"):
+                return "✓", "verified", ("citation exists, number(s) found verbatim in abstract; " if nums else "citation exists; ") + f"{SYS_AUDIT_NOTE} ({a['note']})", cstatus, infile
             if "⚠" in a["badge"]:
                 return "⚠", "conflict", f"System verification flags a conflict or mislabel ({a['note']})", cstatus, "data/processed/" + a["note"]
     if num is not None and sysrows:
@@ -1071,6 +1077,9 @@ def first_col(row, names):
     return None
 
 
+SYS_AUDIT_NOTE = "System audit: System's extraction of this paper mislabels or drops the drug (graph-audit fix list)"
+
+
 def prefer_api(paths):
     """Drop a *_dataverse_fallback file when the live-API file with the same name exists (no double counting)."""
     s = set(paths)
@@ -1094,7 +1103,9 @@ def load_api_verification(ctx):
             badge = (first_col(r, ["badge", "verification_badge"]) or "").strip()
             for k in (first_col(r, ["paper_key"]), (first_col(r, ["id_type"]) or "") + ":" + (first_col(r, ["id_value", "pmid"]) or "")):
                 if k and ":" in k and k.split(":", 1)[1]:
-                    ctx.api_verif.setdefault(k.lower(), []).append({"badge": badge, "note": os.path.basename(path)})
+                    ctx.api_verif.setdefault(k.lower(), []).append({
+                        "badge": badge, "note": os.path.basename(path),
+                        "mislabel_only": (fnum(r.get("numbers_direction_conflict")) or 0) == 0 and (fnum(r.get("numbers_mislabel")) or 0) > 0})
     for path in vnum:
         ctx.api_files.append(os.path.relpath(path, ROOT))
         for r in read_csv(path):

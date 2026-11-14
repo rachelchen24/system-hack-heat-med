@@ -212,7 +212,12 @@ The structure stays; these goals get more weight. Full task list: `docs/build-pl
 - **Medicine Cabinet scrapped as the main patient view;** optional side visual at most (§4.5).
 - **Still required:** the challenge's visual evidence map (§4.1) and meaningful System use (§8.5a, §8.5c). The new focus is the "counseling and outreach" half of the challenge sentence.
 
-**Sources Rachel sent (Sat 14 Nov), to read in Step 2:**
+- **Patients as colored dots on the clinician map** (Rachel, Sat 14 Nov): each synthetic patient at their home location, colored by Low / Medium / High.
+- **All community resources on the map** (Rachel, Sat 14 Nov): scrape every community-based organization and nonprofit that could help in a heat wave (libraries, senior centers, soup kitchens and food pantries, community centers, NYC Care CBOs, other nonprofits) into `data/processed/community_resources_nyc.geojson`; click a place for details.
+
+- **Colors (Rachel, Sat 14 Nov):** keep the current Okabe–Ito chip palette. Risk groups: **High = orange** (#d55e00), **Medium = yellow** (#f0c419), **Low = blue** (#0072b2). More colors are allowed if they stay in this scheme.
+
+**Sources Rachel sent (Sat 14 Nov): the advisor's models to copy, scale and improve.** Read; notes and the "how we do better" table are in `research-notes/advisor-models.md`.
 - NYC Care community-based organizations: https://www.nyccare.nyc/community-based-organization/ (map data to scrape)
 - LA County Public Health, Heat Illness & Mortality: https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality (screening baseline)
 - NACHC, heat-related messaging at La Clínica: https://www.nachc.org/about-nachc/our-work/air-water-and-chemical-exposures/heat-and-health-basics/heat-related-messaging-highlight-la-clinica/ (patient messaging model)
@@ -387,7 +392,7 @@ Every message is **tailored to the patient's needs**, never generic (e.g. no bla
 - Cincinnati 1999: working AC OR 0.03.
 - Chicago 1995 (Semenza et al., NEJM 1996, *verify*): living alone, not leaving home and being bedbound raised risk; AC protected.
 
-**Sat 14 Nov update:** we write the questionnaire by **adapting a baseline from LA County** (https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality), add **heat habits** (time outside, outdoor work or exercise, fluids, fan-only cooling) and a **caregiver / emergency contact**, and output a **Low / Medium / High** bucket instead of four levels.
+**Sat 14 Nov update:** the questionnaire is modeled on **CDC's CHILL'D-Out questionnaire** (Cooling, Housing, Isolation & mobility, eLectricity, Learning, Drugs, Outside), found in the NACHC EHR guide the advisor sent (`research-notes/advisor-models.md`; the LA County link is a dashboard with no questionnaire). We add **heat habits** (time outside, outdoor work or exercise, fluids, fan-only cooling) and a **caregiver / emergency contact**, and output a **Low / Medium / High** bucket instead of four levels.
 
 **Known from the pharmacy or clinic record (not asked):** age, medications, diagnoses (heart, kidney, diabetes, mental illness, dementia), pregnancy.
 
@@ -838,6 +843,19 @@ System is used in **six roles**, and each shows up visibly in the product (25% o
 - **Overall:** about 60 processed CSVs. All parse cleanly (no ragged rows, no unexpected empty columns). Every synthetic file is labelled synthetic. The knowledge base builds for all 15 drugs.
 - **System status:** the overnight API pull got HTTP 403 (key rejected), so every `system_*` output comes from the **Dataverse v2.1 fallback** (about 2.0M findings vs. about 5.9M via the API). The key in `.env` **works as of 14 Nov late morning (HTTP 200)**. **Next step:** rerun the API pipeline in this order: `system_api_master_audit` → `system_api_evidence` → `system_api_graph_check` → `system_api_verify` → `system_api_live_layer`. That's about 2–4.5k of the 10k daily requests. Then rebuild the knowledge base.
 - **Why the API rerun matters:** Dataverse holds only 7 of our 83 cited papers. The API had 50 indexed, 8 with findings. The **Martin-Latry mislabel** (our best audit story) is API-only, and so are the dialysis RR 1.27 and the insulin-pen finding.
+- **API rerun done (14 Nov, 1,225 calls):**
+  - Of the 83 papers we cite, 80 are indexed and 15 have findings (50 findings).
+  - 14 of our numbers are ✓✓, up from 5. There are 0 number or direction conflicts.
+  - 3 papers carry System mislabels or drop the drug: Martin-Latry 2007, Layton 2020 (PMID 33301532) and Wong 2024.
+  - Concept-level drug × heat edges: still 7.
+  - The evidence step's variable route was finished from cache: about 45% of batches are done, and the rest were skipped because the server takes about 10 s per batch. To complete it later, run `system_api_evidence.py` without `EVID_D_CACHED_ONLY`.
+- **Decision:** a System mislabel never downgrades our claim. If our number is in the abstract, the claim keeps ✓, gets an audit note, and goes to `data/processed/system_audit_fix_list.csv`. ⚠ is reserved for real number or direction conflicts.
+- **Fix list** (`system_audit_fix_list.csv`): 4 mislabels, 5 findings System didn't extract, and 16 candidate additions. Highlights:
+  - an unused **outdoor temperature → drug-induced hyponatremia OR 2.21** on PMID 28737683, which we already cite
+  - lithium PMID 25163443
+  - SGLT2 → AKI (31 studies, mostly protective)
+  - loop diuretics → AKI (30 studies, 27 of the ratio findings point up)
+- **Visuals:** `docs/data-pipeline.svg` shows how the data was gathered, joined and filtered. `docs/data-cleaning-charts.html` shows the cleaning and System verification charts and the cleaning log.
 - **Open decision:** System's rule "keep API findings only if they're also in Dataverse" would drop Martin-Latry. Proposal: apply the rule to evidence badges (✓✓), but still report API-only findings in the audit/fix list, labelled "API only."
 - **Graph coverage file:** `data/graph_coverage.csv` was overwritten in Dataverse mode (13 core-heat findings). The 13 Nov API version (about 7 concept / 15 variable findings) is backed up in `data/raw/system/graph_coverage_api_2026-11-13_backup.csv`. Keep the headline numbers tied to their source.
 - **Lithium under-scored:** lithium shows "Early signs" (0.156), because its only population-study claim (Wilting, Utrecht thesis, no PMID) is badged "?" and hidden.
@@ -1045,5 +1063,6 @@ Suggested 15 (to confirm):
 - **Work split from 10:45 Sat:** Rachel = SQLite + core loop (send alert → simulated push/SMS on the phone → escalation with fast-forward → clinic board). Myra = System key rerun, then the evidence-side visuals in `web/` (forest plot, pathway Sankey, node graph, live System layer, CDS Hooks cards). The 3D map and call-first scatter go to whoever finishes first.
 - **Core loop built (Sat 14 Nov, 11:00):** `/board` (clinic board: replay-day call list, send / multi-send, live status, message log, +5/+15/+45 min fast-forward, reset) and `/phone/<id>` (demo phone: simulated push banner, simulated SMS thread, "I'm OK" / "I feel unwell" / "No AC"). All wording and timings come from `panel_scores_replay.json` (`safety_alert`, `contact_check`, `escalation.steps`); escalation steps fire when the board or phone polls, so fast-forward just shifts the demo clock. **Rule: no invented data; missing pieces show a labeled placeholder naming the file they'll come from.**
 - **The one specific use case (Rachel, Sat 14 Nov): to pick.** One suggestion: *a clinic nurse at a Bronx health center, the morning a heat wave is forecast, screens the panel into buckets, texts each bucket its plan, and the High-risk patients and their caregivers get a resource, a route and a safe time to go.* To discuss.
+- **Project name:** still "The Missing Label." Rachel rejected the first brainstorm (CoolPath, Safe Hours, Heatline, etc.); to pick.
 - **Texting:** real SMS-provider API in the demo, or keep it simulated (decided simulated earlier on 14 Nov)? The SMS module is built so either works.
 - **Open:** the board can send to patients whose `why` says "not opted in to safety alerts: phone call is the only route" (e.g. P0149). Send should respect the questionnaire's `alert_opt_in` and route those patients straight to the call list.

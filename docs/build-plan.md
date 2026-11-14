@@ -13,7 +13,7 @@ The old 8-step plan is archived in `docs/build-plan-v1-archive.md`. `spec.md` is
 1. **Outcome first, evidence on click.** Screens show who's at risk, what to do and where to go. The evidence sits behind a **"Why?"** button: the plain reason first, then sources, System graph, FDA reports and badges.
 2. **Readable by anyone:** no codes or scores on main screens (no FLAG/CHANGE, ROR, T1–T8, "jurisdictions," "HeatRisk 4 Magenta"). Every chart title states the takeaway. Numbers in words.
 3. **Few visuals:** 6 (below). Everything else is cut or moved into "Why?" / nerd stats.
-4. **Pretty and clean:** light mode, calm colors, lots of white space, one main action per screen. At most 3 colors per chart.
+4. **Pretty and clean:** keep the current palette (Okabe–Ito chips Rachel likes); risk groups **High = orange, Medium = yellow, Low = blue**; light mode, lots of white space, one main action per screen. At most 3 colors per chart.
 5. **Patient map: 2D by default** (older patients), with a 3D switch.
 6. **No invented data.** Missing pieces show a labeled placeholder naming the file they'll come from. Synthetic patients only.
 
@@ -44,10 +44,16 @@ Work in this order. If time runs out, everything above the line still makes a co
 ### P1. Heat + help map (≈60 min), the centerpiece
 - deck.gl + MapLibre, light basemap (OpenFreeMap). **2D default, 3D toggle** (pitch + building extrusions).
 - **Heat layer first:** hottest → coolest neighborhoods, with one simple legend ("hotter / cooler").
-- **Help layer:** cooling centers, libraries, senior centers, rec centers (`cooling_places_nyc.geojson`). Icons by type; tap → name, hours, address, phone.
-- **Clinician mode:** patients shown as **group counts per neighborhood** (hexagons or circles in Low/Medium/High colors, no individuals); click an area → its patients by group → "Text this group."
+- **Help layer:** every community resource that can help in a heat wave, from **`data/processed/community_resources_nyc.geojson`** (being built now, see P1b; until it exists, use `cooling_places_nyc.geojson`). Icons by type with a type filter; **click → a small card**: name, type, address, hours, phone, website, services, languages, and "Directions."
+- **Clinician mode: every patient as a colored dot at their home** (`synthetic/patients.csv` → `home_lat`/`home_lon`), colored by risk group (Low / Medium / High). Click a dot → name, group, plain why, "Text" and "Why?". Filter by group; lasso or click an area → "Text this group." (Synthetic patients, so individual dots are fine; a real deployment would show them only inside the clinic's login.)
 - **Patient mode:** their home, nearest help, and the **route line** with walk minutes (from `cooling_match.csv`), plus the nearest subway station.
 - "Best way there given the heat" (honest version for today): walk minutes × heat at that hour → **"leave by X"**; offer **delivery instead** when the walk is long, the patient can't reach a cool place alone (`q5_can_reach_cool_place`), or it's the hottest hours. Shade-aware routing goes in "Next steps."
+
+### P1b. Community resources data (Claude) — DONE 11:55: `community_resources_nyc.geojson`, 4,484 places
+Scrape and merge **all community-based organizations and nonprofits that could help in a heat wave** into one file: `data/processed/community_resources_nyc.geojson`, one point per place, with name, type, address, borough, ZIP, phone, website, hours, services, languages, source and access date.
+- Types: cooling centers, libraries, senior / older adult centers, community centers, soup kitchens and food pantries, NYC Care community-based organizations, other nonprofits (health, housing, immigrant services), and rec centers.
+- Sources: NYC Care CBO directory (https://www.nyccare.nyc/community-based-organization/), NYC Open Data (older adult centers, food programs, libraries, community centers), the existing `cooling_places_nyc.geojson`, and others as found. Each one is listed in `data/SOURCES.md`.
+- Shown on the map (P1) with a click-for-details card; used to match patients to the nearest suitable help (P3).
 
 ### P2. Risk groups for the clinician (≈40 min)
 - Rework `/board` into **three columns or tabs: High / Medium / Low** with counts.
@@ -77,8 +83,7 @@ Work in this order. If time runs out, everything above the line still makes a co
 ### ─── line: above here = a complete demo ───
 
 ### P6. If time (each ≈20–30 min, in this order)
-- **NYC Care community organizations** on the map: scrape https://www.nyccare.nyc/community-based-organization/ (name, address, services, languages, phone), geocode, add as a layer.
-- **Intake questionnaire screen** (patient sign-up), adapted from the LA County baseline (https://ph-lacounty.hub.arcgis.com/pages/heat-illness-mortality): the core 5 + heat habits + caregiver/emergency contact; shows the resulting group.
+- **Intake questionnaire screen** (patient sign-up), modeled on **CDC's CHILL'D-Out questionnaire** (Cooling, Housing, Isolation & mobility, eLectricity, Learning, Drugs, Outside; from the NACHC EHR guide the advisor sent, see `research-notes/advisor-models.md`). Drugs is filled in from the medication list. Shows the resulting group and why.
 - **"Embedded in the EHR" view:** the patient's plan rendered in a narrow side-panel layout + the existing CDS Hooks route (`/api/cds-hooks`) returning a card that links to it. Label: "Prototype, designed to embed via SMART on FHIR / CDS Hooks." Use the NACHC EHR page as the model.
 - Spanish toggle for the patient plan.
 
@@ -90,8 +95,12 @@ Work in this order. If time runs out, everything above the line still makes a co
 
 ---
 
+## What the advisor's models give us (see `research-notes/advisor-models.md`)
+- **CHILL'D-Out** → our questionnaire; **5 Rights of Clinical Communication** → pitch framing; **message-fatigue rules** → text only on high-heat days, specific to the person; **La Clínica** → proof that clinic texts work and are trusted (2,608 → 11,535 recipients). Our step up: scored groups, medicines explained and stacked, help + route + safe hours, contact escalation, any health system.
+
 ## Who does what (suggested; you two decide)
-- **Track A (map person):** P1, then the map parts of P3, then the NYC Care layer.
+- **Track A (map person):** P1 (patient dots + resources layer), then the map parts of P3.
+- **Claude (this session):** P1b, the community resources data file.
 - **Track B (app person):** P0, P2, the rest of P3, P4, P5.
 - Whoever finishes first: questionnaire screen, EHR view, pitch slides.
 - Coding agents can run each track in parallel. Two agents must never edit the same file. Map files live in `web/src/components/map/`; everything else stays where it is.
@@ -108,4 +117,4 @@ Work in this order. If time runs out, everything above the line still makes a co
 - Next.js app in `web/` (runs with `npm run dev` on port 3000, LAN-visible)
 - `/board` clinic board with send, multi-send, fast-forward and message log; `/phone/[id]` demo phone with simulated push + SMS and check-in buttons; SQLite loop in `web/src/lib/loop.ts`
 - Evidence map, drug pages, nerd stats (`/evidence`), knowledge base API, System live layer API, CDS Hooks route
-- All data in `data/processed/` and `data/kb/` (see `data/SOURCES.md`)
+- All data in `data/processed/` and `data/kb/` (`data/SOURCES.md` doesn't exist yet; add it before Devpost so the data-sources section is easy to write)
