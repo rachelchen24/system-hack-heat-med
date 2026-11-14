@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import PatientPlanMap from "@/components/map/PatientPlanMap";
 import { HOT_FEELS_LIKE_F } from "@/components/map/patientPlanData";
 import { Placeholder } from "@/components/Placeholder";
@@ -161,6 +162,9 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
           </p>
         )}
         <p className="font-bold">{t.talk}</p>
+        <Link href={`/phone/signup?patient=${p.patientId}`} className="inline-block text-base underline">
+          {es ? "Actualizar mis respuestas" : "Update my answers"}
+        </Link>
       </section>
     </div>
   );

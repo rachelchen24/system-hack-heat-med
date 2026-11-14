@@ -17,6 +17,12 @@ export default function PhonePicker() {
     <div className="mx-auto max-w-xl space-y-4">
       <h1 className="text-3xl font-bold">Patient app</h1>
       <p className="text-ink-muted">Pick a patient to see their heat plan for today. All patients are synthetic.</p>
+      <Link
+        href="/phone/signup"
+        className="block rounded-2xl border border-risk-low bg-risk-low-tint p-4 text-lg font-semibold text-risk-low-ink hover:opacity-90"
+      >
+        New here? Answer a few questions to get your heat plan →
+      </Link>
       <ul className="space-y-2">
         {story.map((p) => {
           const g = riskGroup(p.readiness?.level);
