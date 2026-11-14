@@ -17,11 +17,13 @@ export interface CabinetEffect {
 // Bottle colors from the app palette (app teal + Okabe–Ito).
 const BOTTLE = ["#0e7c86", "#e69f00", "#cc79a7", "#009e73", "#d55e00", "#56b4e9"];
 
-export function MedicineCabinet({ effects, title = "Your medicines in the heat", hint = "Tap your medicines.", addsUp = "Adds up" }: {
+export function MedicineCabinet({ effects, title = "Your medicines in the heat", hint = "Tap your medicines.", addsUp = "Adds up", compact = false }: {
   effects: CabinetEffect[];
   title?: string;
   hint?: string;
   addsUp?: string;
+  /** Clinician view with many medicines: narrower bottles so one row fits ~15. Patient view unchanged. */
+  compact?: boolean;
 }) {
   const drugs = useMemo(() => Array.from(new Set(effects.flatMap((e) => e.drugs))), [effects]);
   const color = useMemo(() => new Map(drugs.map((d, i) => [d, BOTTLE[i % BOTTLE.length]])), [drugs]);
@@ -92,7 +94,7 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
         </svg>
 
         {/* shelf of bottles */}
-        <div className="relative flex flex-wrap justify-center gap-3 border-b-4 border-[#6b6b66] pb-2">
+        <div className={`relative flex flex-wrap justify-center ${compact ? "gap-1" : "gap-3"} border-b-4 border-[#6b6b66] pb-2`}>
           {drugs.map((d) => {
             const on = active.includes(d);
             const c = color.get(d)!;
@@ -107,18 +109,18 @@ export function MedicineCabinet({ effects, title = "Your medicines in the heat",
                 onMouseEnter={() => setHover(d)}
                 onMouseLeave={() => setHover(null)}
                 aria-pressed={picked.includes(d)}
-                className="flex w-[84px] flex-col items-center rounded-lg p-1 focus-visible:outline-2"
+                className={`flex ${compact ? "w-[74px]" : "w-[84px]"} flex-col items-center rounded-lg p-1 focus-visible:outline-2`}
               >
                 {/* cap */}
                 <span className="block h-3 w-9 rounded-t-md" style={{ background: "#6b6b66" }} />
                 {/* bottle */}
                 <span
-                  className="flex h-20 w-14 items-center justify-center rounded-b-xl rounded-t-md border-2 shadow-sm"
+                  className={`flex ${compact ? "h-16 w-11" : "h-20 w-14"} items-center justify-center rounded-b-xl rounded-t-md border-2 shadow-sm`}
                   style={{ borderColor: c, background: on ? c : `${c}22` }}
                 >
                   <span className="rounded bg-page px-1 text-[10px] font-bold leading-tight text-ink">Rx</span>
                 </span>
-                <span className={`mt-1 text-center text-sm font-semibold capitalize leading-tight ${on ? "text-ink" : "text-ink-muted"}`}>{d}</span>
+                <span className={`mt-1 text-center ${compact ? "text-xs" : "text-sm"} font-semibold capitalize leading-tight ${on ? "text-ink" : "text-ink-muted"}`}>{d}</span>
               </button>
             );
           })}
