@@ -8,6 +8,9 @@ import { RISK, RISK_ORDER, type RiskGroup } from "@/lib/risk";
 import { BUCKETS } from "@/lib/ui";
 import type { Bucket } from "@lib/types/knowledge-base.ts";
 
+// The group's risk color stays on hover (the Button default hovers to the app teal).
+const GROUP_HOVER: Record<string, string> = { high: "hover:bg-risk-high", medium: "hover:bg-risk-medium", low: "hover:bg-risk-low" };
+
 // Medicine boxes take the Evidence Map's action-bucket color (left accent + chip).
 const BUCKET_ACCENT: Record<Bucket, string> = {
   hold_or_substitute: "border-l-hold-solid",
@@ -180,7 +183,7 @@ export function Board({ rows, source, questionnaireFile, asOf }: { rows: BoardRo
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Button size="lg" className="px-6 text-base" onClick={() => send(texts.map((r) => r.id))} disabled={busy || !texts.length}>
+              <Button size="lg" className={`px-6 text-base hover:brightness-95 ${RISK[group].solid} ${GROUP_HOVER[group]}`} onClick={() => send(texts.map((r) => r.id))} disabled={busy || !texts.length}>
                 Text this group ({texts.length})
               </Button>
               {calls.length > 0 && (
@@ -195,7 +198,7 @@ export function Board({ rows, source, questionnaireFile, asOf }: { rows: BoardRo
             {shown.map((r) => {
               const st = statusOf(r.id);
               return (
-                <li key={r.id} className="flex flex-col gap-1 px-4 py-2.5 sm:flex-row sm:items-center sm:gap-4">
+                <li key={r.id} className="flex flex-col gap-1 border-l-[6px] px-4 py-2.5 sm:flex-row sm:items-center sm:gap-4" style={{ borderLeftColor: `var(--risk-${r.group})` }}>
                   <div className="min-w-0 flex-1">
                     <p>
                       <span className="font-semibold">{r.name}</span>{" "}
