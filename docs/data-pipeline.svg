@@ -88,7 +88,7 @@
     <rect class="sysbg" x="920" y="256" width="300" height="58" rx="6"/>
     <text class="t b" x="932" y="276" font-weight="700">1,644 drug→mediator · 101 heat→mediator</text>
     <text class="t b" x="932" y="294" font-weight="700">18 direct drug × heat (14 studies)</text>
-    <text class="m s" x="932" y="308">API: 8,893 findings via 401 edges + variable search</text>
+    <text class="m s" x="932" y="308">API: 15,001 findings via 401 edges + variable search</text>
     <path class="arrow" d="M760,285 H778"/><path class="arrow" d="M900,285 H918"/>
   </g>
   <text class="sys s" x="640" y="336" font-weight="700">CONNECT THE HOPS</text>

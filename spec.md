@@ -843,14 +843,14 @@ System is used in **six roles**, and each shows up visibly in the product (25% o
 - **Overall:** about 60 processed CSVs. All parse cleanly (no ragged rows, no unexpected empty columns). Every synthetic file is labelled synthetic. The knowledge base builds for all 15 drugs.
 - **System status:** the overnight API pull got HTTP 403 (key rejected), so every `system_*` output comes from the **Dataverse v2.1 fallback** (about 2.0M findings vs. about 5.9M via the API). The key in `.env` **works as of 14 Nov late morning (HTTP 200)**. **Next step:** rerun the API pipeline in this order: `system_api_master_audit` → `system_api_evidence` → `system_api_graph_check` → `system_api_verify` → `system_api_live_layer`. That's about 2–4.5k of the 10k daily requests. Then rebuild the knowledge base.
 - **Why the API rerun matters:** Dataverse holds only 7 of our 83 cited papers. The API had 50 indexed, 8 with findings. The **Martin-Latry mislabel** (our best audit story) is API-only, and so are the dialysis RR 1.27 and the insulin-pen finding.
-- **API rerun done (14 Nov, 1,225 calls):**
+- **API rerun done (14 Nov, 1,902 calls; 15,001 findings, complete):**
   - Of the 83 papers we cite, 80 are indexed and 15 have findings (50 findings).
   - 14 of our numbers are ✓✓, up from 5. There are 0 number or direction conflicts.
   - 3 papers carry System mislabels or drop the drug: Martin-Latry 2007, Layton 2020 (PMID 33301532) and Wong 2024.
   - Concept-level drug × heat edges: still 7.
-  - The evidence step's variable route was finished from cache: about 45% of batches are done, and the rest were skipped because the server takes about 10 s per batch. To complete it later, run `system_api_evidence.py` without `EVID_D_CACHED_ONLY`.
+  - The server takes about 10 s per batched call, so the variable route was fetched 8 at a time with `scripts/system_api_prefetch.py`, splitting batches that return 500. The evidence step then reran entirely from cache.
 - **Decision:** a System mislabel never downgrades our claim. If our number is in the abstract, the claim keeps ✓, gets an audit note, and goes to `data/processed/system_audit_fix_list.csv`. ⚠ is reserved for real number or direction conflicts.
-- **Fix list** (`system_audit_fix_list.csv`): 4 mislabels, 5 findings System didn't extract, and 16 candidate additions. Highlights:
+- **Fix list** (`system_audit_fix_list.csv`): 4 mislabels, 5 findings System didn't extract, and 17 candidate additions. Highlights:
   - an unused **outdoor temperature → drug-induced hyponatremia OR 2.21** on PMID 28737683, which we already cite
   - lithium PMID 25163443
   - SGLT2 → AKI (31 studies, mostly protective)
@@ -1063,6 +1063,7 @@ Suggested 15 (to confirm):
 - **Work split from 10:45 Sat:** Rachel = SQLite + core loop (send alert → simulated push/SMS on the phone → escalation with fast-forward → clinic board). Myra = System key rerun, then the evidence-side visuals in `web/` (forest plot, pathway Sankey, node graph, live System layer, CDS Hooks cards). The 3D map and call-first scatter go to whoever finishes first.
 - **Core loop built (Sat 14 Nov, 11:00):** `/board` (clinic board: replay-day call list, send / multi-send, live status, message log, +5/+15/+45 min fast-forward, reset) and `/phone/<id>` (demo phone: simulated push banner, simulated SMS thread, "I'm OK" / "I feel unwell" / "No AC"). All wording and timings come from `panel_scores_replay.json` (`safety_alert`, `contact_check`, `escalation.steps`); escalation steps fire when the board or phone polls, so fast-forward just shifts the demo clock. **Rule: no invented data; missing pieces show a labeled placeholder naming the file they'll come from.**
 - **The one specific use case (Rachel, Sat 14 Nov): to pick.** One suggestion: *a clinic nurse at a Bronx health center, the morning a heat wave is forecast, screens the panel into buckets, texts each bucket its plan, and the High-risk patients and their caregivers get a resource, a route and a safe time to go.* To discuss.
+- **Heat-day time-lapse (Rachel, Sat 14 Nov): YES**, at `/replay`, as the pitch opener. **Rejected:** cooling deserts, 3D "walk in their shoes" route, QR code for judges.
 - **Project name:** still "The Missing Label." Rachel rejected the first brainstorm (CoolPath, Safe Hours, Heatline, etc.); to pick.
 - **Texting:** real SMS-provider API in the demo, or keep it simulated (decided simulated earlier on 14 Nov)? The SMS module is built so either works.
 - **Open:** the board can send to patients whose `why` says "not opted in to safety alerts: phone call is the only route" (e.g. P0149). Send should respect the questionnaire's `alert_opt_in` and route those patients straight to the call list.

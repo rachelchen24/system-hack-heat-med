@@ -80,6 +80,10 @@ Scrape and merge **all community-based organizations and nonprofits that could h
 - One simple 3-column picture: **medicines → body effect ← heat**. Thick line = more studies in System. Click a line → "Why?" with System study counts.
 - A small version on the patient's plan: "Your two medicines both make it harder to stay cool."
 
+### P5b. Heat-day time-lapse (`/replay`, Claude on Rachel's machine, new files only)
+- About 20 seconds of the replay heat day, hour by hour (`replay_heatwave_hourly.csv`): the map warms from blue to orange; patient dots in their risk-group colors pulse when their heat-risk hour hits; the clock, temperature and counters (texts sent, check-ins) tick. Play / pause / scrub. Pitch opener. Only real data; message and check-in timing comes from `panel_scores_replay.json`.
+- Rejected ideas (Rachel, Sat 14 Nov): cooling deserts, 3D "walk in their shoes," QR code for judges.
+
 ### ─── line: above here = a complete demo ───
 
 ### P6. If time (each ≈20–30 min, in this order)
