@@ -15,6 +15,7 @@ export const PROCESSED = path.join(REPO_ROOT, "data", "processed");
 export const FILES = {
   panel: "data/processed/panel_scores_replay.json",
   patients: "data/processed/synthetic/patients.csv",
+  questionnaire: "data/processed/synthetic/questionnaire.csv",
   heat: "data/processed/hvi_nta2020.geojson",
   help: "data/processed/community_resources_nyc.geojson",
 };
@@ -26,7 +27,7 @@ export function riskGroup(level: string | undefined | null): RiskGroup {
 }
 
 /** Rewrite readiness.drivers into plain words. */
-function plainDriver(d: string): string {
+export function plainDriver(d: string): string {
   const s = d.trim();
   if (s.startsWith("neighborhood heat vulnerability index 5")) return "lives in one of the neighborhoods hit hardest by heat";
   if (s.startsWith("neighborhood heat vulnerability index")) return "lives in a neighborhood hit hard by heat";
@@ -106,6 +107,10 @@ export interface MapPatient {
   why: string;
   nta: string | null;
   ntaName: string | null;
+  /** questionnaire.csv alert_opt_in; false → "Call instead". */
+  textOk: boolean;
+  /** Every reason, in plain words (for the "Why?" panel). */
+  reasons: string[];
 }
 
 export interface HelpPoint { id: string; name: string; type: string; lon: number; lat: number }
@@ -180,6 +185,7 @@ export function loadMapPatients(): MapPatient[] {
   if (cache.__mapPatients?.key === key) return cache.__mapPatients.patients;
   const rows = readCsv(pf);
   const home = new Map(rows.map((r) => [r.patient_id, r]));
+  const optIn = new Map(readCsv(path.join(REPO_ROOT, FILES.questionnaire)).map((r) => [r.patient_id, r.alert_opt_in !== "false"]));
   const heat = loadHeatAreas();
   const out: MapPatient[] = [];
   for (const p of panel.data.patients as unknown as {
@@ -195,6 +201,8 @@ export function loadMapPatients(): MapPatient[] {
       id: p.patientId, name: p.displayName, age: p.age, zip: p.zip, lat, lon, group,
       why: plainWhy(p.readiness?.drivers, group),
       nta: area?.properties.nta2020 ?? null, ntaName: area?.properties.ntaname ?? null,
+      textOk: optIn.get(p.patientId) ?? true,
+      reasons: (p.readiness?.drivers ?? []).map((d) => { const t = plainDriver(d); return t.charAt(0).toUpperCase() + t.slice(1); }),
     });
   }
   cache.__mapPatients = { key, patients: out };
