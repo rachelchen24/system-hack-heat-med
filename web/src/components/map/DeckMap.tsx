@@ -1,7 +1,8 @@
 "use client";
 // Client-only map canvas: MapLibre (OpenFreeMap positron) + deck.gl overlay.
 // Load it through next/dynamic with ssr:false (see MapCanvas.tsx).
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Ring } from "@/components/replay/area";
 import { Map, NavigationControl, useControl, type MapRef } from "react-map-gl/maplibre";
 import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
 import * as maplibregl from "maplibre-gl";
@@ -31,6 +32,9 @@ export interface DeckMapProps {
   onZoom?: (z: number) => void;
   height: number | string;
   ariaLabel: string;
+  /** Area-select mode: dragging draws a box (instead of panning) and reports its 4 ground corners. */
+  selecting?: boolean;
+  onBox?: (ring: Ring) => void;
 }
 
 function setBuildings(map: maplibregl.Map, on: boolean) {
@@ -53,9 +57,23 @@ function setBuildings(map: maplibregl.Map, on: boolean) {
   if (!on && map.getLayer(BUILDINGS_ID)) map.removeLayer(BUILDINGS_ID);
 }
 
-export default function DeckMap({ layers, initialView, fitBounds, threeD, getTooltip, onZoom, height, ariaLabel }: DeckMapProps) {
+export default function DeckMap({ layers, initialView, fitBounds, threeD, getTooltip, onZoom, height, ariaLabel, selecting = false, onBox }: DeckMapProps) {
   const ref = useRef<MapRef>(null);
   const threeDRef = useRef(threeD);
+  const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const finishDrag = () => {
+    if (!drag) return;
+    const { x0, y0, x1, y1 } = drag;
+    setDrag(null);
+    const map = ref.current;
+    if (!map || Math.abs(x1 - x0) < 6 || Math.abs(y1 - y0) < 6) return; // a click, not a box
+    const [l, r, t, b] = [Math.min(x0, x1), Math.max(x0, x1), Math.min(y0, y1), Math.max(y0, y1)];
+    const ring: Ring = ([[l, t], [r, t], [r, b], [l, b]] as [number, number][]).map(([x, y]) => {
+      const ll = map.unproject([x, y]);
+      return [ll.lng, ll.lat];
+    });
+    onBox?.(ring);
+  };
 
   const apply3D = useCallback((on: boolean) => {
     const m = ref.current?.getMap();
@@ -97,6 +115,39 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
         <NavigationControl position="top-right" visualizePitch />
         <DeckOverlay layers={layers} getTooltip={getTooltip} />
       </Map>
+      {/* Area-select overlay: catches the drag so the map doesn't pan, and draws the box. */}
+      {selecting && (
+        <div
+          className="absolute inset-0 z-[5] cursor-crosshair touch-none"
+          onPointerDown={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            const x = e.clientX - r.left, y = e.clientY - r.top;
+            setDrag({ x0: x, y0: y, x1: x, y1: y });
+          }}
+          onPointerMove={(e) => {
+            if (!drag) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            setDrag({ ...drag, x1: e.clientX - r.left, y1: e.clientY - r.top });
+          }}
+          onPointerUp={finishDrag}
+          onPointerCancel={() => setDrag(null)}
+        >
+          {drag && (
+            <div
+              className="pointer-events-none absolute border-2 border-dashed"
+              style={{
+                left: Math.min(drag.x0, drag.x1),
+                top: Math.min(drag.y0, drag.y1),
+                width: Math.abs(drag.x1 - drag.x0),
+                height: Math.abs(drag.y1 - drag.y0),
+                borderColor: "#3730a3",
+                background: "rgba(55, 48, 163, 0.1)",
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

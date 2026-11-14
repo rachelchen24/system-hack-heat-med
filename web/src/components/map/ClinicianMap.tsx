@@ -2,7 +2,8 @@
 // Clinician heat + help map (/map): neighborhoods shaded by heat, help places, synthetic patients
 // colored by risk group. Click a dot, a place or a neighborhood for a card.
 import { useEffect, useMemo, useState } from "react";
-import { GeoJsonLayer, IconLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, IconLayer, PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { inRing, type Ring } from "@/components/replay/area";
 import { personIcon } from "./personIcon";
 import type { PickingInfo } from "@deck.gl/core";
 import { HEAT_HEX, HEAT_RGB, RISK_CSS, RISK_GROUPS, RISK_RGB, type RiskGroup } from "./colors";
@@ -16,7 +17,10 @@ type Selection =
   | { kind: "patient"; id: string }
   | { kind: "place"; id: string }
   | { kind: "area"; nta: string }
+  | { kind: "box" } // everyone inside a box dragged on the map
   | null;
+
+const GROUP_ORDER: Record<RiskGroup, number> = { High: 0, Medium: 1, Low: 2 };
 
 interface Layers {
   heat: { type: "FeatureCollection"; features: HeatArea[] } | null;
@@ -93,10 +97,22 @@ function Card({ title, onClose, children }: { title: React.ReactNode; onClose: (
   );
 }
 
-function PatientCard({ p, onClose }: { p: MapPatient; onClose: () => void }) {
-  const [more, setMore] = useState(false);
+function PatientCard({ p, onClose, backLabel = null, defaultMore = false }: { p: MapPatient; onClose: () => void; backLabel?: string | null; defaultMore?: boolean }) {
+  const [more, setMore] = useState(defaultMore);
   return (
-    <Card title={p.name} onClose={onClose}>
+    <Card
+      title={
+        <>
+          {backLabel && (
+            <button type="button" onClick={onClose} className="mb-2 block text-left text-sm font-semibold text-[var(--layer-graph-fg,#3730a3)] hover:underline">
+              ← {backLabel}
+            </button>
+          )}
+          {p.name}
+        </>
+      }
+      onClose={onClose}
+    >
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <GroupChip g={p.group}>{p.group} risk</GroupChip>
         <span className="text-[var(--ui-ink-muted,#4b5563)]">Age {p.age}</span>
@@ -208,6 +224,60 @@ function AreaCard({ area, patients, onPick, onClose }: { area: HeatArea; patient
   );
 }
 
+function BoxList({ people, onPick, onClear, onRedo }: { people: MapPatient[]; onPick: (id: string) => void; onClear: () => void; onRedo: () => void }) {
+  const counts = { High: 0, Medium: 0, Low: 0 } as Record<RiskGroup, number>;
+  for (const p of people) counts[p.group]++;
+  return (
+    <div className="overflow-hidden rounded-xl border border-[var(--ui-line,#d4d4d0)] bg-white">
+      <div className="border-b-4 border-b-[var(--layer-graph-fg,#3730a3)] bg-[var(--layer-graph-bg,#eef2ff)] p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-base font-bold">
+            {people.length} {people.length === 1 ? "person" : "people"} in this area
+          </h2>
+          <button type="button" onClick={onClear} aria-label="Clear area" className="rounded-full px-2 text-xl leading-none text-[var(--ui-ink-muted,#4b5563)] hover:bg-white">×</button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {RISK_GROUPS.map((g) => <GroupChip key={g} g={g}>{counts[g]} {g.toLowerCase()}</GroupChip>)}
+        </div>
+        <button type="button" onClick={onRedo} className="mt-2 text-sm font-semibold text-[var(--layer-graph-fg,#3730a3)] underline underline-offset-2">
+          Select a different area
+        </button>
+      </div>
+      {people.length === 0 ? (
+        <p className="p-4 text-sm text-[var(--ui-ink-muted,#4b5563)]">No patients inside this box (with the risk groups that are switched on). Try a bigger area.</p>
+      ) : (
+        <>
+          <ul className="max-h-[44vh] divide-y divide-[var(--ui-line,#d4d4d0)] overflow-y-auto">
+            {people.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(p.id)}
+                  className="flex w-full items-start gap-3 border-l-4 px-4 py-2.5 text-left text-sm hover:bg-[var(--ui-surface,#f7f7f5)]"
+                  style={{ borderLeftColor: RISK_CSS[p.group].solid }}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2">
+                      <span className="font-semibold">{p.name}</span>
+                      <span className="text-[var(--ui-ink-muted,#4b5563)]">{p.age}</span>
+                      <span className="rounded-full px-2 py-px text-xs font-semibold" style={{ background: RISK_CSS[p.group].tint, color: RISK_CSS[p.group].ink }}>{p.group}</span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-[var(--ui-ink-muted,#4b5563)]">{p.why}</span>
+                  </span>
+                  <span aria-hidden className="self-center text-[var(--ui-ink-muted,#4b5563)]">›</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-[var(--ui-line,#d4d4d0)] p-3">
+            <SendButton patients={people} label={`Text everyone in this area (${people.length})`} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }: { patients: MapPatient[]; files: { panel: string; patients: string }; mapHeight?: string }) {
   const [layers, setLayers] = useState<Layers | null>(null);
   const [loadErr, setLoadErr] = useState(false);
@@ -217,6 +287,15 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
   const [threeD, setThreeD] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
   const [zoom, setZoom] = useState(11);
+  // Area select: drag a box on the map → everyone inside is listed in the side panel.
+  const [selecting, setSelecting] = useState(false);
+  const [box, setBox] = useState<Ring | null>(null);
+  useEffect(() => {
+    if (!selecting) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setSelecting(false);
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [selecting]);
 
   useEffect(() => {
     fetch("/api/map/layers").then((r) => r.json()).then(setLayers).catch(() => setLoadErr(true));
@@ -228,6 +307,15 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
   const fit = useMemo(() => boundsOf(patients), [patients]);
   const selArea = sel?.kind === "area" ? layers?.heat?.features.find((f) => f.properties.nta === sel.nta) ?? null : null;
   const selPatient = sel?.kind === "patient" ? patients.find((p) => p.id === sel.id) ?? null : null;
+  const boxPeople = useMemo(
+    () =>
+      box
+        ? visiblePatients
+            .filter((p) => inRing(box, p))
+            .sort((a, b) => GROUP_ORDER[a.group] - GROUP_ORDER[b.group] || a.name.localeCompare(b.name))
+        : [],
+    [box, visiblePatients],
+  );
 
   const deckLayers = useMemo(() => {
     const out = [];
@@ -244,6 +332,12 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
       out.push(new GeoJsonLayer({
         id: "heat-selected", data: { type: "FeatureCollection", features: [selArea] } as never, filled: false, stroked: true,
         getLineColor: [20, 20, 20, 255], lineWidthUnits: "pixels", getLineWidth: 3,
+      }));
+    }
+    if (box) {
+      out.push(new PolygonLayer<Ring>({
+        id: "box", data: [box], getPolygon: (r) => [...r, r[0]], filled: true, stroked: true,
+        getFillColor: [55, 48, 163, 22], getLineColor: [55, 48, 163, 230], getLineWidth: 2, lineWidthUnits: "pixels", pickable: false,
       }));
     }
     if (layers?.help) {
@@ -269,13 +363,15 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
           // White outline on every group so orange/yellow people stay visible on the heat shading.
           : personIcon(RISK_RGB[d.group].solid, [255, 255, 255], 2.4),
       getSize: (d) => (selPatient?.id === d.id ? 34 : 22), sizeUnits: "pixels",
+      // With a box drawn, fade the people outside it.
+      getColor: (d) => [255, 255, 255, box && !inRing(box, d) ? 70 : 255] as [number, number, number, number],
       // SVG icons must load as <img> (createImageBitmap can't decode SVG blobs).
       loadOptions: { image: { type: "image" } },
-      updateTriggers: { getIcon: selPatient?.id, getSize: selPatient?.id },
+      updateTriggers: { getIcon: selPatient?.id, getSize: selPatient?.id, getColor: box },
       onClick: (info: PickingInfo) => { const d = info.object as MapPatient | undefined; if (d) setSel({ kind: "patient", id: d.id }); },
     }));
     return out;
-  }, [layers, showHeat, helpVisible, visiblePatients, selArea, selPatient, zoom, threeD]);
+  }, [layers, showHeat, helpVisible, visiblePatients, selArea, selPatient, zoom, threeD, box]);
 
   const getTooltip = ({ object, layer }: PickingInfo) => {
     if (!object || !layer) return null;
@@ -314,7 +410,24 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
 
   const panel = (
     <div className="space-y-5 text-sm">
-      {sel?.kind === "patient" && selPatient && <PatientCard key={selPatient.id} p={selPatient} onClose={() => setSel(null)} />}
+      {sel?.kind === "patient" && selPatient && (
+        <PatientCard
+          key={selPatient.id}
+          p={selPatient}
+          // Opened with a box drawn: closing goes back to the list, and the full reasons start open.
+          onClose={() => setSel(box ? { kind: "box" } : null)}
+          backLabel={box ? `Back to the ${boxPeople.length} ${boxPeople.length === 1 ? "person" : "people"} in this area` : null}
+          defaultMore={!!box}
+        />
+      )}
+      {sel?.kind === "box" && box && (
+        <BoxList
+          people={boxPeople}
+          onPick={(id) => setSel({ kind: "patient", id })}
+          onClear={() => { setBox(null); setSel(null); }}
+          onRedo={() => setSelecting(true)}
+        />
+      )}
       {sel?.kind === "place" && <PlaceCard id={sel.id} onClose={() => setSel(null)} />}
       {selArea && <AreaCard area={selArea} patients={areaPatients} onPick={(id) => setSel({ kind: "patient", id })} onClose={() => setSel(null)} />}
 
@@ -393,7 +506,25 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
           onZoom={setZoom}
           height={mapHeight}
           ariaLabel="Map of synthetic patients, neighborhood heat and places to cool off"
+          selecting={selecting}
+          onBox={(ring) => { setSelecting(false); setBox(ring); setSel({ kind: "box" }); }}
         />
+        {/* Top-right, just left of the zoom buttons. */}
+        <button
+          type="button"
+          onClick={() => setSelecting((s) => !s)}
+          aria-pressed={selecting}
+          className={`absolute right-12 top-2.5 z-10 rounded-full border-2 border-[var(--layer-graph-fg,#3730a3)] px-3.5 py-1.5 text-sm font-semibold shadow-sm ${
+            selecting ? "bg-[var(--layer-graph-fg,#3730a3)] text-white" : "bg-white text-[var(--layer-graph-fg,#3730a3)] hover:bg-[var(--layer-graph-bg,#eef2ff)]"
+          }`}
+        >
+          {selecting ? "Cancel selecting" : "Select an area"}
+        </button>
+        {selecting && (
+          <div className="pointer-events-none absolute bottom-10 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--layer-graph-fg,#3730a3)] px-4 py-1.5 text-sm font-semibold text-white shadow">
+            Drag a box around the people you want to see · Esc to cancel
+          </div>
+        )}
         <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
           <ThreeDToggle on={threeD} onChange={setThreeD} />
           {!layers && !loadErr && <span className="rounded-full bg-white px-3 py-1 text-xs shadow-sm">Loading…</span>}

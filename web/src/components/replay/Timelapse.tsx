@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { HeatGrid, ReplayData, ReplayPatient } from "@/lib/replay";
 import { GROUP_COLORS, HEAT_STOPS, heatColor } from "./colors";
+import { inArea, type Area } from "./area";
+
+const GROUP_ORDER = { High: 0, Medium: 1, Low: 2 } as const;
 
 const TimelapseMap = dynamic(() => import("./TimelapseMap"), {
   ssr: false,
@@ -96,6 +99,30 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
     return c;
   }, [data.patients]);
 
+  // Area select: drag a box on the map → everyone inside is listed in the sidebar.
+  const [selecting, setSelecting] = useState(false);
+  const [area, setArea] = useState<Area | null>(null);
+  const areaPeople = useMemo(
+    () =>
+      area
+        ? data.patients
+            .filter((p) => inArea(area, p))
+            .sort((a, b) => GROUP_ORDER[a.group] - GROUP_ORDER[b.group] || a.name.localeCompare(b.name))
+        : [],
+    [area, data.patients],
+  );
+  useEffect(() => {
+    if (!selecting) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setSelecting(false);
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [selecting]);
+  function pickArea(a: Area | null) {
+    setSelecting(false);
+    setArea(a);
+    select(null);
+  }
+
   function select(p: ReplayPatient | null) {
     setSelected(p);
     setRoute(null);
@@ -129,9 +156,19 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
           ) : (
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">The June 2025 heat wave, hour by hour</h1>
           )}
-          <p className="mt-1 text-ink-muted">Watch the heat roll over the city. Click any patient to see their plan.</p>
+          <p className="mt-1 text-ink-muted">Watch the heat roll over the city. Click any patient to see their plan, or select an area to list everyone in it.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSelecting((s) => !s)}
+            aria-pressed={selecting}
+            className={`rounded-full border-2 px-4 py-2 text-sm font-semibold ${
+              selecting ? "border-layer-graph-fg bg-layer-graph-fg text-white" : "border-layer-graph-fg bg-layer-graph-bg text-layer-graph-fg hover:opacity-90"
+            }`}
+          >
+            {selecting ? "Cancel selecting" : "Select an area"}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -170,7 +207,22 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
 
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="relative h-[64vh] min-h-[440px] overflow-hidden rounded-tile border border-line">
-          <TimelapseMap grid={grid} tf={tf} patients={data.patients} selected={selected} route={route} onSelect={select} />
+          <TimelapseMap
+            grid={grid}
+            tf={tf}
+            patients={data.patients}
+            selected={selected}
+            route={route}
+            onSelect={select}
+            selecting={selecting}
+            area={area}
+            onArea={pickArea}
+          />
+          {selecting && (
+            <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-layer-graph-fg px-4 py-1.5 text-sm font-semibold text-white shadow">
+              Drag a box around the people you want to see · Esc to cancel
+            </div>
+          )}
           <div className="pointer-events-none absolute left-3 top-3 rounded-tile bg-page/95 px-4 py-3 shadow-sm">
             <div className="text-sm text-ink-muted">{fmtDate(date)}</div>
             <div className="text-3xl font-bold tabular-nums">{fmtHour(clock)}</div>
@@ -200,7 +252,16 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
 
         <aside className="flex flex-col gap-3">
           {selected ? (
-            <PatientCard p={selected} onClose={() => select(null)} onShowWay={showWay} routeShown={!!route} routeNote={routeNote} />
+            <PatientCard
+              p={selected}
+              onClose={() => select(null)}
+              onShowWay={showWay}
+              routeShown={!!route}
+              routeNote={routeNote}
+              backLabel={area ? `Back to the ${areaPeople.length} ${areaPeople.length === 1 ? "person" : "people"} in this area` : null}
+            />
+          ) : area ? (
+            <AreaList people={areaPeople} onPick={select} onClear={() => pickArea(null)} onRedo={() => setSelecting(true)} />
           ) : (
             <>
               <section className="rounded-tile border border-line bg-page p-4">
@@ -225,6 +286,8 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
               <section className="rounded-tile border border-dashed border-line-strong bg-surface p-4 text-sm">
                 <p className="font-semibold">Click a patient on the map</p>
                 <p className="mt-1 text-ink-muted">See why they&apos;re at risk, how their medicines and the heat add up, where their nearest cool place is, and the way there. Then message them.</p>
+                <p className="mt-2 font-semibold">Or select an area</p>
+                <p className="mt-1 text-ink-muted">Press &ldquo;Select an area&rdquo; and drag a box on the map to list everyone inside it.</p>
               </section>
             </>
           )}
@@ -269,34 +332,123 @@ export function Timelapse({ data, embedded = false }: { data: ReplayData; embedd
   );
 }
 
+function AreaList({
+  people,
+  onPick,
+  onClear,
+  onRedo,
+}: {
+  people: ReplayPatient[];
+  onPick: (p: ReplayPatient) => void;
+  onClear: () => void;
+  onRedo: () => void;
+}) {
+  const counts = { High: 0, Medium: 0, Low: 0 };
+  for (const p of people) counts[p.group]++;
+  return (
+    <section className="flex max-h-[64vh] flex-col overflow-hidden rounded-tile border border-line bg-page">
+      <div className="border-b-4 border-b-layer-graph-fg bg-layer-graph-bg p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-lg font-bold">
+            {people.length} {people.length === 1 ? "person" : "people"} in this area
+          </h2>
+          <button type="button" onClick={onClear} className="rounded-full px-2 text-xl leading-none text-ink-muted hover:bg-page" aria-label="Clear area">
+            ×
+          </button>
+        </div>
+        <ul className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
+          {(["High", "Medium", "Low"] as const).map((g) => (
+            <li key={g} className="inline-flex items-center gap-1.5 rounded-full border bg-page px-2.5 py-0.5" style={{ borderColor: GROUP_COLORS[g].ink, color: GROUP_COLORS[g].ink }}>
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: GROUP_COLORS[g].css }} />
+              {counts[g]} {g.toLowerCase()}
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={onRedo} className="mt-2 text-sm font-semibold text-layer-graph-fg underline underline-offset-2">
+          Select a different area
+        </button>
+      </div>
+      {people.length === 0 ? (
+        <p className="p-4 text-sm text-ink-muted">No patients live inside this box. Try a bigger area.</p>
+      ) : (
+        <ul className="divide-y divide-line overflow-y-auto">
+          {people.map((p) => {
+            const c = GROUP_COLORS[p.group];
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(p)}
+                  className="flex w-full items-start gap-3 border-l-4 px-4 py-3 text-left text-sm hover:bg-surface focus-visible:bg-surface"
+                  style={{ borderLeftColor: c.css }}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2">
+                      <span className="font-semibold">{p.name}</span>
+                      <span className="text-ink-muted">{p.age}</span>
+                      <span className="rounded-full px-2 py-px text-xs font-semibold" style={{ background: c.tint, color: c.ink }}>
+                        {p.group}
+                      </span>
+                    </span>
+                    {p.why[0] && <span className="mt-0.5 block truncate text-ink-muted">{p.why.join(" · ")}</span>}
+                  </span>
+                  <span aria-hidden className="self-center text-ink-muted">›</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function PatientCard({
   p,
   onClose,
   onShowWay,
   routeShown,
   routeNote,
+  backLabel = null,
 }: {
   p: ReplayPatient;
   onClose: () => void;
   onShowWay: () => void;
   routeShown: boolean;
   routeNote: string | null;
+  /** When the patient was opened from an area list: a link back to it. */
+  backLabel?: string | null;
 }) {
   const c = GROUP_COLORS[p.group];
+  const cool = GROUP_COLORS.Low;
+  const facts = p.place
+    ? [
+        p.place.walkMin != null ? `${Math.round(p.place.walkMin)} min walk` : null,
+        p.place.leaveBy ? `Leave by ${p.place.leaveBy}` : null,
+        p.place.arriveBy ? `Arrive by ${p.place.arriveBy}` : null,
+        p.place.hours ? `Open ${p.place.hours}` : null,
+      ].filter((x): x is string => !!x)
+    : [];
   return (
     <section className="flex max-h-[64vh] flex-col overflow-y-auto rounded-tile border border-line bg-page">
-      <div className="flex items-start justify-between gap-2 border-b border-line p-4">
+      {backLabel && (
+        <button type="button" onClick={onClose} className="border-b border-line px-4 py-2 text-left text-sm font-semibold text-layer-graph-fg hover:bg-surface">
+          ← {backLabel}
+        </button>
+      )}
+      {/* Header band in the patient's risk-group color */}
+      <div className="flex items-start justify-between gap-2 border-b-4 p-4" style={{ background: c.tint, borderBottomColor: c.css }}>
         <div>
           <h2 className="text-lg font-bold">{p.name}</h2>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5 text-xs font-semibold" style={{ borderColor: c.ink, background: c.tint, color: c.ink }}>
+            <span className="inline-flex items-center gap-1.5 rounded-full border-2 bg-page px-2.5 py-0.5 text-xs font-semibold" style={{ borderColor: c.ink, color: c.ink }}>
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: c.css }} />
               {p.group} risk
             </span>
             <span className="text-ink-muted">{p.age} · synthetic patient</span>
           </div>
         </div>
-        <button type="button" onClick={onClose} className="rounded-full px-2 text-xl leading-none text-ink-muted hover:bg-surface" aria-label="Close">
+        <button type="button" onClick={onClose} className="rounded-full px-2 text-xl leading-none text-ink-muted hover:bg-page" aria-label="Close">
           ×
         </button>
       </div>
@@ -304,67 +456,84 @@ function PatientCard({
       <div className="space-y-4 p-4 text-sm">
         {p.why.length > 0 && (
           <div>
-            <h3 className="font-semibold">Why</h3>
-            <p className="mt-0.5 text-ink-muted">{p.why.join(" · ")}</p>
-          </div>
-        )}
-
-        {p.meds.length > 0 && (
-          <div>
-            <h3 className="font-semibold">Their medicines and the heat</h3>
-            {p.shared.length > 0 && (
-              <p className="mt-1 rounded-tile px-3 py-2 font-semibold" style={{ background: GROUP_COLORS.High.tint, color: GROUP_COLORS.High.ink }}>
-                {p.shared.map((s) => `${s.meds.join(" and ")} both raise the risk of ${s.effect}`).join(". ")}, and so does the heat.
-              </p>
-            )}
-            <ul className="mt-2 space-y-2">
-              {p.meds.map((m) => (
-                <li key={m.name}>
-                  <span className="font-semibold capitalize">{m.name}</span>
-                  {m.links.length ? (
-                    <ul className="mt-0.5 space-y-0.5 text-ink-muted">
-                      {m.links.slice(0, 3).map((l) => (
-                        <li key={l.effect}>
-                          → {l.effect} ← heat{" "}
-                          <span className="text-xs">
-                            ({l.drugStudies} {l.drugStudies === 1 ? "study" : "studies"} for the medicine, {l.heatStudies} for heat, in the System graph)
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-ink-muted"> — no medicine → body-effect link in the System graph yet</span>
-                  )}
-                </li>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Why</h3>
+            <ul className="mt-1.5 flex flex-wrap gap-1.5">
+              {p.why.map((w) => (
+                <li key={w} className="rounded-full border border-line bg-surface px-2.5 py-0.5">{w}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {p.place ? (
+        {p.meds.length > 0 && (
           <div>
-            <h3 className="font-semibold">Nearest cool place</h3>
-            <p className="mt-0.5">{p.place.name}</p>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Their medicines and the heat</h3>
+            {p.shared.length > 0 && (
+              <p className="mt-1.5 rounded-tile border-l-4 px-3 py-2 font-semibold" style={{ background: GROUP_COLORS.High.tint, color: GROUP_COLORS.High.ink, borderLeftColor: GROUP_COLORS.High.css }}>
+                {p.shared.map((s) => `${s.meds.join(" and ")} both raise the risk of ${s.effect}`).join(". ")}, and so does the heat.
+              </p>
+            )}
+            <ul className="mt-2 space-y-2">
+              {p.meds.map((m) => (
+                <li key={m.name} className="rounded-tile border border-line border-l-4 border-l-layer-graph-fg bg-surface p-3">
+                  <div className="font-semibold capitalize">{m.name}</div>
+                  {m.links.length ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {m.links.slice(0, 3).map((l) => (
+                        <li key={l.effect} className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded bg-layer-graph-bg px-2 py-0.5 font-semibold text-layer-graph-fg">{l.effect}</span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-line bg-page py-0.5 pl-2 pr-1 text-xs">
+                            medicine
+                            <b className="rounded-full bg-layer-graph-bg px-1.5 tabular-nums text-layer-graph-fg">{l.drugStudies}</b>
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-line bg-page py-0.5 pl-2 pr-1 text-xs">
+                            heat
+                            <b className="rounded-full bg-hold-tint px-1.5 tabular-nums text-hold-ink">{l.heatStudies}</b>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1 text-ink-muted">No medicine → body-effect link in the System graph yet</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-xs text-ink-muted">Numbers are studies in the System graph: medicine → effect, and heat → effect.</p>
+          </div>
+        )}
+
+        {p.place ? (
+          <div className="rounded-tile border border-l-4 p-3" style={{ background: cool.tint, borderColor: cool.css, color: cool.ink }}>
+            <h3 className="text-xs font-semibold uppercase tracking-wide">Nearest cool place</h3>
+            <p className="mt-1 text-base font-bold text-ink">{p.place.name}</p>
             {p.place.address && <p className="text-ink-muted">{p.place.address}</p>}
-            <p className="mt-1">
-              {p.place.walkMin != null && <>About {Math.round(p.place.walkMin)} min walk. </>}
-              {p.place.leaveBy && <>Leave by {p.place.leaveBy}</>}
-              {p.place.arriveBy && <>, arrive by {p.place.arriveBy}</>}
-              {p.place.hours && <> (open {p.place.hours})</>}
-            </p>
-            {p.place.needsHelp && <p className="mt-1 font-semibold" style={{ color: GROUP_COLORS.High.ink }}>Needs someone to go with them.</p>}
-            <button
-              type="button"
-              onClick={onShowWay}
-              className="mt-2 rounded-full border-2 px-4 py-1.5 font-semibold"
-              style={{ borderColor: GROUP_COLORS.Low.ink, color: GROUP_COLORS.Low.ink, background: GROUP_COLORS.Low.tint }}
-            >
-              {routeShown ? "Showing the way" : "Show the way"}
-            </button>
+            {facts.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {facts.map((f) => (
+                  <li key={f} className="rounded-full bg-page px-2.5 py-0.5 font-semibold tabular-nums" style={{ color: cool.ink }}>{f}</li>
+                ))}
+              </ul>
+            )}
+            {p.place.needsHelp && (
+              <p className="mt-2 inline-block rounded-full px-2.5 py-0.5 font-semibold" style={{ background: GROUP_COLORS.High.tint, color: GROUP_COLORS.High.ink }}>
+                Needs someone to go with them
+              </p>
+            )}
+            <div>
+              <button
+                type="button"
+                onClick={onShowWay}
+                className="mt-3 rounded-full px-4 py-1.5 font-semibold text-white hover:opacity-90"
+                style={{ background: cool.ink }}
+              >
+                {routeShown ? "Showing the way" : "Show the way"}
+              </button>
+            </div>
             {routeNote && <p className="mt-1 text-xs text-ink-muted">{routeNote}</p>}
           </div>
         ) : (
-          <p className="text-ink-muted">No cool place matched for this patient.</p>
+          <p className="rounded-tile border border-dashed border-line-strong bg-surface p-3 text-ink-muted">No cool place matched for this patient.</p>
         )}
 
         <Link href={`/messages/${p.id}`} className="block rounded-full bg-primary px-4 py-2 text-center font-semibold text-primary-foreground hover:opacity-90">

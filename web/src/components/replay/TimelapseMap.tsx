@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import DeckGL from "@deck.gl/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import DeckGL, { type DeckGLRef } from "@deck.gl/react";
 import { FlyToInterpolator } from "@deck.gl/core";
-import { IconLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { IconLayer, PathLayer, PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { personIcon } from "@/components/map/personIcon";
 import { Map, type MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -14,6 +14,7 @@ import * as maplibregl from "maplibre-gl";
 maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
 import type { HeatGrid, ReplayPatient } from "@/lib/replay";
 import { GROUP_COLORS, heatRgba } from "./colors";
+import { inArea, type Area } from "./area";
 
 const BASEMAP = "https://tiles.openfreemap.org/styles/positron";
 const SCALE = 14; // canvas pixels per grid cell (before blur)
@@ -70,6 +71,9 @@ export default function TimelapseMap({
   selected,
   route,
   onSelect,
+  selecting = false,
+  area = null,
+  onArea,
 }: {
   grid: HeatGrid;
   tf: number; // fractional hour index into grid.times
@@ -77,7 +81,27 @@ export default function TimelapseMap({
   selected: ReplayPatient | null;
   route: [number, number][] | null; // only for the selected patient, only when asked
   onSelect: (p: ReplayPatient | null) => void;
+  /** Area-select mode: dragging draws a box instead of panning the map. */
+  selecting?: boolean;
+  area?: Area | null;
+  onArea?: (a: Area | null) => void;
 }) {
+  const deckRef = useRef<DeckGLRef>(null);
+  const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const toLonLat = (x: number, y: number): [number, number] | null => {
+    const vp = deckRef.current?.deck?.getViewports()[0];
+    const p = vp?.unproject([x, y]);
+    return p ? [p[0], p[1]] : null;
+  };
+  const finishDrag = () => {
+    if (!drag) return;
+    const { x0, y0, x1, y1 } = drag;
+    setDrag(null);
+    if (Math.abs(x1 - x0) < 6 || Math.abs(y1 - y0) < 6) return; // a click, not a box
+    const a = toLonLat(Math.min(x0, x1), Math.min(y0, y1)); // top-left → west, north
+    const b = toLonLat(Math.max(x0, x1), Math.max(y0, y1)); // bottom-right → east, south
+    if (a && b) onArea?.({ w: a[0], n: a[1], e: b[0], s: b[1] });
+  };
   const homeView = useMemo(() => {
     const lon = patients.reduce((s, p) => s + p.lon, 0) / Math.max(1, patients.length);
     const lat = patients.reduce((s, p) => s + p.lat, 0) / Math.max(1, patients.length);
@@ -148,6 +172,19 @@ export default function TimelapseMap({
         capRounded: true,
         jointRounded: true,
       }),
+    area &&
+      new PolygonLayer({
+        id: "area",
+        data: [area],
+        getPolygon: (a: Area) => [[a.w, a.n], [a.e, a.n], [a.e, a.s], [a.w, a.s], [a.w, a.n]],
+        getFillColor: [55, 48, 163, 22],
+        getLineColor: [55, 48, 163, 230],
+        getLineWidth: 2,
+        lineWidthUnits: "pixels",
+        stroked: true,
+        filled: true,
+        pickable: false,
+      }),
     new IconLayer({
       id: "patients",
       data: patients,
@@ -160,9 +197,11 @@ export default function TimelapseMap({
       getSize: (p: ReplayPatient) => (selected?.id === p.id ? 30 : 18),
       sizeUnits: "pixels",
       loadOptions: { image: { type: "image" } },
-      getColor: (p: ReplayPatient) => [255, 255, 255, selected && selected.id !== p.id ? 120 : 255] as [number, number, number, number],
+      // Fade everyone but the selected person; with an area drawn, fade people outside it.
+      getColor: (p: ReplayPatient) =>
+        [255, 255, 255, selected ? (selected.id === p.id ? 255 : 120) : area && !inArea(area, p) ? 70 : 255] as [number, number, number, number],
       pickable: true,
-      updateTriggers: { getIcon: [selected?.id], getSize: [selected?.id], getColor: [selected?.id] },
+      updateTriggers: { getIcon: [selected?.id], getSize: [selected?.id], getColor: [selected?.id, area?.w, area?.s, area?.e, area?.n] },
     }),
     selected?.place &&
       new ScatterplotLayer({
@@ -180,18 +219,54 @@ export default function TimelapseMap({
   ].filter(Boolean);
 
   return (
-    <DeckGL
-      initialViewState={initialViewState}
-      controller={{ dragRotate: false }}
-      layers={layers}
-      onClick={(info) => onSelect(info.layer?.id === "patients" ? (info.object as ReplayPatient) : null)}
-      getCursor={({ isHovering }) => (isHovering ? "pointer" : "grab")}
-      getTooltip={({ object, layer }) =>
-        layer?.id === "patients" && object ? { text: `${(object as ReplayPatient).name} · ${(object as ReplayPatient).group} risk\nClick for their plan` } : null
-      }
-    >
-      <Map mapLib={maplibregl} mapStyle={BASEMAP} attributionControl={{ compact: true }} onLoad={onMapLoad}>
-      </Map>
-    </DeckGL>
+    <div className="absolute inset-0">
+      <DeckGL
+        ref={deckRef}
+        initialViewState={initialViewState}
+        controller={{ dragRotate: false }}
+        layers={layers}
+        onClick={(info) => onSelect(info.layer?.id === "patients" ? (info.object as ReplayPatient) : null)}
+        getCursor={({ isHovering }) => (isHovering ? "pointer" : "grab")}
+        getTooltip={({ object, layer }) =>
+          layer?.id === "patients" && object ? { text: `${(object as ReplayPatient).name} · ${(object as ReplayPatient).group} risk\nClick for their plan` } : null
+        }
+      >
+        <Map mapLib={maplibregl} mapStyle={BASEMAP} attributionControl={{ compact: true }} onLoad={onMapLoad}>
+        </Map>
+      </DeckGL>
+      {/* Area-select overlay: catches the drag so the map doesn't pan, and draws the box. */}
+      {selecting && (
+        <div
+          className="absolute inset-0 z-10 cursor-crosshair touch-none"
+          onPointerDown={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            const x = e.clientX - r.left, y = e.clientY - r.top;
+            setDrag({ x0: x, y0: y, x1: x, y1: y });
+          }}
+          onPointerMove={(e) => {
+            if (!drag) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            setDrag({ ...drag, x1: e.clientX - r.left, y1: e.clientY - r.top });
+          }}
+          onPointerUp={finishDrag}
+          onPointerCancel={() => setDrag(null)}
+        >
+          {drag && (
+            <div
+              className="pointer-events-none absolute border-2 border-dashed"
+              style={{
+                left: Math.min(drag.x0, drag.x1),
+                top: Math.min(drag.y0, drag.y1),
+                width: Math.abs(drag.x1 - drag.x0),
+                height: Math.abs(drag.y1 - drag.y0),
+                borderColor: "#3730a3",
+                background: "rgba(55, 48, 163, 0.1)",
+              }}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }
