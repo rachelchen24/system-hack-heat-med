@@ -36,7 +36,7 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 3. **Few visuals:** 6 instead of 21.
 4. **No invented data:** every number traces to a file in `data/`.
 5. **No dose advice** to patients.
-6. **Colors:** the Okabe–Ito chip palette. Risk groups are **High = orange**, **Medium = yellow**, **Low = blue**.
+6. **Colors:** the Okabe–Ito chip palette. Risk groups are **High = orange**, **Medium = yellow**, **Low = teal** (`#0e7c86`, which replaced the old blue everywhere). Logo and tab icon: a hot-and-cool pill (orange + teal), `web/src/app/icon.svg`.
 
 ## How the System Public Graph is used
 - **Patient cards show the graph directly:** click a patient (time-lapse, map) to see each of their medicines → body effect ← heat with System study counts, and which medicines stack on the same effect.
