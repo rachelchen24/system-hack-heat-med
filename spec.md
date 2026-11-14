@@ -259,6 +259,7 @@ Everything about one drug, in tabs or sections:
    - The notification **breaks through do-not-disturb and focus filters**, so the patient sees it whatever they're doing. It isn't a siren or a government broadcast.
    - **How:** iOS Critical Alerts (needs Apple's entitlement approval) or Time-Sensitive notifications; Android high-priority channel allowed to bypass DND.
    - **Sent as both an app push notification and an SMS** (decided 14 Nov), so it reaches people without the app or a smartphone too. A voice call stays an optional extra.
+   - **Demo (decided Sat 14 Nov): both the push and the SMS are simulated** on the demo phone. The phone opens the patient app, which shows a mock lock-screen push banner and a mock text thread, both labeled "simulated." Production would use native push and an SMS provider.
    - Sent by the clinician, or automatically at high HeatRisk. Opt-in at sign-up. Used only on high-risk days.
    - Message from the knowledge base, e.g. "Heat danger today. Your lithium and water pill make heat riskier. Go somewhere cool by 11 AM. Reply OK."
 2. **Trusted contact escalation.**
@@ -408,27 +409,27 @@ Chosen for speed (5 hours, two people), open source, and one language per layer.
 | **Charts** | **Apache ECharts** (via `echarts-for-react`) | One library covers scatter, Sankey, treemap, heatmap, calendar, forest-style plots and graphs, so all 21 visuals can be prototyped quickly |
 | **Node graph** | **react-force-graph** (2D; 3D optional) | A real interactive force-directed "CS" node graph |
 | **3D NYC map** | **deck.gl + MapLibre GL JS** with OpenStreetMap / OpenFreeMap vector tiles (3D building extrusions) | Open source, no token, 3D buildings, hexagon and arc layers |
-| **Database + live updates** | **Supabase (Postgres + Realtime), since Rachel already has an account (14 Nov).** Recommended, because it syncs **across devices**: a tap on the patient phone updates the clinician laptop instantly. Fallback: local SQLite/JSON with polling | Patients, questionnaire, contacts, check-ins, alerts |
-| **Scheduled escalation timers** | Supabase scheduled functions (pg_cron) or a small Node worker | Runs the T_wait → contact → clinic escalation |
-| **SMS** | **Demo: simulated (decided 14 Nov).** The alert appears in an on-screen phone mock-up and the message log, labeled "simulated SMS." Production: an SMS provider (e.g. Twilio) | No account needed for the hackathon |
-| **Push notifications** | **Web Push** from the Next.js PWA for the demo; production: native app with iOS **Critical Alerts / Time-Sensitive** and Android DND-bypass channel | See the caveat below |
+| **Database + live updates** | **Local SQLite (decided Sat 14 Nov; Supabase dropped)** behind the Next.js API routes. The clinic board and the patient app **poll every 2–3 seconds**, so a tap on the demo phone shows up on the clinician laptop almost instantly. The phone opens the app from the laptop's server, so both share one database. Production: a hosted Postgres per health system | Patients, questionnaire, contacts, check-ins, alerts. No account needed |
+| **Scheduled escalation timers** | A small Node timer in the app server; **demo has a "fast-forward" control** so a 45-minute wait plays in seconds | Runs the T_wait → contact → clinic escalation |
+| **SMS** | **Demo: simulated (decided 14 Nov).** The alert appears in a mock text thread on the demo phone and in the message log, labeled "simulated SMS." Production: an SMS provider (e.g. Twilio) | No account needed |
+| **Push notifications** | **Demo: simulated (decided Sat 14 Nov).** The patient app on the demo phone shows a mock lock-screen push banner (styled like a real notification, labeled "simulated") when the clinician sends the alert. Production: native app with iOS **Critical Alerts / Time-Sensitive** and an Android DND-bypass channel | No Web Push, VAPID keys or HTTPS tunnel needed |
 | **EHR alert** | **CDS Hooks** service as a Next.js API route; tested in the public CDS Hooks sandbox; FHIR R4 JSON | Real informatics standards |
 | **Synthetic patients** | **Synthea** (Java CLI) → FHIR R4 bundles | Realistic multi-drug panels for SBH and a second city |
 | **Routing** | **Default: no-key OSM routing** (routing.openstreetmap.de, walking and driving); OpenRouteService (free key) optional, for isochrones | Trusted-contact eligibility; cooling-place travel time |
 | **Weather** | **api.weather.gov** (NWS); **WPC HeatRisk** data files; **NOAA CPC** outlooks; NOAA GHCN-Daily | All free; NOAA only |
 | **FDA reports** | **openFDA** FAERS API (no key needed at our volume, about 300 requests) | Warning-signal counts |
-| **Hosting** | **Default: run locally** for the demo; GitHub repo + video for Devpost. Vercel optional, for a public URL | No extra accounts |
+| **Hosting** | **Run locally** on a laptop; the demo phone opens the app over the same Wi-Fi (phone hotspot as backup). GitHub repo + video for Devpost. No Vercel (Sat 14 Nov) | No extra accounts |
 | **Required keys** | **System API only** | Everything else is optional |
 
 **Caveat on "breaks through do-not-disturb":** a web app (PWA) **can't** bypass DND, and SMS only does if the sender is allowed through. True DND breakthrough needs a native app: iOS Critical Alerts require Apple's entitlement; Time-Sensitive notifications need the user's permission; Android needs a channel the user lets bypass DND.
-- **For the demo:** send push + SMS for real, and show the native DND-breakthrough path on a slide or architecture diagram, or as an Expo build on an Android phone **if time allows**.
+- **For the demo:** push and SMS are both simulated on the demo phone (labeled), and the native DND-breakthrough path is shown on a slide or architecture diagram. An Expo build on an Android phone is §11, only if time allows.
 - Be upfront about this in nerd stats.
 
 **Repo layout (proposed):**
 - `scripts/`: pipeline
 - `data/raw/`, `data/kb/`: data
 - `app/`: Next.js app: `/clinician/*` and `/patient/*` routes; `/api/cds-hooks`, `/api/alerts`, `/api/escalation`
-- `supabase/`: schema
+- `db/`: SQLite schema and seed (synthetic panel)
 - `docs/`: notes
 
 ### 4.7 Screen 3: Evidence / "nerd stats" (Methods & Receipts)
@@ -587,7 +588,7 @@ Sources: `research-notes/` and `report/Prescribed drug heat risks.md`. Verify be
 ## 7. Scale-up ideas (the four strengths)
 
 ### 7.1 Core loop: see risk → act → someone shows up
-- **Show the real software, not a staged scenario** (decided 14 Nov). No role-play with judges. Demo the working product: forecast → call-first scatter → send alert → push + SMS actually delivered → escalation logic → clinic board updating. *(Test DND-breakthrough and SMS delivery on our own phones beforehand.)*
+- **Show the real software, not a staged scenario** (decided 14 Nov). No role-play with judges. Demo the working product: forecast → call-first scatter → send alert → simulated push banner + text appear on the demo phone → escalation logic → clinic board updating. The simulated messages are clearly labeled; the software around them is real. *(Test the demo phone on the venue Wi-Fi beforehand.)*
 - **Heat-day timeline replay (visual 19):** one real past NYC heat day, minute by minute. 5 AM forecast → 6 AM cooling-place texts → 10 AM check-ins → 11:30 no reply → contact alerted → 11:52 contact arrives. Swimlanes for patient, system, contact and clinic.
 - **Lasso-to-act:** select the top-right dots on the call-first scatter → preview the personalized messages → send to all.
 - **Smart replies:** "OK" / "Need help" / "Can't get there." "Need help" or "can't get there" goes straight to the clinic call list.
@@ -820,7 +821,8 @@ Suggested 15 (to confirm):
 - System API: closed beta, 10,000 requests/day; key in `.env` (gitignored).
 - Licenses: System Public Graph is CC BY-NC 4.0 (non-commercial, credit required).
 - November: no live heat, so replay mode.
-- iOS Critical Alerts need Apple's entitlement. For the demo, test what breaks through DND on the actual phones.
+- iOS Critical Alerts need Apple's entitlement, so the demo push is simulated (decided Sat 14 Nov).
+- The demo phone must reach the laptop's server (same Wi-Fi; venue Wi-Fi may block device-to-device traffic, so have a phone hotspot as backup).
 
 ### 10.4 Risks
 | Risk | Mitigation |
@@ -873,12 +875,15 @@ Suggested 15 (to confirm):
   - the Compass temperature slider (not enough data)
   - action items: cooling-place ride help, Con Edison life-sustaining-equipment enrollment, building door-knocks, NYC Advance Warning System
   - custom forecasting ML
-  - FDA adverse-event (FAERS) disproportionality analysis (not something the team asked for)
+  - FDA adverse-event (FAERS) disproportionality analysis (not something the team asked for). *Reversed later on 14 Nov: see C9.*
+- **Sat 14 Nov (hack day):**
+  - **Supabase dropped:** local SQLite + polling instead; no accounts beyond System.
+  - **Push notifications simulated** on the demo phone (mock banner, labeled), like the SMS. No Web Push, Twilio or Vercel.
 
 ### 12.2 Choices: Rachel's spec vs Myra's notes (merged 14 Nov)
 **Rachel's decisions (14 Nov):**
 - **C1:** keep the **Medicine Cabinet app**.
-- **C2:** the safety alert is **mandatory**, sent as **both an app push notification (breaking through DND) and an SMS**.
+- **C2:** the safety alert is **mandatory**, sent as **both an app push notification (breaking through DND) and an SMS**. In the demo both are simulated on the demo phone (Sat 14 Nov).
 - **C3:** we **are** building the **3D map**.
 - **C4:** **build the node graph** to see it, and decide later whether to use it.
 - **C5:** **both.** The site is organized by the **6-stage journey**, and it can also be viewed as a **map view, a graph view and a patient-facing view**.

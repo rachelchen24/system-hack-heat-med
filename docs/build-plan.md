@@ -19,28 +19,23 @@ Everything else depends on this. **The manual steps (accounts, keys, installs) a
   - Apache ECharts
   - react-force-graph (node graph)
   - deck.gl + MapLibre (3D NYC map)
-  - Supabase (Postgres + Realtime)
-  - Twilio (SMS); Web Push
+  - Local SQLite database; clinic board and patient app poll every 2–3 s (Supabase dropped Sat 14 Nov)
+  - **Simulated push + simulated SMS** on the demo phone (no Twilio, no Web Push)
   - CDS Hooks API route
   - Synthea
   - OpenRouteService
   - NWS / NOAA / openFDA
-  - Vercel hosting
+  - Runs locally on a laptop; the demo phone opens it over the same Wi-Fi (no Vercel)
 - **Scaffold:**
   - `npx create-next-app` with TypeScript and Tailwind
-  - install echarts, echarts-for-react, react-force-graph, deck.gl, maplibre-gl and supabase-js
-  - create the Supabase project and tables (patients, medications, questionnaire, contacts, alerts, check-ins)
-  - deploy an empty app to Vercel
-- **Get keys and accounts:**
-  - System API (have)
-  - ~~Anthropic (Claude API)~~: not needed. Claude Code does the reading and extraction in-session.
-  - openFDA (free)
-  - OpenRouteService (free)
-  - Twilio trial (verify the demo phone numbers)
-  - Supabase
-  - Vercel
-  - VAPID keys for Web Push
-  - Store them all in `.env` (gitignored).
+  - install echarts, echarts-for-react, react-force-graph, deck.gl, maplibre-gl and better-sqlite3
+  - create the SQLite tables (patients, medications, questionnaire, contacts, alerts, check-ins) in `db/`
+  - start the dev server on the local network (`next dev -H 0.0.0.0`) and open it on the demo phone
+- **Keys (all done):**
+  - System API (required, have)
+  - openFDA and OpenRouteService (optional, have)
+  - Nothing else: no Anthropic, Twilio, Supabase, Vercel or VAPID keys.
+  - All in `.env` (gitignored).
 - **Install Java** for Synthea.
 - **Define the knowledge-base format:** one row per drug. Fields: buckets, 3-step meter + 8-step tier, FLAG/CHANGE, Compass arrow, mechanisms, prescribers, guidance coverage (8 sources), evidence claims with badges, FAERS signal, substitutes, combination partners, patient message blocks.
 - **Define the patient record format:** synthetic FHIR patient + medications + questionnaire answers + trusted contacts.
@@ -135,7 +130,8 @@ Needs: Step 4 logic, Step 2 data (start on mock data).
 ## Step 7. Patient app, alerts and scalability (~1.5–2 hrs)
 Needs: Step 4 logic, Step 5/6 shell.
 - **Medicine Cabinet app:** cabinet, glowing bottles, personal flow, questionnaire, large-type light UI, English + Spanish.
-- **Mandatory safety alert:** push + SMS. **The SMS is simulated for the demo** (on-screen phone mock-up + message log, labeled "simulated"); production would use an SMS provider.
+- **Mandatory safety alert:** push + SMS. **Both are simulated for the demo:** when the clinician sends the alert, the patient app on the demo phone shows a mock lock-screen push banner and a mock text thread, both labeled "simulated," and the message log records them. Production would use native push (iOS Critical Alerts / Android DND channel) and an SMS provider.
+- **Fast-forward control** for the escalation timers, so a 45-minute wait plays in seconds.
 - **Trusted-contact escalation** with the computed wait; contact page with the "what to look for / what to do" checklist.
 - **Morning cooling-place text; "I'm OK" check-ins; "I feel unwell / no AC" buttons** → clinic call list.
 - **Clinic board:** who hasn't checked in; outcome funnel.
@@ -144,8 +140,8 @@ Needs: Step 4 logic, Step 5/6 shell.
 
 ## Step 8. Integrate, test, pitch, submit (last ~1 hr; finish by 2:45 PM)
 Needs: everything above.
-- **End-to-end run** on the replayed heat day: forecast → scatter → send alert → push + simulated SMS appear → escalation → board updates → post-heat-wave follow-up list.
-- **Test:** push on a real phone, the simulated-SMS view, and the second-city switch.
+- **End-to-end run** on the replayed heat day: forecast → scatter → send alert → simulated push banner + text appear on the demo phone → escalation → board updates → post-heat-wave follow-up list.
+- **Test:** the demo phone reaching the laptop on the venue Wi-Fi (phone hotspot as backup), the simulated push and SMS views, and the second-city switch.
 - **Check every headline number** traces to a file; unverified claims are hidden from labels.
 - **Pitch:** 3-minute walkthrough of the real software (no staged scenario), organized by the journey. Graph audit + "10 questions" slides. Headline line.
 - **Record a backup video.**
