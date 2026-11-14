@@ -16,17 +16,84 @@ Many common prescriptions make heat more dangerous. They block sweating, deepen 
   - about 15 direct drug × heat findings
   - landmark papers are indexed but filed under vague labels, or have no findings extracted
 
+## 1a. How we meet the challenge brief
+
+The judged deliverable is: *"A visual evidence map of heat-sensitive medications grouped by type of action, showing evidence strength, the prescribers involved and gaps in current guidance, which a clinician, pharmacist or public health official could use to plan heat-wave counseling and outreach."* (Challenge owner: Chethan Sarabu, MD, Cornell Tech.)
+
+| Brief asks for | Our answer | Status |
+|---|---|---|
+| Use the System graph to map the drug-to-heat evidence | Paper-level receipts, two-hop pathways (3.3), graph audit | Planned |
+| Action buckets (dose, hold/substitute, monitor, storage) | Master list is tagged by bucket | Data done |
+| Evidence strength per bucket | Evidence tiers + FLAG/CHANGE meters | Data done; meters planned |
+| Prescribers involved | Prescriber column in the master list | Data done |
+| What a prescriber might reasonably change before or during a heat wave | Label action lines + Heat Dose Compass (3.4) | Planned |
+| Compare with guidance worldwide; show where it's missing or out of step | 8 guidance sources compared + quadrant (3.2) | Data done; visual planned |
+| *Optional:* wearables, and where the evidence runs out | Wearables panel (3.5c) | Research done |
+| *Optional:* NYC overlap of heat exposure and prescriptions | Playbook (3.5) + 3D NYC map (3.5d) | Planned |
+
+**Category criterion (Visualize):** "compelling and accurate visual stories for a non-specialist audience." The **public visual story** (§2) answers this, and it's weighted equally with the clinician tool.
+
+**Rule:** the evidence map is the core content, shown two ways: as the story for non-specialists and as the tool for clinicians. Every other feature has to connect back to it:
+- the Compass answers "what to change"
+- Heat-Safe Delivery covers the storage bucket
+- the schizophrenia/SBH case is the worked example
+
 ## 2. Who it's for
 
 | User | What they need |
 |---|---|
-| **Prescribers** (primary care, psychiatry, cardiology, endocrinology, nephrology, neurology, pediatrics) | Which of my patients to contact before a heat wave, and what, if anything, to change |
-| **Pharmacists** | A counseling line per drug, plus storage advice |
-| **Health department / emergency planners** | Where in NYC to focus outreach, and which prescribers to alert first |
-| **Patients** (secondary) | A plain-language warning that should have been on the label |
-
-**Audience decision:** the product is **clinician- and health-system-facing** (prescribers, pharmacists, SBH-style clinics). It isn't a patient app. Patients only see the plain-language label line, delivered by their clinician or pharmacist. At judging, it's presented as a working tool plus a visual story, not as a consumer product.
+| **Prescribers / clinicians** (primary care, **pediatrics**, psychiatry, cardiology, endocrinology, nephrology, neurology), **the primary user** | Which of my patients to contact before a heat wave, what, if anything, to change, and an alert inside the EHR at the moment of prescribing |
+| **Pharmacists** (secondary) | A counseling line per drug, plus storage and delivery advice |
+| **Health department / emergency planners** (secondary) | Where in NYC to focus outreach, and which prescribers to alert first |
+| **Patients, caregivers and the public** (non-specialist; co-equal with clinicians for judging) | A story they can follow about why heat and medicine collide, plus a plain-language heat card for their own medicines and questions to ask their care team |
 | **System's team** (judges) | Evidence that their graph can power this, plus a precise account of where it falls short |
+
+**Two things are being judged, and they pull in different directions:**
+- **The Visualize category:** "Design and communication, turning relationships in the graph into compelling and accurate visual stories for a **non-specialist audience**."
+- **The Challenge 3 deliverable:** a visual evidence map "which a **clinician, pharmacist or public health official** could use."
+
+**Audience decision (revised): one product, two equally weighted front doors that share one knowledge base.**
+1. **Public visual story (non-specialist front door, co-equal):** a scrolling, illustrated story, *"The Missing Label,"* that anyone can follow without medical training. It's the first thing judges see.
+   - **Open on a person:** a 78-year-old in the Bronx, on a diuretic and a bladder pill, with no AC.
+   - **The four ways heat and medicine collide,** each shown as a simple body diagram:
+     - sweat blocked
+     - water and salt lost
+     - drug builds up or absorbs faster
+     - drug spoiled before it's taken
+   - **The graph made visible:** drug → kidney / salt / water ← heat pathways, animated from real graph findings, with the gap shown openly ("the graph knows the pieces, but no one has connected them").
+   - **The guidance gap:** which rules exist, which are missing, which are out of step.
+   - **The place:** the Bronx / SBH neighborhood, and who is most exposed.
+   - **The doorstep:** a package of medicine heating up on a porch.
+   - **The ending:** the missing label, revealed, and a hand-off: "Clinicians: open the tool."
+   - **Rule:** accuracy is part of "compelling and accurate." Every number in the story has a receipt, and uncertainty is shown plainly (e.g. "we don't know yet").
+2. **"Check my medicines" (patient-facing feature inside the public story):** pick your medicines from a list and get a plain-language heat card for each.
+   - Each card says why heat matters for that drug, what to watch for, how to store it, and **questions to ask your doctor or pharmacist**.
+   - No dose advice, ever.
+   - Framed as "talk to your care team." Ties to the doorstep delivery text and the printed bottles.
+3. **Clinician tool (professional front door, meets the challenge deliverable):** clinician-first (see 2a). Pharmacists and public-health officials use the same views with their own filters.
+   - Contains: the evidence map, quadrant, pathways, Compass, playbook, delivery dashboard, EHR alert, Methods & receipts.
+   - Researchers are served by the Methods & receipts page.
+
+**Shared foundation:** one knowledge base feeds both front doors, so the patient card, the public story and the clinician card always say the same thing at different reading levels.
+
+**At judging:** start with the public story (non-specialist), then step through to the clinician tool (the challenge deliverable). The story wins the category; the tool wins the challenge.
+
+### 2a. Clinician-first design (our judge is a pediatrician and clinical informatician who works with SBH)
+- **Fit the workflow.**
+  - The core interaction is a clinician's own question: "I'm prescribing X, and a heat wave is coming. What do I need to know?"
+  - Answer in one card: bucket, FLAG/CHANGE, what to monitor, the Compass arrow, evidence strength, receipts.
+- **Show it inside the EHR (informatics).**
+  - Promote the **CDS Hooks card** from stretch to should-have.
+  - It's a working alert in the public CDS Hooks sandbox that fires when a flagged drug is ordered while the NWS forecast is high.
+  - Use real standards: RxNorm codes for drugs, FHIR MedicationRequest, and a SMART-on-FHIR-style patient context.
+  - A "heat-risk patient list" (all of a clinician's patients on flagged drugs) is the panel-management version.
+- **Include a pediatrics slice:**
+  - topiramate/zonisamide reduced sweating in children (all US zonisamide cases were age 18 or under)
+  - ADHD stimulants and exertional heat illness in teen athletes
+  - epinephrine auto-injectors and inhalers degrading in heat
+  - asthma
+  - Pediatric drug-heat evidence is thin, so show that as a gap rather than hide it.
+- **Stay credible:** wording is "considerations for clinicians," not orders. Every claim has a receipt, and evidence tier and confounding are labeled. An informatician will check whether alerts would cause alert fatigue, so fire the card only when **drug is flagged AND forecast is high**, never year-round.
 
 ## 3. Product
 
@@ -85,6 +152,27 @@ The deep-dive label and playbook path. Shows how illness and medication each con
 
 Label: **FLAG high, CHANGE moderate.** Review combination therapy before summer; set up check-in calls and cooling access during heat waves; never stop abruptly. See `docs/schizophrenia-sbh-focus.md` §1.
 
+### 3.5b Heat-Safe Delivery (supply chain, from the judge's input)
+A software layer over the pharmacy → carrier → patient chain. Details in `docs/supply-chain.md`.
+- **Before shipping:** a risk check using the drug's heat profile, the NWS forecast for the destination, and shipping speed. Recommends ship as-is, upgrade to next-day, add insulation, reroute to pickup, or hold.
+- **At delivery:** a text to the patient ("bring it inside within 30 min"), escalating to a caregiver if not confirmed.
+- **After delivery:** an exposure estimate (mean kinetic temperature from hourly weather) → use / check with pharmacist / replace.
+- **Dashboard:** heat-risk shipments across the SBH catchment.
+- **Hardware demo (optional):** an ESP32 temperature logger in a package that streams to the dashboard.
+
+**Talking point:** we quantify the drug in the box (mean kinetic temperature, an industry standard) but not the drug in the body (the Compass shows direction only), because only one of the two has validated data.
+
+### 3.5c Wearables panel (optional part of the brief)
+What research exists on using heart rate or skin temperature to personalize heat guidance, and where it runs out:
+- Heart-rate-based core-temperature estimators (e.g. ECTemp) are validated only in healthy soldiers, athletes and firefighters.
+- They miss many readings above 39°C.
+- They've never been validated in people on beta blockers (which blunt heart rate), stimulants or anticholinergics (which raise it), or in older, dialysis, MS or pregnant users.
+
+Shown as a "where the evidence runs out" panel, linked from the Compass.
+
+### 3.5d 3D NYC map (team-owned, later)
+An open-source 3D map of NYC for the heat × prescriptions overlap and the SBH catchment. **Rachel and Myra will build this themselves later.** Details to be added.
+
 ### 3.6 Methods & receipts page
 - Data sources with versions and access dates
 - Graph coverage counts and the graph audit
@@ -94,11 +182,11 @@ Label: **FLAG high, CHANGE moderate.** Review combination therapy before summer;
 
 ### 3.7 Stretch outputs (scalability)
 - **Heat Label API:** RxNorm code in → label JSON out
-- **EHR alert prototype** (CDS Hooks): fires when a flagged drug is prescribed during a high-heat forecast
+- **EHR alert prototype** (CDS Hooks): fires when a flagged drug is prescribed during a high-heat forecast. **Promoted to should-have; see 2a.**
 - **City toggle:** e.g. Phoenix, to show it works outside NYC
 - **Physical props:**
   - printed pill bottles with thermochromic heat-warning labels
-  - optional evidence-calibrated storage sensor
+  - optional package temperature logger (see 3.5b)
 
 ## 4. Data
 
@@ -121,11 +209,34 @@ Label: **FLAG high, CHANGE moderate.** Review combination therapy before summer;
 - Every public citation verified, or else marked as unverified
 - Versions and access dates pinned in `data/SOURCES.md`
 
+### 4.2a Current quality of our research data (as of 13 Nov 2026)
+**A good map, not yet verified data.**
+- The master list and report came from web searches and abstracts, mostly not full texts.
+- **Citation status of the 86 rows:**
+  - 40 have verified identifiers
+  - 16 are partly verified
+  - 5 are unverified
+  - 25 have no citation yet (basics drawn from guidance or general pharmacology)
+- **Severity ratings** are the compiler's judgment.
+- **Some figures** come from secondary or news sources (e.g. Nordon 2009, mail-order percentages).
+- **Checked against the System graph** (`data/master_list_graph_status.csv`):
+  - 38 of the 86 rows cite at least one PMID, 51 distinct PMIDs in all
+  - **50 of the 51 are indexed in the graph**, which confirms those PMIDs exist
+  - **Only 8 have extracted findings.** 42 are indexed with no findings.
+  - **PMID 42710533 (Harley 2026) isn't indexed.** Recheck that ID.
+  - Of the 8 with findings, Martin-Latry 2007 is mislabeled ("psychotropic drugs").
+- **Before anything goes public:**
+  1. Run the citation-verification script (PubMed/Crossref title match).
+  2. Read the abstract behind every number that appears on a label or slide.
+  3. Drop or mark anything that can't be confirmed.
+
 ### 4.3 Already in the repo
 - `data/Drug heat risk master list.xlsx` / `.csv`: 86 drug-risk rows, plus the guidance comparison
 - `data/graph_coverage.csv`, `data/graph_heat_relationships.csv`, `data/graph_heat_variable_hits.csv`: graph check output
 - `report/Prescribed drug heat risks.md`: cited research report
 - `docs/graph-check-results.md`: graph coverage results and how the landmark papers were filed
+- `data/master_list_graph_status.csv`: every master-list PMID looked up in the graph (indexed? findings?)
+- `docs/schizophrenia-sbh-focus.md`, `docs/supply-chain.md`: focus notes
 
 ## 5. Evidence model
 
