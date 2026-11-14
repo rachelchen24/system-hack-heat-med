@@ -64,7 +64,7 @@ function SendButton({ patients, label }: { patients: MapPatient[]; label: string
           setSt({ status: "sending" });
           try { setSt({ status: "done", ...(await send(patients)) }); } catch (e) { setSt({ status: "error", msg: (e as Error).message }); }
         }}
-        className="w-full rounded-full bg-[var(--ui-ink,#141414)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="w-full rounded-full bg-[var(--bucket-store-solid,#0072b2)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
         {st.status === "sending" ? "Sending…" : allCall && patients.length === 1 ? "Call instead (add to call list)" : label}
       </button>
@@ -148,7 +148,7 @@ function PlaceCard({ id, onClose }: { id: string; onClose: () => void }) {
         {place.hours && <p>{place.hours}</p>}
         {place.phone && <p><a className="underline" href={`tel:${place.phone}`}>{place.phone}</a></p>}
       </div>
-      <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[var(--ui-ink,#141414)] px-4 py-2 text-center text-sm font-semibold text-white">
+      <a href={directionsUrl(null, place)} target="_blank" rel="noreferrer" className="block rounded-full bg-[var(--bucket-store-solid,#0072b2)] px-4 py-2 text-center text-sm font-semibold text-white">
         Directions
       </a>
       <p className="text-xs text-[var(--ui-ink-muted,#4b5563)]">Hours and services can change. Call ahead.</p>
