@@ -6,6 +6,7 @@ import { Placeholder } from "@/components/Placeholder";
 import { getPanelPatient } from "@/lib/panel";
 import { MASKED_WHY_ES, patientWhy, patientWhyEs, plainName, RISK, RISK_LABEL_ES, riskGroup, SIGN_ES } from "@/lib/risk";
 import { HOURLY_FILE, hourlyHeat } from "@/lib/synthetic";
+import { HourByHour } from "./HourByHour";
 import { Phone } from "./Phone";
 import { MedicineCabinet, type CabinetEffect } from "@/components/cabinet/MedicineCabinet";
 
@@ -25,7 +26,6 @@ export default function PhonePage({ params }: { params: Promise<{ id: string }> 
   );
 }
 
-const hourLabel = (h: number) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
 const hourLong = (h: number) => (h === 0 || h === 24 ? "midnight" : h < 12 ? `${h} AM` : h === 12 ? "noon" : `${h - 12} PM`);
 const hourLongEs = (h: number) =>
   h === 0 || h === 24 ? "la medianoche" : h === 12 ? "el mediodía" : `${h % 12 === 1 ? "la" : "las"} ${h % 12} ${h < 12 ? "a.m." : "p.m."}`;
@@ -34,12 +34,14 @@ const hourLongEs = (h: number) =>
 const T = {
   en: {
     risk: "Your heat risk today:",
+    eyebrow: "Heat wave · June 24",
     synthetic: "Synthetic patient",
     replay: "Heat wave replay, June 24, 2025.",
     safest: "Best time to go out",
     stayInside: (a: number, b: number) => `Stay inside ${hourLong(a)} to ${hourLong(b)}.`,
     noHot: "No very hot hours today.",
     hourly: "Hourly heat today",
+    hourByHour: "Hour by hour",
     feels: (h: number, f: number) => `${hourLong(h)}: feels like ${f}°F`,
     ok: "OK",
     stayIn: "Stay in",
@@ -54,12 +56,14 @@ const T = {
   },
   es: {
     risk: "Su riesgo por calor hoy:",
+    eyebrow: "Ola de calor · 24 de junio",
     synthetic: "Paciente de prueba",
     replay: "Repetición de la ola de calor, 24 de junio de 2025.",
     safest: "La mejor hora para salir",
     stayInside: (a: number, b: number) => `Quédese adentro de ${hourLongEs(a)} a ${hourLongEs(b)}.`.replace(/\.\.$/, "."),
     noHot: "Hoy no hay horas de mucho calor.",
     hourly: "Calor por hora hoy",
+    hourByHour: "Hora por hora",
     feels: (h: number, f: number) => `${hourLongEs(h)}: se siente como ${f}°F`,
     ok: "Puede salir",
     stayIn: "Quédese adentro",
@@ -104,41 +108,32 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
 
   const plan = (
     <div className="space-y-8">
-      {/* 1. Risk headline + the map: "where do I go?" first */}
-      <section className="space-y-1">
-        <p className="text-patient-lg font-bold leading-snug">
+      {/* 1. Risk headline (hero, same style as the home hero) + the map: "where do I go?" first */}
+      <section className="space-y-2 text-center">
+        <p className="text-base font-medium text-muted-foreground">{t.eyebrow}</p>
+        <h2 className="text-patient-xl font-semibold leading-tight tracking-tight">
           {t.risk}{" "}
-          <span className={`inline-block rounded-full px-3 ${RISK[g].solid}`}>{es ? RISK_LABEL_ES[g] : RISK[g].label}</span>
-        </p>
-        <p>{firstSentence(why)}</p>
+          <span className={`inline-block whitespace-nowrap rounded-full px-3 ${RISK[g].tint} ${RISK[g].ink}`}>{es ? RISK_LABEL_ES[g] : RISK[g].label}</span>
+        </h2>
+        <p className="text-muted-foreground">{firstSentence(why)}</p>
       </section>
 
       <PatientPlanMapView data={mapData} height={320} lang={lang} variant="patient" />
 
-      {/* 2. Best time to go out */}
-      <section className="space-y-2">
-        <h2 className="text-patient-lg font-bold">{t.safest}</h2>
+      {/* 2. Best time to go out: hour by hour (same hourly data as the time-lapse) */}
+      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <h2 className="text-patient-lg font-semibold tracking-tight">{t.safest}</h2>
         {hours.length ? (
           <>
             <p>{hot.length ? t.stayInside(hot[0].hour, hot[hot.length - 1].hour + 1) : t.noHot}</p>
-            <ol className="flex gap-0.5" aria-label={t.hourly}>
-              {hours.map((h) => {
-                const isHot = (h.heatIndexF ?? h.tempF) >= HOT_FEELS_LIKE_F;
-                return (
-                  <li key={h.hour} className="flex flex-1 flex-col items-center gap-1">
-                    <span
-                      title={t.feels(h.hour, Math.round(h.heatIndexF ?? h.tempF))}
-                      className={`h-8 w-full rounded ${isHot ? "bg-hold-solid" : "bg-verify-double-bg border border-verify-double-fg"}`}
-                    />
-                    {h.hour % 3 === 0 && <span className="text-sm text-ink-muted">{hourLabel(h.hour)}</span>}
-                  </li>
-                );
-              })}
-            </ol>
-            <p className="flex gap-5 text-base">
-              <span><span aria-hidden className="mr-1 inline-block h-3 w-3 rounded-sm border border-verify-double-fg bg-verify-double-bg" />{t.ok}</span>
-              <span><span aria-hidden className="mr-1 inline-block h-3 w-3 rounded-sm bg-hold-solid" />{t.stayIn}</span>
-            </p>
+            <div aria-label={t.hourByHour}>
+              <HourByHour
+                hours={hours.map((h) => ({ hour: h.hour, f: h.heatIndexF ?? h.tempF }))}
+                hotF={HOT_FEELS_LIKE_F}
+                lang={lang}
+                startHour={hot[0]?.hour ?? 14}
+              />
+            </div>
           </>
         ) : (
           <Placeholder title="Hourly heat">Data goes here: {HOURLY_FILE}</Placeholder>
@@ -147,8 +142,8 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
 
       {/* 3. What to watch for (max 4) */}
       {symptoms.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-patient-lg font-bold">{t.watch}</h2>
+        <section className="space-y-2 rounded-lg border border-border bg-card p-4">
+          <h2 className="text-patient-lg font-semibold tracking-tight">{t.watch}</h2>
           <ul className="list-disc space-y-1 pl-6">
             {symptoms.map((s) => (
               <li key={s.sign}>{es ? SIGN_ES[s.sign] ?? s.label : s.label}</li>
@@ -168,9 +163,9 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
 
   const footer = (
     <div className="space-y-4 pb-4">
-      <p className="text-patient-lg font-bold">{t.talk}</p>
-      <details className="text-base text-ink-muted">
-        <summary className="flex min-h-tap cursor-pointer items-center font-semibold text-ink">{t.more}</summary>
+      <p className="text-patient-lg font-semibold">{t.talk}</p>
+      <details className="text-base text-muted-foreground">
+        <summary className="flex min-h-tap cursor-pointer items-center font-semibold text-foreground">{t.more}</summary>
         <div className="space-y-2 pt-2">
           {why !== firstSentence(why) && <p>{why}</p>}
           {masked.map((m) => (

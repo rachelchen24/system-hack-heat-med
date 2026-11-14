@@ -103,7 +103,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
     const opens = clock(place?.opens), closes = clock(place?.closes);
     return (
       <section className="space-y-4 text-[var(--ui-ink,#141414)]" aria-label={t.sectionLabel}>
-        <div className="relative overflow-hidden rounded-2xl">
+        <div className="relative overflow-hidden rounded-lg border border-border">
           <MapCanvas
             layers={layers}
             initialView={{ longitude: data.home.lon, latitude: data.home.lat, zoom: 15 }}
@@ -115,10 +115,10 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
           <div className="absolute left-2 top-2 z-10"><ThreeDToggle on={threeD} onChange={setThreeD} /></div>
         </div>
         {place ? (
-          <div className="space-y-2">
-            <p className="text-[1.125rem] font-semibold text-[var(--ui-ink-muted,#4b5563)]">{t.goTo}</p>
-            <p className="text-[1.75rem] font-bold leading-tight">{titleCase(cleanName(place.name))}</p>
-            <ul className="space-y-1 text-[1.375rem] font-semibold leading-snug">
+          <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+            <p className="text-[1.125rem] font-medium text-muted-foreground">{t.goTo}</p>
+            <p className="text-[1.75rem] font-semibold leading-tight tracking-tight">{titleCase(cleanName(place.name))}</p>
+            <ul className="space-y-1 text-[1.25rem] leading-snug">
               {walk !== null && <li>{t.walkShort(walk)}</li>}
               {leave && <li>{t.leaveBy(leave)}</li>}
               {opens && closes && <li>{t.open(opens, closes)}</li>}
@@ -127,8 +127,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
               href={directionsUrl(data.home, place)}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 flex min-h-[56px] items-center justify-center rounded-full px-5 text-[1.375rem] font-bold text-white"
-              style={{ background: "#00694c" }}
+              className="mt-2 flex min-h-[56px] items-center justify-center rounded-lg bg-primary px-5 text-[1.375rem] font-semibold text-primary-foreground hover:bg-primary/90"
             >
               {t.directions}
             </a>
@@ -142,7 +141,7 @@ export function PatientPlanMapView({ data: initial, patientId, height = 320, lan
           <p className="text-[1.125rem]">{t.noPlace}</p>
         )}
         {data.delivery.show && (
-          <div className="border-l-4 pl-4" style={{ borderColor: "var(--risk-high, #d55e00)" }}>
+          <div className="rounded-lg border border-border bg-risk-high-tint p-4">
             <p className="text-[1.375rem] font-bold">{t.cantGo}</p>
             <p className="text-[1.125rem]">{t.cantGoText}</p>
           </div>

@@ -330,9 +330,12 @@ export function Intake({
 
         {step.kind === "intro" && (
           <section className="flex flex-1 flex-col gap-5">
-            <h1 className="text-patient-2xl font-bold leading-tight">{t.hi(firstName)}</h1>
-            <p>{t.count}</p>
-            <p className="text-base text-ink-muted">{t.basedOn}</p>
+            <div className="space-y-2 text-center">
+              <p className="text-base font-medium text-muted-foreground">{lang === "es" ? "Su plan para el calor" : "Your heat plan"}</p>
+              <h1 className="text-patient-xl font-semibold leading-tight tracking-tight">{t.hi(firstName)}</h1>
+              <p className="text-muted-foreground">{t.count}</p>
+            </div>
+            <p className="text-base text-muted-foreground">{t.basedOn}</p>
             <BigButton onClick={next} primary>
               {t.start}
             </BigButton>
@@ -488,7 +491,7 @@ function Progress({ t, lang, current, n, total }: { t: Txt; lang: Lang; current:
         <span>{t.of(n, total)}</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-surface">
-        <div className="h-full rounded-full bg-ink transition-all" style={{ width: `${(n / total) * 100}%` }} />
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(n / total) * 100}%` }} />
       </div>
     </div>
   );
@@ -513,12 +516,12 @@ function BigButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={primary ? undefined : !!selected}
-      className={`min-h-tap w-full rounded-2xl border-2 px-4 py-3 font-semibold transition-colors disabled:opacity-60 ${
+      className={`min-h-tap w-full rounded-lg border px-4 py-3 font-semibold transition-colors disabled:opacity-60 ${
         primary
           ? "border-primary bg-primary text-center text-primary-foreground"
           : selected
-            ? "border-ink bg-surface text-left"
-            : "border-line text-left hover:border-line-strong"
+            ? "border-primary bg-primary/5 text-left"
+            : "border-border bg-card text-left hover:bg-accent"
       }`}
     >
       {selected && !primary && <span aria-hidden className="mr-2">✓</span>}
