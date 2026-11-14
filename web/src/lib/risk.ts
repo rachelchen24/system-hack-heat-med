@@ -196,3 +196,67 @@ export function whyBullets(p: RiskInput): string[] {
   if (p.lifestyle?.profileLabel) out.push(`Daily routine: ${p.lifestyle.profileLabel}.`);
   return out;
 }
+
+// ---- Spanish (patient side). Machine-style translation, flagged "por revisar" in the UI. ----
+
+export const RISK_LABEL_ES: Record<RiskGroup, string> = { high: "Alto", medium: "Medio", low: "Bajo" };
+
+const DEFENSE_ES: Record<string, string> = {
+  blood_pressure: "bajan la presión arterial (mareos, desmayos)",
+  kidney_clearance: "fuerzan los riñones",
+  fluid_salt_balance: "hacen perder agua y sal del cuerpo",
+  alertness: "hacen más difícil notar el calor y sentir sed",
+  brain_thermostat: "hacen más difícil que el cuerpo controle su temperatura",
+  sweating: "hacen más difícil sudar y refrescarse",
+  blood_sugar: "hacen más difícil controlar el azúcar en la sangre",
+  drug_delivery: "se absorben más rápido con el calor",
+};
+// Singular verb forms for one medicine.
+const DEFENSE_ES_ONE: Record<string, string> = {
+  blood_pressure: "bajar la presión arterial (mareos, desmayos)",
+  kidney_clearance: "forzar los riñones",
+  fluid_salt_balance: "hacer perder agua y sal del cuerpo",
+  alertness: "hacer más difícil notar el calor y sentir sed",
+  brain_thermostat: "hacer más difícil que el cuerpo controle su temperatura",
+  sweating: "hacer más difícil sudar y refrescarse",
+  blood_sugar: "hacer más difícil controlar el azúcar en la sangre",
+  drug_delivery: "absorberse más rápido",
+};
+const NUM_ES = ["", "", "dos", "tres", "cuatro", "cinco", "seis"];
+const listJoinEs = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`);
+
+/** Spanish version of patientWhy. */
+export function patientWhyEs(p: RiskInput): string {
+  const m = topMechanism(p);
+  const out: string[] = [];
+  if (m && DEFENSE_ES[m.defense]) {
+    out.push(
+      m.stacked && m.drugs.length > 1
+        ? `Sus ${NUM_ES[m.drugs.length] ?? m.drugs.length} medicinas (${listJoinEs(m.drugs)}) ${DEFENSE_ES[m.defense]}, y el calor también.`
+        : `Su medicina ${m.drugs[0]} puede ${DEFENSE_ES_ONE[m.defense]} con el calor.`,
+    );
+  }
+  const drivers = p.readiness?.drivers ?? [];
+  if (drivers.includes("no working ac at home")) out.push("No tiene aire acondicionado que funcione en casa.");
+  else if (drivers.includes("has ac but cost limits use")) out.push("Usar el aire acondicionado le cuesta mucho.");
+  else if (drivers.includes("lives alone")) out.push("Vive solo/a.");
+  return out.join(" ") || "Hoy hace mucho calor.";
+}
+
+export const SIGN_ES: Record<string, string> = {
+  hot_dry_skin: "Piel caliente, roja y seca",
+  headache: "Dolor de cabeza",
+  muscle_cramps: "Calambres musculares",
+  tiredness: "Cansancio o debilidad",
+  heavy_sweating: "Sudar mucho",
+  nausea: "Náuseas o vómitos",
+  confusion: "Confusión",
+  high_body_temp: "Temperatura del cuerpo alta",
+  fainting: "Desmayos",
+  dizziness: "Mareos",
+};
+
+export const MASKED_WHY_ES: Record<string, string> = {
+  confusion: "la somnolencia o pensar más lento puede ocultar la confusión temprana, y puede que no sienta sed",
+  heavy_sweating: "la medicina reduce el sudor, así que la señal de 'sudar mucho' puede no aparecer",
+};
