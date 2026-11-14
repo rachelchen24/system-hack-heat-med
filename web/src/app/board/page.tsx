@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Placeholder } from "@/components/Placeholder";
+import { primaryBucket } from "@/lib/kb";
 import { loadPanel } from "@/lib/panel";
 import { clinicianWhy, plainName, riskGroup, whyBullets } from "@/lib/risk";
 import { callInsteadIds, kbDrugFor, QUESTIONNAIRE_FILE } from "@/lib/synthetic";
@@ -37,6 +38,7 @@ export default function BoardPage() {
             name: m,
             kbId: d?.id ?? null,
             kbName: d?.names?.display ?? null,
+            bucket: d ? primaryBucket(d) : null,
             line: d?.label_line ?? null,
             sources: (d?.claims ?? [])
               .filter((c) => c.source?.url)

@@ -4,6 +4,8 @@
 export type RiskGroup = "High" | "Medium" | "Low";
 export const RISK_GROUPS: RiskGroup[] = ["High", "Medium", "Low"];
 
+import { heatRgba } from "@/components/replay/colors";
+
 type RGB = [number, number, number];
 
 function hex(h: string): RGB {
@@ -31,9 +33,15 @@ export const RISK_CSS: Record<RiskGroup, { solid: string; tint: string; ink: str
 };
 
 /** Heat shading (neighborhood heat vulnerability 1 = cooler … 5 = hotter).
- *  Okabe–Ito reddish purple ramp, kept apart from the patient dot colors. */
-export const HEAT_HEX = ["#f7eef4", "#efd6e4", "#e2b3cd", "#cf86ae", "#b05a8c"];
-export const HEAT_RGB: RGB[] = HEAT_HEX.map(hex);
+ *  Same ramp as the "feels like" time-lapse (replay/colors.ts HEAT_STOPS: pale yellow → orange →
+ *  pink → deep purple), sampled at 5 evenly spaced points from 88° to 116°, so every heat scale
+ *  in the app reads the same way. */
+const HEAT_SAMPLES_F = [88, 95, 102, 109, 116];
+export const HEAT_RGB: RGB[] = HEAT_SAMPLES_F.map((f) => {
+  const [r, g, b] = heatRgba(f);
+  return [Math.round(r), Math.round(g), Math.round(b)];
+});
+export const HEAT_HEX = HEAT_RGB.map(([r, g, b]) => `rgb(${r},${g},${b})`);
 
 /** Help places: Okabe–Ito bluish green. */
 export const HELP_HEX = "#009e73";

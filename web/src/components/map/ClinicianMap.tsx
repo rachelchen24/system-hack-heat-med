@@ -266,7 +266,8 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
       getIcon: (d) =>
         selPatient?.id === d.id
           ? personIcon(RISK_RGB[d.group].solid, [20, 20, 20], 2)
-          : personIcon(RISK_RGB[d.group].solid, d.group === "Medium" ? RISK_RGB.Medium.ink : [255, 255, 255]),
+          // White outline on every group so orange/yellow people stay visible on the heat shading.
+          : personIcon(RISK_RGB[d.group].solid, [255, 255, 255], 2.4),
       getSize: (d) => (selPatient?.id === d.id ? 34 : 22), sizeUnits: "pixels",
       // SVG icons must load as <img> (createImageBitmap can't decode SVG blobs).
       loadOptions: { image: { type: "image" } },
@@ -352,9 +353,9 @@ export function ClinicianMap({ patients, files, mapHeight = "min(72vh, 760px)" }
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={showHeat} onChange={(e) => setShowHeat(e.target.checked)} />
           <span className="flex flex-1 items-center gap-2 text-[var(--ui-ink-muted,#4b5563)]">
-            <span>Hotter</span>
-            <span className="h-2.5 flex-1 rounded-full" style={{ background: `linear-gradient(to right, ${[...HEAT_HEX].reverse().join(",")})` }} />
             <span>Cooler</span>
+            <span className="h-2.5 flex-1 rounded-full" style={{ background: `linear-gradient(to right, ${HEAT_HEX.join(",")})` }} />
+            <span>Hotter</span>
           </span>
         </label>
       </section>

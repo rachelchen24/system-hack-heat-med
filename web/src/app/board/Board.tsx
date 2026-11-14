@@ -5,6 +5,31 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RISK, RISK_ORDER, type RiskGroup } from "@/lib/risk";
+import { BUCKETS } from "@/lib/ui";
+import type { Bucket } from "@lib/types/knowledge-base.ts";
+
+// Medicine boxes take the Evidence Map's action-bucket color (left accent + chip).
+const BUCKET_ACCENT: Record<Bucket, string> = {
+  hold_or_substitute: "border-l-hold-solid",
+  adjust_dose: "border-l-adjust-solid",
+  monitor: "border-l-monitor-solid",
+  storage: "border-l-store-solid",
+};
+
+/** Same paper can appear twice in a drug's claims; show each link once. */
+const uniqueSources = (s: { label: string; url: string }[]) =>
+  s.filter((x, i) => s.findIndex((y) => y.url === x.url && y.label === x.label) === i);
+
+function StudyChip({ label, n }: { label: string; n: number | null }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-page px-2 py-0.5 text-xs">
+      <span>{label}</span>
+      <span className={`rounded-full px-1.5 font-semibold tabular-nums ${n ? "bg-layer-graph-bg text-layer-graph-fg" : "bg-surface text-ink-muted"}`}>
+        {n ?? 0}
+      </span>
+    </span>
+  );
+}
 
 export interface BoardRow {
   id: string;
@@ -16,7 +41,7 @@ export interface BoardRow {
   callInstead: boolean;
   detail: {
     bullets: string[];
-    meds: { name: string; kbId: string | null; kbName: string | null; line: string | null; sources: { label: string; url: string }[] }[];
+    meds: { name: string; kbId: string | null; kbName: string | null; bucket: Bucket | null; line: string | null; sources: { label: string; url: string }[] }[];
     pathways: {
       label: string;
       drugs: string[];
@@ -253,42 +278,70 @@ function WhyPanel({ row, onClose }: { row: BoardRow; onClose: () => void }) {
         </ul>
 
         <h3 className="mt-5 font-semibold">Their medicines in heat</h3>
-        <ul className="mt-1 space-y-2 text-sm">
+        <ul className="mt-2 space-y-3 text-sm">
           {d.meds.length === 0 && <li className="text-ink-muted">No heat-relevant medicines on file.</li>}
-          {d.meds.map((m) => (
-            <li key={m.name} className="border-l-2 border-line-strong pl-3">
-              <div className="font-semibold capitalize">{m.name}</div>
-              {m.line ? <p>{m.line}</p> : <p className="text-ink-muted">Not in data/kb/knowledge_base.json yet.</p>}
-              {m.kbId && (
-                <Link href={`/drug/${m.kbId}`} className="text-xs underline">
-                  {m.kbName} evidence card
-                </Link>
-              )}
-              {m.sources.length > 0 && (
-                <ul className="mt-1 text-xs">
-                  {m.sources.map((s) => (
-                    <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer" className="underline">{s.label}</a></li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+          {d.meds.map((m) => {
+            const b = m.bucket ? BUCKETS[m.bucket] : null;
+            return (
+              <li
+                key={m.name}
+                className={`rounded-tile border border-line border-l-4 bg-surface p-3 ${m.bucket ? BUCKET_ACCENT[m.bucket] : "border-l-line-strong"}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-semibold capitalize">{m.name}</div>
+                  {b && (
+                    <span className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-semibold ${b.solid}`}>
+                      {b.letter} · {b.label}
+                    </span>
+                  )}
+                </div>
+                {m.line ? <p className="mt-1">{m.line}</p> : <p className="mt-1 text-ink-muted">Not in data/kb/knowledge_base.json yet.</p>}
+                {(m.kbId || m.sources.length > 0) && (
+                  <div className="mt-2 space-y-1 border-t border-line pt-2 text-xs">
+                    {m.kbId && (
+                      <Link href={`/drug/${m.kbId}`} className="font-semibold underline">
+                        {m.kbName} evidence card →
+                      </Link>
+                    )}
+                    {uniqueSources(m.sources).map((s) => (
+                      <a key={s.url + s.label} href={s.url} target="_blank" rel="noreferrer" className="block text-ink-muted underline hover:text-ink">
+                        {s.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {d.pathways.length > 0 && (
           <>
             <h3 className="mt-5 font-semibold">How it adds up</h3>
-            <ul className="mt-1 space-y-2 text-sm">
+            <ul className="mt-2 space-y-3 text-sm">
               {d.pathways.map((p) => (
-                <li key={p.label} className="border-l-2 border-line-strong pl-3">
-                  <div className="font-semibold">{p.label}</div>
+                <li
+                  key={p.label}
+                  className={`rounded-tile border border-l-4 p-3 ${p.stacked ? "border-line border-l-hold-solid bg-hold-tint/40" : "border-line border-l-layer-graph-fg bg-layer-graph-bg/50"}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-semibold">{p.label}</div>
+                    {p.stacked && (
+                      <span className="shrink-0 rounded-full bg-hold-solid px-2 py-0.5 text-xs font-semibold text-hold-on">2+ medicines</span>
+                    )}
+                  </div>
                   {p.system.map((s) => (
-                    <p key={s.mediator} className="text-xs">
-                      Heat → {s.mediator.toLowerCase()}: {s.heatStudies ?? "no"} studies.{" "}
-                      {s.drugLegs.map((l) => `${l.drug} → ${s.mediator.toLowerCase()}: ${l.studies ?? "no"} studies`).join("; ")}.
-                    </p>
+                    <div key={s.mediator} className="mt-2">
+                      <div className="text-xs font-semibold text-ink-muted">{s.mediator} · studies in System</div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <StudyChip label="Heat" n={s.heatStudies} />
+                        {s.drugLegs.map((l) => (
+                          <StudyChip key={l.drug} label={l.drug} n={l.studies} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                  <p className="mt-1 text-xs text-ink-muted">{p.note}</p>
+                  <p className="mt-2 text-xs text-ink-muted">{p.note}</p>
                 </li>
               ))}
             </ul>

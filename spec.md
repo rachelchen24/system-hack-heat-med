@@ -112,6 +112,7 @@ Only 1 of 5 judges is a clinician, so the main screen must make sense to non-cli
 
 ### 3.3 Visual style
 - **Light mode** on both sides. No dark mode.
+- **One heat color scale everywhere (Sat 14 Nov):** pale yellow → yellow → orange → vermillion → pink → deep purple (the "Feels like" 88°–116°+ legend). Source of truth: `HEAT_STOPS` in `web/src/components/replay/colors.ts`. The time-lapse, the hour-by-hour strip and the static map's neighborhood heat (HVI 1–5, sampled from the same ramp) all use it.
 - **One color per action bucket,** used everywhere (grid, cards, map, cabinet, labels, props):
   - Adjust dose
   - Hold / substitute
