@@ -7,6 +7,8 @@ import { getPanelPatient } from "@/lib/panel";
 import { MASKED_WHY_ES, patientWhy, patientWhyEs, plainName, RISK, RISK_LABEL_ES, riskGroup, SIGN_ES } from "@/lib/risk";
 import { HOURLY_FILE, hourlyHeat } from "@/lib/synthetic";
 import { HourByHour } from "./HourByHour";
+import { HelpContacts } from "@/components/help/HelpContacts";
+import { HELP_FILE, helpContactsFor } from "@/lib/helpContacts";
 import { Phone } from "./Phone";
 import { MedicineCabinet, type CabinetEffect } from "@/components/cabinet/MedicineCabinet";
 
@@ -119,6 +121,8 @@ async function PhoneForPatient({ params }: { params: Promise<{ id: string }> }) 
       </section>
 
       <PatientPlanMapView data={mapData} height={320} lang={lang} variant="patient" />
+
+      <HelpContacts contacts={helpContactsFor(p.patientId)} lang={lang} sourceFile={HELP_FILE} />
 
       {/* 2. Best time to go out: hour by hour (same hourly data as the time-lapse) */}
       <section className="space-y-3 rounded-lg border border-border bg-card p-4">
