@@ -279,6 +279,9 @@ def main():
                            "sentence": s[:600]})
     claim_lines.append(f"(c) tolterodine: {n_hit} of {len(labs)} labels have a non-storage heat or sweating sentence.")
 
+    # The same sentence can recur within one label field (e.g. insulin storage lines); keep one copy.
+    claims = list({tuple(c.values()): c for c in claims}.values())
+
     os.makedirs(PROCESSED, exist_ok=True)
     for name, data in [("fda_label_heat_audit_v2.csv", rows), ("fda_label_heat_audit_summary_v2.csv", summary),
                        ("fda_label_heat_claims_v2.csv", claims)]:

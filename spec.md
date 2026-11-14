@@ -409,7 +409,7 @@ Chosen for speed (5 hours, two people), open source, and one language per layer.
 | **Charts** | **Apache ECharts** (via `echarts-for-react`) | One library covers scatter, Sankey, treemap, heatmap, calendar, forest-style plots and graphs, so all 21 visuals can be prototyped quickly |
 | **Node graph** | **react-force-graph** (2D; 3D optional) | A real interactive force-directed "CS" node graph |
 | **3D NYC map** | **deck.gl + MapLibre GL JS** with OpenStreetMap / OpenFreeMap vector tiles (3D building extrusions) | Open source, no token, 3D buildings, hexagon and arc layers |
-| **Database + live updates** | **Local SQLite (decided Sat 14 Nov; Supabase dropped)** behind the Next.js API routes. The clinic board and the patient app **poll every 2–3 seconds**, so a tap on the demo phone shows up on the clinician laptop almost instantly. The phone opens the app from the laptop's server, so both share one database. Production: a hosted Postgres per health system | Patients, questionnaire, contacts, check-ins, alerts. No account needed |
+| **Database + live updates** | **Local SQLite (decided Sat 14 Nov; Supabase dropped)** behind the Next.js API routes, using **Node's built-in `node:sqlite`** (no better-sqlite3: it needs a native build on Windows; decided Sat 14 Nov). **The database holds live demo state only** (alerts, check-ins, simulated push/SMS log, live questionnaire sign-ups, fast-forward clock: `db/schema.sql`, `web/src/lib/db.ts`); patients, meds, questionnaire and contacts stay in `data/processed/synthetic/` and load through `lib/patient`. The clinic board and the patient app **poll every 2–3 seconds**, so a tap on the demo phone shows up on the clinician laptop almost instantly. The phone opens the app from the laptop's server, so both share one database. Production: a hosted Postgres per health system | Patients, questionnaire, contacts, check-ins, alerts. No account needed |
 | **Scheduled escalation timers** | A small Node timer in the app server; **demo has a "fast-forward" control** so a 45-minute wait plays in seconds | Runs the T_wait → contact → clinic escalation |
 | **SMS** | **Demo: simulated (decided 14 Nov).** The alert appears in a mock text thread on the demo phone and in the message log, labeled "simulated SMS." Production: an SMS provider (e.g. Twilio) | No account needed |
 | **Push notifications** | **Demo: simulated (decided Sat 14 Nov).** The patient app on the demo phone shows a mock lock-screen push banner (styled like a real notification, labeled "simulated") when the clinician sends the alert. Production: native app with iOS **Critical Alerts / Time-Sensitive** and an Android DND-bypass channel | No Web Push, VAPID keys or HTTPS tunnel needed |
@@ -762,6 +762,23 @@ System is used in **six roles**, and each shows up visibly in the product (25% o
 - "N untested links implied by the graph"
 - "Z label errors on the fix list"
 
+### 8.5b Data check of Myra's overnight pipeline (commit 95fb864, 14 Nov)
+- **Overall:** about 60 processed CSVs. All parse cleanly (no ragged rows, no unexpected empty columns). Every synthetic file is labelled synthetic. The knowledge base builds for all 15 drugs.
+- **System status:** the overnight API pull got HTTP 403 (key rejected), so every `system_*` output comes from the **Dataverse v2.1 fallback** (about 2.0M findings vs. about 5.9M via the API). The key in `.env` **works as of 14 Nov late morning (HTTP 200)**. **Next step:** rerun the API pipeline in this order: `system_api_master_audit` → `system_api_evidence` → `system_api_graph_check` → `system_api_verify` → `system_api_live_layer`. That's about 2–4.5k of the 10k daily requests. Then rebuild the knowledge base.
+- **Why the API rerun matters:** Dataverse holds only 7 of our 83 cited papers. The API had 50 indexed, 8 with findings. The **Martin-Latry mislabel** (our best audit story) is API-only, and so are the dialysis RR 1.27 and the insulin-pen finding.
+- **Open decision:** System's rule "keep API findings only if they're also in Dataverse" would drop Martin-Latry. Proposal: apply the rule to evidence badges (✓✓), but still report API-only findings in the audit/fix list, labelled "API only."
+- **Graph coverage file:** `data/graph_coverage.csv` was overwritten in Dataverse mode (13 core-heat findings). The 13 Nov API version (about 7 concept / 15 variable findings) is backed up in `data/raw/system/graph_coverage_api_2026-11-13_backup.csv`. Keep the headline numbers tied to their source.
+- **Lithium under-scored:** lithium shows "Early signs" (0.156), because its only population-study claim (Wilting, Utrecht thesis, no PMID) is badged "?" and hidden.
+  - Fix 1: find a PMID/DOI for the Wilting work.
+  - Fix 2: add the System-surfaced McGill 2014 study (PMID 25163443: lithium dose-level ratio vs. mean daily temperature, β −0.17, p=0.08, n=63) to the master list.
+  - This is a demo example of System **adding** evidence (role 5, reverse check).
+- **SGLT2:** literature score 0, with graph-only (28 AKI studies) + FAERS + label support. Add DKA/volume-depletion-in-heat literature, or present it explicitly as a "graph-only / gap" drug.
+- **Small cleanups:**
+  - `fda_label_heat_claims_v2.csv` has 70 exact duplicate rows (mostly insulin storage lines repeated per label section). Dedupe them.
+  - Name-matched System findings have unreviewed `auto_flags_heuristic`. Filter flagged rows and BP-efficacy rows out of public views.
+  - `system_hidden_drug_candidates.csv` is unvalidated. Never show it as findings.
+- **Rediscovery result (Dataverse):** diuretics rank 1–3 of 19, lithium 7, antipsychotics 11, anticholinergics 15. Thermoregulation (sweating / body temperature) is barely in the graph, and that's itself a gap finding.
+
 ### 8.6 Already in the repo
 - `data/Drug heat risk master list.xlsx` / `.csv`: master list (86 rows) and guidance comparison
 - `data/graph_coverage.csv`, `graph_heat_relationships.csv`, `graph_heat_variable_hits.csv`, `master_list_graph_status.csv`: graph checks
@@ -921,3 +938,5 @@ Suggested 15 (to confirm):
 - HeatRisk data access (API vs WPC data files); NYC heat-advisory criteria.
 - Verify: Semenza 1996; Be a Buddy; HEAP details; substitute examples; notification-study medians.
 - Do we use any tier C sources in the pitch?
+- **System API key returned 403** on Myra's overnight run (Sat 14 Nov); System results so far are the Dataverse fallback. Get a working key and rerun the System scripts: roles 1–6 (§8.5a) and 25% of judging depend on it.
+- **Work split from 10:45 Sat:** Rachel = SQLite + core loop (send alert → simulated push/SMS on the phone → escalation with fast-forward → clinic board). Myra = System key rerun, then the evidence-side visuals in `web/` (forest plot, pathway Sankey, node graph, live System layer, CDS Hooks cards). The 3D map and call-first scatter go to whoever finishes first.

@@ -1071,11 +1071,19 @@ def first_col(row, names):
     return None
 
 
+def prefer_api(paths):
+    """Drop a *_dataverse_fallback file when the live-API file with the same name exists (no double counting)."""
+    s = set(paths)
+    return [p for p in paths if not (p.endswith("_dataverse_fallback.csv")
+                                     and p.replace("_dataverse_fallback.csv", ".csv") in s)]
+
+
 def load_api_verification(ctx):
-    """System API verification (other agent). Accepts system_api_verification.csv or *_dataverse_fallback variants."""
+    """System API verification (other agent). Accepts system_api_verification.csv or *_dataverse_fallback variants;
+    when both exist the live-API file wins."""
     ctx.api_verif, ctx.api_num = {}, {}
     ctx.api_files = []
-    vfiles = sorted(glob.glob(P("data/processed/system_api_verification*.csv")))
+    vfiles = prefer_api(sorted(glob.glob(P("data/processed/system_api_verification*.csv"))))
     vclaim = [f for f in vfiles if "numbers" not in os.path.basename(f)]
     vnum = [f for f in vfiles if "numbers" in os.path.basename(f)]
     n = 0
@@ -1096,7 +1104,7 @@ def load_api_verification(ctx):
                 ctx.api_num[(pk, round(v, 4))] = {"badge": (first_col(r, ["badge"]) or "").strip(),
                                                   "system_result": first_col(r, ["system_result"]) or "", "file": os.path.relpath(path, ROOT)}
     ctx.api_by_group = {}
-    for path in sorted(glob.glob(P(GLOB_INPUTS["system_api_extra"]))):
+    for path in prefer_api(sorted(glob.glob(P(GLOB_INPUTS["system_api_extra"])))):
         if os.path.basename(path).startswith("system_api_verification"):
             continue
         for r in read_csv(path):

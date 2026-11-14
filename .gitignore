@@ -14,3 +14,7 @@ __pycache__/
 .DS_Store
 node_modules/
 .next/
+
+# Local SQLite database (synthetic demo data)
+db/*.sqlite
+db/*.sqlite-*
