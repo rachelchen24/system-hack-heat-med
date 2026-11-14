@@ -20,6 +20,30 @@ Raw output:
 
 **Not found:** the landmark heat-wave medication studies (the French 2003 heat-wave studies, Layton 2020 Medicare, Kalisch Ellett 2016) don't show up as drug × heat findings. They are either not extracted, or their variables are filed under general concepts like "hospitalization."
 
+## Graph size, and where the landmark papers ended up (checked 13 Nov 2026)
+
+**Size (API totals):**
+- 40,307,952 studies
+- 5,944,001 findings (associations)
+- 626,265 relationships
+- 108,624 concepts
+- 5,654,715 variables
+
+The studies table is roughly PubMed-sized, but there are far fewer findings than papers. So most indexed papers have **no** extracted findings, and the extracted findings come from text only, not tables, figures or supplements.
+
+**All 9 landmark papers checked are indexed. 5 have findings, and none is filed as drug × heat:**
+
+| Paper | Findings | What the graph recorded |
+|---|---|---|
+| Martin-Latry 2007 (PMID 17513091) | 3 | All three odds ratios (6.0, 4.6, 2.4) are labeled "use of **psychotropic drugs**" → heat admission. The 6.0 is actually **anticholinergics**, which aren't psychotropic. This is a **mislabel**. |
+| Mangoni 2017 (PMID 29116624) | 2 | Triple whammy → in-hospital AKI (OR 0.79, 1.02). Correct. |
+| Page 2012 (PMID 22661680) | 1 | High temperature → death in psychosis/dementia. The drug-level finding wasn't extracted. |
+| Wong 2024 (PMID 39648665) | 2 | Heatwave → heat illness. The drug stratification (on vs. off antipsychotics) is lost. |
+| Ashburn 2003 (PMID 14622685) | 2 | Local heat → fentanyl Cmax and AUC. Correct. |
+| Kalisch Ellett 2016, Hospers 2024, Newhouse 2024, Rand 2005 | 0 | Indexed, but nothing extracted |
+
+**Lesson:** the evidence is in the graph more often than the concept search suggests. It's filed under vague labels ("psychotropic drugs," "heat-related pathologies"), so starting from known papers (PMID → findings) catches what concept search misses. These cases are the graph-audit material.
+
 ## Caveats
 
 - This route may **undercount**. A heat-wave study whose variables are filed under "temperature" or "hospitalization" won't appear.
