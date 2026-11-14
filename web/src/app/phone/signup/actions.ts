@@ -24,7 +24,7 @@ import type { QuestionnaireAnswers } from "@lib/types/patient.ts";
 import type { IntakeAnswers, IntakeResult } from "@/components/intake/types";
 import { REPO_ROOT } from "@/lib/kb";
 import { getPanelPatient } from "@/lib/panel";
-import { patientWhy, riskGroup } from "@/lib/risk";
+import { patientWhy, patientWhyEs, riskGroup } from "@/lib/risk";
 
 // Second-person wording for readiness.drivers (lower-cased EXPOSURE_POINTS labels + age modifiers).
 const YOU: Record<string, string> = {
@@ -45,6 +45,27 @@ const YOU: Record<string, string> = {
   "neighborhood heat vulnerability index 4": "You live in a heat-exposed neighborhood.",
   "age 75+": "You are 75 or older.",
   "child under 5": "Young children get sick from heat faster.",
+};
+
+// Spanish (usted form) for the same drivers. Machine-style translation, flagged "por revisar" in the UI.
+const YOU_ES: Record<string, string> = {
+  "no working ac at home": "No tiene aire acondicionado que funcione en casa.",
+  "has ac but cost limits use": "Usar el aire acondicionado le cuesta mucho.",
+  "spends the day outdoors or doing physical work": "Pasa el día afuera o haciendo trabajo físico.",
+  "outdoor work or sports": "Trabaja o hace deporte al aire libre.",
+  "home all day without reliable ac": "Pasa el día en casa sin aire acondicionado confiable.",
+  "lives alone": "Vive solo/a.",
+  "lives alone and no one checks on them": "Vive solo/a y nadie viene a verle.",
+  "cannot get to a cool place": "No puede llegar a un lugar fresco.",
+  "can reach a cool place only with help": "Necesita ayuda para llegar a un lugar fresco.",
+  "lives on floor 7 or higher": "Vive en un piso alto.",
+  "floor 4+ with no elevator": "Tiene que subir varios pisos por escalera.",
+  "home often gets hot": "Su casa se calienta mucho a menudo.",
+  "uses power-dependent equipment": "Usa equipo médico que necesita electricidad.",
+  "neighborhood heat vulnerability index 5 (highest)": "Vive en uno de los barrios más expuestos al calor.",
+  "neighborhood heat vulnerability index 4": "Vive en un barrio expuesto al calor.",
+  "age 75+": "Tiene 75 años o más.",
+  "child under 5": "Los niños pequeños se enferman por el calor más rápido.",
 };
 
 type Ctx = { drugIndex: DrugProfileIndex; neighborhood: NeighborhoodData; patients: PatientRecord[] };
@@ -99,7 +120,7 @@ function ctx(): Ctx {
   return g.__intakeCtx;
 }
 
-export async function scoreIntake(patientId: string, a: IntakeAnswers, takingMedIds: string[]): Promise<IntakeResult | { error: string }> {
+export async function scoreIntake(patientId: string, a: IntakeAnswers, takingMedIds: string[], lang: "en" | "es" = "en"): Promise<IntakeResult | { error: string }> {
   const c = ctx();
   const rec = c.patients.find((p) => p.id === patientId);
   const panel = getPanelPatient(patientId, "replay");
@@ -140,11 +161,13 @@ export async function scoreIntake(patientId: string, a: IntakeAnswers, takingMed
   };
 
   const group = riskGroup(readiness.level);
-  let why = patientWhy({ readiness, stacking, lifestyle });
-  if (why === "Today is very hot.") {
+  const es = lang === "es";
+  let why = es ? patientWhyEs({ readiness, stacking, lifestyle }) : patientWhy({ readiness, stacking, lifestyle });
+  const hotOnly = es ? "Hoy hace mucho calor." : "Today is very hot.";
+  if (why === hotOnly) {
     // No medicine or AC reason: say which home answers drove the group (readiness.drivers).
-    const home = readiness.drivers.map((d) => YOU[d]).filter(Boolean).slice(0, 2);
-    if (home.length) why = `${home.join(" ")} Today is very hot.`;
+    const home = readiness.drivers.map((d) => (es ? YOU_ES : YOU)[d]).filter(Boolean).slice(0, 2);
+    if (home.length) why = `${home.join(" ")} ${hotOnly}`;
   }
   const recordGroup = panel.readiness ? riskGroup(panel.readiness.level) : null;
   return {
@@ -152,6 +175,8 @@ export async function scoreIntake(patientId: string, a: IntakeAnswers, takingMed
     why,
     sameAsRecord: recordGroup === group,
     recordGroup,
-    method: "lib/patient: medRiskStack + personalExposure → readinessLevel (same rules as panel_scores_replay.json)",
+    method: es
+      ? "Su grupo sale de sus medicinas y de su casa, igual que en la lista de su clínica."
+      : "Your group comes from your medicines and your home, the same way your clinic's list does.",
   };
 }

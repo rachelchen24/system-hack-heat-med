@@ -29,7 +29,7 @@ function oneOf<T extends string>(v: string | undefined, xs: readonly T[]): T | n
   return xs.includes(v as T) ? (v as T) : null;
 }
 
-export default function SignupPage({ searchParams }: { searchParams: Promise<{ patient?: string }> }) {
+export default function SignupPage({ searchParams }: { searchParams: Promise<{ patient?: string; lang?: string }> }) {
   return (
     <Suspense fallback={<p className="text-ink-muted">Loading…</p>}>
       <Signup searchParams={searchParams} />
@@ -37,8 +37,8 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
   );
 }
 
-async function Signup({ searchParams }: { searchParams: Promise<{ patient?: string }> }) {
-  const { patient } = await searchParams;
+async function Signup({ searchParams }: { searchParams: Promise<{ patient?: string; lang?: string }> }) {
+  const { patient, lang: langParam } = await searchParams;
   const id = patient ?? DEFAULT_PATIENT;
   const panel = loadPanel("replay");
   const p = getPanelPatient(id, "replay");
@@ -49,6 +49,8 @@ async function Signup({ searchParams }: { searchParams: Promise<{ patient?: stri
       </Placeholder>
     );
   }
+  // Same rule as the plan page (/phone/[id]): panel patients[].language; ?lang=en|es overrides.
+  const lang: "en" | "es" = langParam === "es" || langParam === "en" ? langParam : p.language === "es" ? "es" : "en";
   const q = questionnaire().get(id);
   const num = q?.q3_floor ? Number(q.q3_floor) : NaN;
   const answers: IntakeAnswers = {
@@ -93,8 +95,9 @@ async function Signup({ searchParams }: { searchParams: Promise<{ patient?: stri
 
   return (
     <Intake
-      key={id}
+      key={`${id}-${lang}`}
       patientId={id}
+      lang={lang}
       firstName={plainName(p.displayName).split(" ")[0]}
       initial={answers}
       meds={meds}
