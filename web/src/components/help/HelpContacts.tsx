@@ -28,6 +28,17 @@ export function HelpContacts({ contacts, lang, sourceFile }: { contacts: HelpCon
           </li>
         ))}
       </ul>
+      <div className="space-y-1">
+        <p className="font-semibold">{es ? "¿No sabe a quién llamar?" : "Not sure who to call?"}</p>
+        <p className="text-muted-foreground">
+          {es
+            ? "Llame al 311 (línea de servicios de la Ciudad de Nueva York) y pida ayuda con comida o mandados."
+            : "Call 311 (New York City's services line) and ask for help with food or errands."}
+        </p>
+        <Button asChild size="lg" className="h-14 w-full text-lg">
+          <a href="tel:311">{es ? "Llamar al 311" : "Call 311"}</a>
+        </Button>
+      </div>
       <p className="text-base text-muted-foreground">{es ? "Los horarios y servicios pueden cambiar. Llame antes." : "Hours and services can change. Call ahead."}</p>
     </section>
   );
