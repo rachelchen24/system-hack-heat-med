@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DeckGL from "@deck.gl/react";
 import { FlyToInterpolator } from "@deck.gl/core";
 import { PathLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { Layer, Map, Source, type MapRef } from "react-map-gl/maplibre";
+import { Map, type MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { setWorkerUrl } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 
 // Turbopack can't bundle MapLibre's web worker, so serve the prebuilt one from /public
 // (copied from node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs, same version).
-setWorkerUrl("/maplibre-gl-worker.mjs");
+maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
 import type { HeatGrid, ReplayPatient } from "@/lib/replay";
 import { GROUP_COLORS, heatRgba } from "./colors";
 
@@ -18,9 +18,9 @@ const BASEMAP = "https://tiles.openfreemap.org/styles/positron";
 const SCALE = 14; // canvas pixels per grid cell (before blur)
 const BAND = 2; // °F per color band
 
-/** Bilinear-interpolated, blurred heat image for fractional time `tf` (radar look). */
-function heatCanvas(grid: HeatGrid, tf: number): HTMLCanvasElement | null {
-  if (typeof document === "undefined") return null;
+/** Draw the bilinear-interpolated, banded, blurred heat image for fractional time `tf` into `out`
+ *  (radar look). Reuses the same canvases every frame so the map can animate them in place. */
+function drawHeat(grid: HeatGrid, tf: number, scratch: HTMLCanvasElement, out: HTMLCanvasElement) {
   const nLat = grid.lats.length, nLon = grid.lons.length;
   const t0 = Math.max(0, Math.min(grid.f.length - 1, Math.floor(tf)));
   const t1 = Math.min(grid.f.length - 1, t0 + 1);
@@ -31,11 +31,8 @@ function heatCanvas(grid: HeatGrid, tf: number): HTMLCanvasElement | null {
     if (b == null) return a;
     return a + (b - a) * k;
   };
-  const W = (nLon - 1) * SCALE, H = (nLat - 1) * SCALE;
-  const raw = document.createElement("canvas");
-  raw.width = W;
-  raw.height = H;
-  const ctx = raw.getContext("2d")!;
+  const W = scratch.width, H = scratch.height;
+  const ctx = scratch.getContext("2d")!;
   const img = ctx.createImageData(W, H);
   for (let y = 0; y < H; y++) {
     // canvas row 0 = north (last lat)
@@ -58,13 +55,11 @@ function heatCanvas(grid: HeatGrid, tf: number): HTMLCanvasElement | null {
     }
   }
   ctx.putImageData(img, 0, 0);
-  const out = document.createElement("canvas");
-  out.width = W;
-  out.height = H;
   const octx = out.getContext("2d")!;
+  octx.clearRect(0, 0, W, H);
   octx.filter = `blur(${Math.round(SCALE * 0.6)}px)`;
-  octx.drawImage(raw, 0, 0);
-  return out;
+  octx.drawImage(scratch, 0, 0);
+  octx.filter = "none";
 }
 
 export default function TimelapseMap({
@@ -105,21 +100,39 @@ export default function TimelapseMap({
     };
   }, [route, homeView]);
 
-  // The heat image is drawn INSIDE the base map, under roads and labels, so streets stay readable.
-  const dataUrl = useMemo(() => heatCanvas(grid, tf)?.toDataURL() ?? null, [grid, tf]);
+  // The heat is drawn INSIDE the base map (under roads and labels, so streets stay readable) from one
+  // live canvas that MapLibre re-reads every frame ("canvas" source, animate: true). Swapping in a new
+  // image per frame doesn't work: each image loads asynchronously and gets cancelled by the next one.
+  const [canvases] = useState(() => {
+    const W = (grid.lons.length - 1) * SCALE, H = (grid.lats.length - 1) * SCALE;
+    const mk = () => {
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      return c;
+    };
+    return { scratch: mk(), out: mk() };
+  });
+  useEffect(() => {
+    drawHeat(grid, tf, canvases.scratch, canvases.out);
+  }, [grid, tf, canvases]);
   const w = grid.lons[0], e = grid.lons[grid.lons.length - 1], s = grid.lats[0], n = grid.lats[grid.lats.length - 1];
   const coords: [[number, number], [number, number], [number, number], [number, number]] = [[w, n], [e, n], [e, s], [w, s]];
-  const [beforeId, setBeforeId] = useState<string | undefined>(undefined);
-  const [mapReady, setMapReady] = useState(false);
   function onMapLoad(ev: { target: ReturnType<MapRef["getMap"]> }) {
-    const layers = ev.target.getStyle().layers ?? [];
-    // Heat goes just below the first water layer (so water, parks' outlines, roads and labels draw on top):
-    // the blobs show over land, where people live. Falls back to below the first road / label layer.
-    const first =
-      layers.find((l) => /water/i.test(l.id)) ??
-      layers.find((l) => /road|highway|tunnel|bridge|street|transportation/i.test(l.id) || l.type === "symbol");
-    setBeforeId(first?.id);
-    setMapReady(true);
+    const map = ev.target;
+    const styleLayers = map.getStyle().layers ?? [];
+    // Heat goes just below the first water layer (so water, roads and labels draw on top): the blobs
+    // show over land, where people live. Falls back to below the first road / label layer.
+    const before =
+      styleLayers.find((l) => /water/i.test(l.id)) ??
+      styleLayers.find((l) => /road|highway|tunnel|bridge|street|transportation/i.test(l.id) || l.type === "symbol");
+    if (!map.getSource("heat")) {
+      map.addSource("heat", { type: "canvas", canvas: canvases.out, coordinates: coords, animate: true });
+      map.addLayer(
+        { id: "heat-layer", type: "raster", source: "heat", paint: { "raster-opacity": 1, "raster-fade-duration": 0, "raster-resampling": "linear" } },
+        before?.id,
+      );
+    }
   }
 
   const layers = [
@@ -176,12 +189,7 @@ export default function TimelapseMap({
         layer?.id === "patients" && object ? { text: `${(object as ReplayPatient).name} · ${(object as ReplayPatient).group} risk\nClick for their plan` } : null
       }
     >
-      <Map mapStyle={BASEMAP} attributionControl={{ compact: true }} onLoad={onMapLoad}>
-        {mapReady && dataUrl && (
-          <Source id="heat" type="image" url={dataUrl} coordinates={coords}>
-            <Layer id="heat-layer" type="raster" beforeId={beforeId} paint={{ "raster-opacity": 1, "raster-fade-duration": 0, "raster-resampling": "linear" }} />
-          </Source>
-        )}
+      <Map mapLib={maplibregl} mapStyle={BASEMAP} attributionControl={{ compact: true }} onLoad={onMapLoad}>
       </Map>
     </DeckGL>
   );

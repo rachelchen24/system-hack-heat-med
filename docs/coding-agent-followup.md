@@ -9,8 +9,8 @@ NEW PAGES ALREADY BUILT (don't edit these files)
 IMPORTANT MAP BUG FIX (do this first if your map shows a blank gray background)
 MapLibre's web worker doesn't load under Turbopack ("Worker failed to load" in the console), so no map tiles render. The fix, already used in `web/src/components/replay/TimelapseMap.tsx`:
 - `web/public/maplibre-gl-worker.mjs` is a copy of `node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs` (already in the repo)
-- in your map component: `import { setWorkerUrl } from "maplibre-gl"; setWorkerUrl("/maplibre-gl-worker.mjs");`
-- To put a heat layer UNDER streets and labels, use a react-map-gl `<Source type="image">` + `<Layer type="raster" beforeId=...>` inside `<Map>` (see TimelapseMap.tsx) instead of a deck.gl layer on top.
+- in your map component: `import * as maplibregl from "maplibre-gl"; maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");` AND pass that instance to the map: `<Map mapLib={maplibregl} ...>` (without `mapLib`, react-map-gl loads its own copy and the fix only works sometimes)
+- To put an ANIMATED heat layer under streets and labels, add a MapLibre `canvas` source (`animate: true`) and a raster layer in the map's `onLoad`, then redraw that same canvas each frame (see TimelapseMap.tsx). Don't swap a new image URL every frame: each loads asynchronously and gets cancelled by the next, so nothing shows while it plays.
 
 WHAT TO ADD (small edits in files you own)
 1. A **"Messages"** button (speech-bubble icon + the word "Messages") that links to `/messages/<patientId>`, everywhere a patient appears for the clinician:
