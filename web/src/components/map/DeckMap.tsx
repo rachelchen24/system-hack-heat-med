@@ -4,7 +4,11 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Map, NavigationControl, useControl, type MapRef } from "react-map-gl/maplibre";
 import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
+import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// See app/api/map/maplibre-gl-worker.mjs/route.ts.
+if (typeof window !== "undefined") maplibregl.setWorkerUrl(`${window.location.origin}/api/map/maplibre-gl-worker.mjs`);
 
 export const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const BUILDINGS_ID = "tml-3d-buildings";
@@ -72,6 +76,7 @@ export default function DeckMap({ layers, initialView, fitBounds, threeD, getToo
     <div style={{ height, width: "100%", position: "relative" }} role="region" aria-label={ariaLabel}>
       <Map
         ref={ref}
+        mapLib={maplibregl}
         initialViewState={{ ...initialView, pitch: 0, bearing: 0 }}
         mapStyle={BASEMAP_STYLE}
         style={{ width: "100%", height: "100%" }}
