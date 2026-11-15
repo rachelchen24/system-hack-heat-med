@@ -5,9 +5,11 @@ _Formerly "The Missing Label"; name may change._
 **Heat-wave outreach for patients whose medicines make heat more dangerous.**
 Built for **Visualize Challenge 3** of the System Public Challenge (NYC, 13–14 Nov 2026): *Which common medications make heat more dangerous, and what should prescribers and health systems do about it?*
 
+**Live demo:** https://cool-aid.vercel.app/phone (patient app) · 🥈 **2nd place, System Public Challenge, Visualize track**
+
 > Prototype. Synthetic patients only. Considerations for clinicians, not medical instructions.
 
-_Last updated: Sat 14 Nov 2026, 1:35 PM. Keep this file current whenever the plan, data or app changes._
+_Last updated: Sat 14 Nov 2026, after judging. Keep this file current whenever the plan, data or app changes._
 
 ---
 
@@ -53,6 +55,8 @@ On the morning a heat wave is forecast, a clinic nurse sees which patients are *
 - Notes and a comparison table are in `research-notes/advisor-models.md`.
 
 ## Run it
+Deployed on Vercel: **https://cool-aid.vercel.app/phone** (patient app). To run it locally:
+
 Requirements: Node 24, Python 3 (`py -3` on Windows). Java 17 is needed only to regenerate Synthea patients.
 
 ```bash
